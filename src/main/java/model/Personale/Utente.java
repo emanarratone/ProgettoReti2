@@ -1,5 +1,4 @@
 package model.Personale;
-
 import model.Autostrada.Casello;
 
 import java.util.ArrayList;
