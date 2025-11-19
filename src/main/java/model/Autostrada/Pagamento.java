@@ -1,21 +1,25 @@
 package model.Autostrada;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Duration;
 
 public class Pagamento {
 
     private String ID_transazione;
     private Biglietto biglietto;
+    private Casello casello_out;
     private Double prezzo;
-    private Boolean Status;
-    private LocalDate timestamp_in;
+    private Boolean Status; //pagato = false
+    private LocalDateTime timestamp_out;
 
-    public Pagamento(String ID_transazione, Biglietto biglietto, Double prezzo, Boolean status, LocalDate timestamp_in) {
+    public Pagamento(String ID_transazione, Biglietto biglietto, Double prezzo, Boolean status, LocalDateTime timestamp_out, Casello casello_out) {
         this.ID_transazione = ID_transazione;
         this.biglietto = biglietto;
         this.prezzo = prezzo;
-        Status = status;
-        this.timestamp_in = timestamp_in;
+        this.Status = status;
+        this.timestamp_out = timestamp_out;
+        this.casello_out = casello_out;
+        checkMulta(biglietto.getCasello_in().getLimite());
     }
 
     public String getID_transazione() {
@@ -43,18 +47,35 @@ public class Pagamento {
     }
 
     public Boolean getStatus() {
-        return Status;
+        return this.Status;
     }
 
     public void setStatus(Boolean status) {
         Status = status;
     }
 
-    public LocalDate getTimestamp_in() {
-        return timestamp_in;
+    public LocalDateTime getTimestamp_in() {
+        return timestamp_out;
     }
 
-    public void setTimestamp_in(LocalDate timestamp_in) {
-        this.timestamp_in = timestamp_in;
+    public void setTimestamp_in(LocalDateTime timestamp_out) {
+        this.timestamp_out= timestamp_out;
+    }
+
+    public void checkMulta(Integer limite){
+        long durata = Duration.between(timestamp_out, biglietto.getTimestamp_in()).toMinutes();
+        if(durata<limite){
+            Multa multa = new Multa(10d, LocalDateTime.now(),
+                                        biglietto.getAuto().getTarga());
+            biglietto.getAuto().getMulte().add(multa);
+        }
+    }
+
+    public Casello getCasello_out() {
+        return casello_out;
+    }
+
+    public void setCasello_out(Casello casello_out) {
+        this.casello_out = casello_out;
     }
 }

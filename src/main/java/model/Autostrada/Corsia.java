@@ -9,11 +9,13 @@ public class Corsia {
 
     private List<Dispositivi> dispositivi;
     private Dispositivi.Tipo tipo;
+    private Boolean isClosed; //
 
     public Corsia(List<Dispositivi> dispositivi, Dispositivi.Tipo tipo) {
         // se ti interessa copiare la lista passata:
         this.dispositivi = dispositivi;
         this.tipo = tipo;
+        this.isClosed = false;
     }
 
     // getter che restituisce una copia "read-only" se vuoi evitare modifiche esterne
@@ -57,5 +59,14 @@ public class Corsia {
     // svuota la lista
     public void svuotaDispositivi() {
         dispositivi.clear();
+    }
+
+
+    public Boolean getClosed() {
+        return isClosed;
+    }
+
+    public void setClosed(Boolean closed) {
+        isClosed = closed;
     }
 }

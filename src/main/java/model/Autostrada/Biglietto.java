@@ -6,14 +6,15 @@ import java.time.LocalDateTime;
 public class Biglietto {
     private String Matricola;
     private String ID_Totem;
-    private String targa;
+    private Auto auto;
     private LocalDateTime timestamp_in;
     private Casello casello_in;
 
-    public Biglietto(String Matricola, String ID_Totem, String targa, LocalDateTime timestamp_in, Casello casello_in) {
+
+    public Biglietto(String Matricola, String ID_Totem, Auto auto, LocalDateTime timestamp_in, Casello casello_in) {
         this.Matricola = Matricola;
         this.ID_Totem = ID_Totem;
-        this.targa = targa;
+        this.auto = auto;
         this.timestamp_in = timestamp_in;
         this.casello_in = casello_in;
     }
@@ -34,12 +35,12 @@ public class Biglietto {
         this.ID_Totem = ID_Totem;
     }
 
-    public String getTarga() {
-        return targa;
+    public Auto getAuto() {
+        return auto;
     }
 
-    public void setTarga(String targa) {
-        this.targa = targa;
+    public void setAuto(Auto auto) {
+        this.auto = auto;
     }
 
     public LocalDateTime getTimestamp_in() {
