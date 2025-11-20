@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login / Registrazione Sist. Autostradale</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --card-radius: 1.2rem;
+      --accent: #6c63ff;
+      --bg1: #667eea;
+      --bg2: #764ba2;
+      --muted: #6b7280;
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #4a4a4a;
+      padding: 1rem;
+    }
+
+    .card {
+      display: flex;
+      max-width: 920px;
+      width: 100%;
+      min-height: 520px;
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: 0 15px 40px rgba(136, 62, 62, 0.18);
+      overflow: hidden;
+    }
+
+    .img-side {
+      flex: 1;
+      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat;
+      display: block;
+    }
+
+    .form-container {
+      flex: 1;
+      padding: 2rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (max-width: 767px) {
+      .card {
+        flex-direction: column;
+      }
+      .img-side {
+        display: none;
+      }
+    }
+
+    /* Hidden radios for toggle */
+    .mode-toggle {
+      position: absolute;
+      left: -9999px;
+    }
+
+    /* Mode switch buttons */
+    .mode-switch {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .mode-switch label {
+      cursor: pointer;
+      color: var(--accent);
+      font-weight: 600;
+      padding: 0.6rem 2.5rem;
+      min-width: 120px;
+      border-radius: 0.4rem;
+      border: 2px solid transparent;
+      text-align: center;
+      transition: all 0.3s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    #mode-login:checked ~ .card .form-container .mode-switch label[for="mode-login"],
+    #mode-register:checked ~ .card .form-container .mode-switch label[for="mode-register"] {
+      background-color: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(80, 77, 136, 0.3);
+    }
+
+    /* Forms wrapper */
+   .forms-wrapper {
+      position: relative;
+      min-height: 420px; /* permette al form di registrazione di occupare spazio e mostrare il bottone */
+      height: auto;
+      overflow: visible;
+    }
+
+    form {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+    }
+    #mode-login:checked ~ .card .form-container .forms-wrapper #login-form {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+      position: relative;
+    }
+    #mode-register:checked ~ .card .form-container .forms-wrapper #register-form {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    input.form-control {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1.5px solid #ccc;
+      border-radius: 0.4rem;
+      transition: border-color 0.3s ease;
+    }
+
+    input.form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    .d-grid {
+      margin-top: 1.4rem;
+    }
+
+    button.btn {
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-radius: 0.4rem;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button.btn svg {
+      margin-left: 0.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      border: none;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #574cd8;
+    }
+
+    .btn-success {
+      background-color: #28a745;
+      border: none;
+      color: white;
+    }
+    .btn-success:hover {
+      background-color: #218838;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .small-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 1rem;
+    }
+
+    .small-text label {
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    fieldset {
+      border: none;
+      margin-bottom: 1.2rem;
+      padding: 0;
+    }
+    legend {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .role-options {
+      display: flex;
+      gap: 1.5rem;
+    }
+    .role-options input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+.role-options label::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.role-options label {
+  cursor: pointer;
+  padding-left: 2.5rem;
+  position: relative;
+  user-select: none;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.role-options input[type="radio"]:checked + label {
+  color: var(--accent);
+}
+
+.role-options input[type="radio"]:checked + label::before {
+  border-color: var(--accent);
+  background-color: var(--accent);
+}
+
+/* Keep SVG icon stroke color */
+.role-options label svg {
+  stroke: currentColor;
+}
+    .role-options label svg {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      stroke: var(--muted);
+    }
+    .role-options input[type="radio"]:checked  label {
+      color: var(--accent);
+    }
+    .role-options input[type="radio"]:checked  label svg {
+      stroke: var(--accent);
+    }
+     form {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+    }
+
+    .error {
+      color: #c53030;
+      font-style: italic;
+      font-size: 0.9rem;
+      margin-top: 0.8rem;
+      min-height: 1.2em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <input type="radio" name="mode" id="mode-login" class="mode-toggle" checked />
+  <input type="radio" name="mode" id="mode-register" class="mode-toggle" />
+
+  <div class="card" role="main" aria-label="Login e Registrazione Sistema Autostradale">
+
+    <div class="img-side" aria-hidden="true"></div>
+
+    <div class="form-container">
+      <div class="mode-switch" role="tablist" aria-label="Scegli modalità">
+        <label for="mode-login" role="tab" aria-controls="login-form" tabindex="0">Accedi</label>
+        <label for="mode-register" role="tab" aria-controls="register-form" tabindex="0">Registrati</label>
+      </div>
+
+      <h1 class="form-title">Sistema Autostradale</h1>
+      <p class="form-subtitle">Gestisci il tuo account in modo semplice e sicuro</p>
+
+      <div class="forms-wrapper">
+
+        <!-- Login Form -->
+          <form id="login-form" method="post" action="/login" novalidate>
+          <div class="mb-3">
+            <label for="login-username">Username</label>
+            <input type="text" id="login-username" name="username" class="form-control" placeholder="Inserisci username" autocomplete="username" required />
+          </div>
+          <div class="mb-3">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" name="password" class="form-control" placeholder="Inserisci password" autocomplete="current-password" required />
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary" aria-label="Accedi">
+              Accedi
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ms-2">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+          <p class="small-text text-center">Non hai un account? <label for="mode-register" style="cursor:pointer;">Registrati</label></p>
+          <div class="error" aria-live="polite"></div>
+        </form>
+
+        <!-- Register Form -->
+          <form id="register-form" method="post" action="/register" novalidate>
+          <div class="mb-3">
+            <label for="reg-email">Email</label>
+              <input type="text" id="reg-email" name="username" class="form-control"
+                     placeholder="mail@mail.com" autocomplete="username" required />
+          </div>
+          <div class="mb-3">
+            <label for="reg-password">Password</label>
+            <input type="password" id="reg-password" name="password" class="form-control" placeholder="Inserisci password" autocomplete="new-password" required />
+          </div>
+          <div class="mb-3">
+            <label for="reg-confirm">Conferma Password</label>
+            <input type="password" id="reg-confirm" name="confirmPassword" class="form-control" placeholder="Conferma password" autocomplete="new-password" required />
+          </div>
+          <fieldset>
+            <legend>Ruolo</legend>
+            <div class="role-options" role="radiogroup" aria-labelledby="role-legend">
+  <input type="radio" id="role-impiegato" name="role" value="impiegato" checked />
+  <label for="role-impiegato" title="Impiegato">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18" aria-hidden="true">
+      <circle cx="12" cy="8" r="3" />
+      <path d="M6 20c0-3 4-5 6-5s6 2 6 5" />
+    </svg>
+    Impiegato
+  </label>
+
+  <input type="radio" id="role-amministratore" name="role" value="amministratore" />
+  <label for="role-amministratore" title="Amministratore">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18" aria-hidden="true">
+      <path d="M12 2l2.9 6.2L21 9l-4.5 3.5L17.8 20 12 16.8 6.2 20l1.3-7.5L3 9l6.1-.8L12 2z" />
+    </svg>
+    Amministratore
+  </label>
+</div>
+
+          </fieldset>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success" aria-label="Registrati">
+              Registrati
+            </button>
+          </div>
+          <p class="small-text text-center">Hai già un account? <label for="mode-login" style="cursor:pointer;">Accedi</label></p>
+          <div class="error" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

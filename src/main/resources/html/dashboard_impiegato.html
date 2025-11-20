@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard Impiegato - Autostrade</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root{--accent:#6c63ff;--muted:#6b7280;--card-radius:12px;}
+    body{font-family:'Poppins',sans-serif;background:#f4f6fb;color:#24303b;}
+    .topbar{background:#fff;border-bottom:1px solid #eef2ff}
+    .kpi {border-radius:var(--card-radius);box-shadow:0 6px 18px rgba(31,41,55,.06)}
+    .kpi .value{font-weight:700;font-size:1.45rem}
+    .role-badge{background:linear-gradient(90deg,#6c63ff22,#764ba222);color:var(--accent);font-weight:600;padding:.25rem .6rem;border-radius:.5rem}
+    .card-chart{min-height:240px}
+    .status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:.5rem}
+    .dot-ok{background:#28a745}
+    .dot-warn{background:#ffc107}
+    .dot-down{background:#dc3545}
+    .small-muted{font-size:.85rem;color:var(--muted)}
+    table.table .nowrap { white-space:nowrap; }
+  </style>
+</head>
+<body>
+  <header class="topbar py-2 mb-3">
+    <div class="container-fluid">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <h4 class="mb-0">Gestionale Autostradale</h4>
+          <span class="role-badge">Impiegato</span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <select id="dateRange" class="form-select form-select-sm" style="width:180px">
+            <option value="7">Ultimi 7 giorni</option>
+            <option value="30" selected>Ultimi 30 giorni</option>
+            <option value="90">Ultimi 90 giorni</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="container-fluid py-2">
+    <!-- KPI row -->
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-md-2">
+        <div class="p-3 bg-white kpi">
+          <div class="text-muted small">Traffico medio / giorno</div>
+          <div id="kpiTraffic" class="value">12.4k</div>
+          <div class="text-success small">+3.7% vs periodo</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-2">
+        <div class="p-3 bg-white kpi">
+          <div class="text-muted small">Picco orario</div>
+          <div id="kpiPeak" class="value">1.2k</div>
+          <div class="small-muted">Ore: 18:00 - 19:00</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-2">
+        <div class="p-3 bg-white kpi">
+          <div class="text-muted small">Corsie chiuse</div>
+          <div id="kpiLanes" class="value">2</div>
+          <div class="text-warning small">Interventi attivi</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-2">
+        <div class="p-3 bg-white kpi">
+          <div class="text-muted small">Caselli offline</div>
+          <div id="kpiToll" class="value">1</div>
+          <div class="small-muted">Monitoraggio dispositivi</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-2">
+        <div class="p-3 bg-white kpi">
+          <div class="text-muted small">Multe giornaliere</div>
+          <div id="kpiFines" class="value">5</div>
+          <div class="small-muted">Ultime 24h</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-2">
+        <div class="p-3 bg-white kpi">
+          <div class="text-muted small">Pagamenti da incassare</div>
+          <div id="kpiPayments" class="value">31</div>
+          <div class="text-danger small">Telepass e cash</div>
+        </div>
+      </div>
+    </div>
+    <!-- Grafici -->
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-6">
+        <div class="card bg-white p-3 card-chart mb-3">
+          <h6 class="mb-2">Trend traffico</h6>
+          <canvas id="trafficChart" aria-label="Grafico traffico giornaliero" role="img"></canvas>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="card bg-white p-3 card-chart mb-3">
+          <h6 class="mb-2">Picchi orari</h6>
+          <canvas id="peaksChart" aria-label="Grafico picchi orari" role="img"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- Gestione Caselli e Corsie -->
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-6">
+        <div class="card bg-white p-3">
+          <h6 class="mb-0">Caselli</h6>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="small text-muted">
+                <tr><th>Casello</th><th>Tratto</th><th>Stato</th><th>Interventi</th><th>Dispositivi</th></tr>
+              </thead>
+              <tbody id="caselliTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="card bg-white p-3">
+          <h6 class="mb-0">Corsie</h6>
+          <div class="table-responsive">
+            <table class="table table-borderless table-sm mb-0">
+              <thead class="small text-muted">
+                <tr><th>Corsia</th><th>Tratto</th><th>Stato</th><th>Note</th></tr>
+              </thead>
+              <tbody id="corsieTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Dispositivi/veicoli -->
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-6">
+        <div class="card bg-white p-3">
+          <h6 class="mb-0">Dispositivi</h6>
+          <div id="devicesList"></div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="card bg-white p-3">
+          <h6 class="mb-2">Storico veicoli</h6>
+          <input type="text" class="form-control form-control-sm mb-2" placeholder="Ricerca targa" disabled>
+          <div id="vehiclesList">Nessun transito recente</div>
+        </div>
+      </div>
+    </div>
+    <!-- Multe / Pagamenti -->
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-8">
+        <div class="card bg-white p-3">
+          <h6 class="mb-0">Multe</h6>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead class="small text-muted">
+                <tr><th>ID</th><th>Data</th><th>Casello/Corsia</th><th>Importo</th><th>Stato</th></tr>
+              </thead>
+              <tbody id="finesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <div class="card bg-white p-3">
+          <h6 class="mb-2">Pagamenti Telepass</h6>
+          <div id="paymentsList">Incassi disponibili: <span class="text-danger">€475</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- Calcolo pedaggio -->
+    <div class="card bg-white p-3 mt-3">
+      <h6>Calcola pedaggio</h6>
+      <div class="row g-2 align-items-end mb-2">
+        <div class="col-12 col-md-5">
+          <label class="form-label small">Origine (lat,lng)</label>
+          <input id="tollOrigin" class="form-control form-control-sm" placeholder="es. 45.4642,9.1900">
+        </div>
+        <div class="col-12 col-md-5">
+          <label class="form-label small">Destinazione (lat,lng)</label>
+          <input id="tollDestination" class="form-control form-control-sm" placeholder="es. 45.0703,7.6869">
+        </div>
+        <div class="col-12 col-md-2 d-grid">
+          <button id="calcTollBtn" class="btn btn-primary btn-sm">Calcola</button>
+        </div>
+      </div>
+      <div class="small-muted" id="tollResult">Inserisci origine/destinazione e premi "Calcola".</div>
+    </div>
+  </main>
+  <footer class="text-center py-3 small text-muted">
+    © Gestionale Autostradale — <span id="buildInfo">v1.0</span>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    (function(){
+      // Simulazione dati come amministratore (solo visibilità)
+      const days = [...Array(30)].map((_,i)=>`G${i+1}`);
+      const dailyTraffic = days.map((_,i)=>Math.round(7000 + Math.sin(i/3)*1500 + Math.random()*900));
+      const hourly = [...Array(24)].map((_,h)=>Math.round(200 + Math.abs(Math.sin((h-7)/6))*1000 + Math.random()*50));
+      document.getElementById('kpiTraffic').textContent = (Math.round(dailyTraffic.reduce((a,b)=>a+b,0)/dailyTraffic.length)).toLocaleString();
+      const peak = Math.max(...hourly);
+      const peakHour = hourly.indexOf(peak);
+      document.getElementById('kpiPeak').textContent = peak.toLocaleString();
+      document.getElementById('kpiPeak').nextElementSibling.textContent = `Ore: ${String(peakHour).padStart(2,'0')}:00 - ${String((peakHour+1)%24).padStart(2,'0')}:00`;
+      document.getElementById('kpiLanes').textContent = "2";
+      document.getElementById('kpiToll').textContent = "1";
+      document.getElementById('kpiFines').textContent = "5";
+      document.getElementById('kpiPayments').textContent = "31";
+      new Chart(document.getElementById('trafficChart'), {
+        type: 'line',
+        data: {
+          labels: days,
+          datasets: [{ label:'Veicoli/giorno', data: dailyTraffic, borderColor:'#6c63ff', backgroundColor:'rgba(108,99,255,0.08)', tension:0.25, pointRadius:0 }]
+        },
+        options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false}}}
+      });
+      new Chart(document.getElementById('peaksChart'), {
+        type:'bar',
+        data:{ labels: [...Array(24).keys()].map(h=>`${h}:00`), datasets:[{data:hourly, backgroundColor:'#ffa94d'}]},
+        options:{plugins:{legend:{display:false}}, responsive:true, scales:{x:{ticks:{maxRotation:0}}}}
+      });
+      // Caselli
+      const caselli = [
+        {id:'CS-01', stretch:'A1 - Km 12', status:'OK', txHour:'Manutenzione', devices: ['POS','Camera','Loop']},
+        {id:'CS-02', stretch:'A1 - Km 24', status:'Offline', txHour:'Verifica elettrica', devices: ['POS','Camera']},
+        {id:'CS-05', stretch:'A4 - Km 45', status:'Limitato', txHour:'Upgrade', devices: ['POS','Camera','Radar']}
+      ];
+      document.getElementById('caselliTable').innerHTML = caselli.map(c =>
+        `<tr>
+          <td class="nowrap">${c.id}</td>
+          <td>${c.stretch}</td>
+          <td><span class="status-dot ${c.status==='OK' ? 'dot-ok' : (c.status==='Offline' ? 'dot-down' : 'dot-warn')}"></span>${c.status}</td>
+          <td>${c.txHour}</td>
+          <td>${c.devices.join(', ')}</td>
+        </tr>`).join('');
+      // Corsie
+      const corsie = [
+        {lane:'Corsia 1', stretch:'A1 - Km 12', state:'Open', note:''},
+        {lane:'Corsia 2', stretch:'A1 - Km 12', state:'Closed', note:'Incidente'},
+        {lane:'Corsia 3', stretch:'A2 - Km 101', state:'Restricted', note:'Lavori in corso'}
+      ];
+      document.getElementById('corsieTable').innerHTML = corsie.map(c=>
+        `<tr>
+          <td>${c.lane}</td>
+          <td>${c.stretch}</td>
+          <td><span class="status-dot ${c.state==='Open'?'dot-ok':(c.state==='Closed'?'dot-down':'dot-warn')}"></span>${c.state}</td>
+          <td>${c.note||'—'}</td>
+        </tr>`).join('');
+      // Dispositivi
+      const devices = [
+        {id:'CAM-01', type:'Camera', loc:'A1 Km12', status:'OK'},
+        {id:'SEN-07', type:'Loop', loc:'A1 Km24', status:'Offline'},
+        {id:'RAD-03', type:'Radar', loc:'A4 Km45', status:'Warning'}
+      ];
+      document.getElementById('devicesList').innerHTML = devices.map(d=>
+        `<div class="mb-1"><strong>${d.id}</strong> — ${d.type} <span class="small-muted">(${d.loc})</span>
+        <span class="small-muted">${d.status}</span></div>`
+      ).join('');
+      // Multe
+      const fines = [
+        {id:'M-9201', date:'2025-11-17', where:'CS-01 / Corsia 2', amount:'€85', status:'Inviata'},
+        {id:'M-9189', date:'2025-11-16', where:'CS-05', amount:'€120', status:'Pagata'},
+        {id:'M-9170', date:'2025-11-15', where:'A2 Km101', amount:'€60', status:'In lavorazione'}
+      ];
+      document.getElementById('finesTable').innerHTML = fines.map(f=>
+        `<tr>
+          <td class="text-muted">${f.id}</td>
+          <td>${f.date}</td>
+          <td>${f.where}</td>
+          <td>${f.amount}</td>
+          <td>${f.status}</td>
+        </tr>`).join('');
+      document.getElementById('paymentsList').innerHTML = 'Incassi disponibili: <span class="text-danger">€475</span>';
+      document.getElementById('calcTollBtn').addEventListener('click',function(){
+        const orig = document.getElementById('tollOrigin').value.split(',').map(Number);
+        const dest = document.getElementById('tollDestination').value.split(',').map(Number);
+        if(orig.length===2 && dest.length===2 && orig.every(isFinite) && dest.every(isFinite)){
+          const dist = Math.sqrt(Math.pow(dest[0]-orig[0],2)+Math.pow(dest[1]-orig[1],2))*111;
+          const base = 0.12;
+          const costo = (dist*base).toFixed(2);
+          document.getElementById('tollResult').textContent = `Pedaggio stimato: €${costo} per ${dist.toFixed(1)}km`;
+        } else {
+          document.getElementById('tollResult').textContent = 'Coordinate non valide.';
+        }
+      });
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+</body>
+</html>
