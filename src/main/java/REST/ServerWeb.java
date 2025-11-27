@@ -1,40 +1,38 @@
 package REST;
 
 import DB.*;
+import model.Autostrada.Traffico;
 import model.Personale.Utente;
 
 import java.net.URL;
 import java.nio.file.Paths;
 
-import static DB.daoUtente.login;
+import static DB.daoUtente.*;   // oppure: import DB.daoUtente;
 import static spark.Spark.*;
+
+import org.mindrot.jbcrypt.BCrypt;
 
 public class ServerWeb {
 
     public static void main(String[] args) throws Exception {
 
-        // opzionale: riduce i log
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
 
         int httpsPort = 3000;
         port(httpsPort);
 
-        // --- TLS: carica il keystore da src/main/resources/server-keystore.jks ---
+        // --- TLS ---
         URL url = ServerWeb.class.getClassLoader().getResource("server-keystore.jks");
         if (url == null) {
             throw new RuntimeException("Keystore server-keystore.jks non trovato nel classpath");
         }
-
-        // converte URL -> path di file locale (gestisce spazi, %20, ecc.)
         String keystoreFile = Paths.get(url.toURI()).toString();
-
-        // password = quella usata in keytool: -storepass changeit -keypass changeit
         secure(keystoreFile, "changeit", null, null);
 
-        // File statici: src/main/resources/html
+        // Static files
         staticFiles.location("/html");
 
-        // Home -> pagina di login
+        // Home -> login
         get("/", (req, res) -> {
             res.redirect("/login.html");
             return null;
@@ -50,40 +48,34 @@ public class ServerWeb {
                 return null;
             }
 
-            Utente u;
             try {
-                u = login(username, password);
+                String hashedFromDb = daoUtente.getHashedPassword(username);
+                Boolean isAdminFromDb = daoUtente.isAdmin(username);
+
+                if (hashedFromDb != null && BCrypt.checkpw(password, hashedFromDb)) {
+                    req.session(true);
+                    req.session().attribute("user", username);
+                    req.session().attribute("isAdmin", isAdminFromDb != null && isAdminFromDb);
+
+                    res.redirect("/dashboard.html");
+                    return null;
+                } else {
+                    res.redirect("/login.html");
+                    return null;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 res.status(500);
                 return "Errore interno nel login";
             }
-
-            if (u != null) {
-                // crea sessione e salva info utente
-                req.session(true);
-                req.session().attribute("user", u.getUser());
-                req.session().attribute("isAdmin", u.isAdministrator());
-
-                // redireziona in base al ruolo
-                if (u.isAdministrator()) {
-                    res.redirect("/dashboard_amministratore.html");
-                } else {
-                    res.redirect("/dashboard_impiegato.html");
-                }
-                return null;
-            } else {
-                // credenziali errate
-                res.redirect("/login.html");
-                return null;
-            }
         });
-// REGISTRAZIONE
+
+        // REGISTRAZIONE
         post("/register", (req, res) -> {
             String username = req.queryParams("username");
             String password = req.queryParams("password");
             String confirm  = req.queryParams("confirmPassword");
-            String role     = req.queryParams("role"); // impiegato / amministratore
+            String role     = req.queryParams("role");
 
             if (username == null || password == null || confirm == null) {
                 res.status(400);
@@ -94,21 +86,17 @@ public class ServerWeb {
                 return "Le password non coincidono";
             }
 
+            String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
             boolean isAdmin = "amministratore".equalsIgnoreCase(role);
 
             try {
-                boolean ok = daoUtente.registrazione(username, password, isAdmin);
+                boolean ok = daoUtente.registrazione(username, hashed, isAdmin);
                 if (ok) {
-                    // crea subito la sessione e manda alla dashboard
                     req.session(true);
                     req.session().attribute("user", username);
                     req.session().attribute("isAdmin", isAdmin);
 
-                    if (isAdmin) {
-                        res.redirect("/dashboard_amministratore.html");
-                    } else {
-                        res.redirect("/dashboard_impiegato.html");
-                    }
+                    res.redirect("/index.html");
                     return null;
                 } else {
                     res.status(409);
@@ -121,19 +109,17 @@ public class ServerWeb {
             }
         });
 
-
-
         // LOGOUT
         post("/logout", (req, res) -> {
             if (req.session(false) != null) {
                 req.session().invalidate();
             }
-            res.redirect("/login.html");
+            res.redirect("/index.html");
             return null;
         });
 
-        // Esempio area protetta admin
-        get("/area-admin", (req, res) -> {
+        // Area protetta admin
+        get("/dash", (req, res) -> {
             if (!isLoggedIn(req) || !isAdmin(req)) {
                 res.redirect("/login.html");
                 halt();
@@ -141,19 +127,105 @@ public class ServerWeb {
             return "Area riservata amministratore";
         });
 
-        // Esempio area protetta impiegato
-        get("/area-impiegato", (req, res) -> {
-            if (!isLoggedIn(req) || isAdmin(req)) {
-                res.redirect("/login.html");
-                halt();
+        // Stato sessione
+        get("/api/session", (req, res) -> {
+            boolean loggedIn = req.session(false) != null && req.session().attribute("user") != null;
+            boolean isAdmin = false;
+
+            if (loggedIn) {
+                Boolean adminAttr = req.session().attribute("isAdmin");
+                isAdmin = adminAttr != null && adminAttr;
             }
-            return "Area riservata impiegato";
+
+            res.type("application/json");
+            return String.format("{\"loggedIn\":%b,\"isAdmin\":%b}", loggedIn, isAdmin);
+        });
+
+        // KPI TRAFFICO (già esistente)
+        get("/api/traffic", (req, res) -> {
+            try {
+                System.out.println("Ricevuta richiesta /api/traffic");
+                TrafficoDao dao = new TrafficoDao();
+                Traffico kpi = dao.calcolaKpiTraffico();
+                System.out.println("KPI calcolati: " + kpi);
+
+                res.type("application/json");
+                return String.format(java.util.Locale.US,
+                        "{\"media\":%d,\"oggi\":%d,\"variazione\":%.1f}",
+                        kpi.getMediaLast30Days(),
+                        kpi.getTrafficToday(),
+                        kpi.getPercentageChangeVsYesterday());
+
+            } catch (Exception e) {
+                System.err.println("ERRORE in /api/traffic:");
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\":\"Errore interno\"}";
+            }
+        });
+
+        // =========================
+        // NUOVE API PER I KPI
+        // =========================
+
+        // Numero di caselli / corsie / dispositivi
+        get("/api/assets", (req, res) -> {
+            try {
+                int caselli     = daoCasello.contaCaselli();
+                int corsie      = daoCorsie.contaCorsie();
+                int dispositivi = daoDispositivi.contaDispositivi();
+
+                res.type("application/json");
+
+                return String.format(
+                        "{\"caselli\":%d,\"corsie\":%d,\"dispositivi\":%d}",
+                        caselli, corsie, dispositivi
+                );
+            } catch (Exception e) {
+                System.err.println("ERRORE in /api/assets:");
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\":\"Errore interno\"}";
+            }
+        });
+
+        // Multe giornaliere (ultime 24h)
+        get("/api/fines", (req, res) -> {
+            try {
+                int count = daoMulte.contaMulteUltime24h();
+
+                res.type("application/json");
+                // kpiFines <- fines
+                return String.format("{\"fines\":%d}", count);
+            } catch (Exception e) {
+                System.err.println("ERRORE in /api/fines:");
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\":\"Errore interno\"}";
+            }
+        });
+
+        // Pagamenti da incassare
+        get("/api/payments", (req, res) -> {
+            try {
+                PagamentiDao dao = new PagamentiDao();
+                int count = dao.contaPagamentiDaIncassare();
+
+                res.type("application/json");
+                // kpiPayments <- pending
+                return String.format("{\"pending\":%d}", count);
+            } catch (Exception e) {
+                System.err.println("ERRORE in /api/payments:");
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\":\"Errore interno\"}";
+            }
         });
 
         System.out.println("✓ Server HTTPS avviato su https://localhost:" + httpsPort);
     }
 
-    // --------- metodi di utilità per la sessione ---------
+    // --------- utilità sessione ---------
     private static boolean isLoggedIn(spark.Request req) {
         return req.session(false) != null && req.session().attribute("user") != null;
     }

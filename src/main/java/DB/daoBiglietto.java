@@ -6,23 +6,6 @@ import java.sql.*;
 
 public class daoBiglietto {
 
-    public static long countAutoOggi() throws SQLException {
-        String SQL =
-                "SELECT COUNT(*) AS auto_oggi " +
-                        "FROM Biglietto " +
-                        "WHERE timestamp_in::date = CURRENT_DATE";
-
-        try (Connection con = DbConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL);
-             ResultSet rs = ps.executeQuery()) {
-
-            if (rs.next()) {
-                return rs.getLong("auto_oggi");
-            }
-            return 0L;
-        }
-    }
-
     public void insertBiglietto(Biglietto biglietto) throws SQLException {
 
         String sql = "INSERT INTO BIGLIETTO (matricola, id_totem, targa_auto, timestamp_in, id_casello_in) " +

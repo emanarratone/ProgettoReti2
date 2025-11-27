@@ -5,6 +5,7 @@ import model.Personale.Utente;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class daoUtente {
 
@@ -49,5 +50,37 @@ public class daoUtente {
             throw e;
         }
     }
+
+    public static String getHashedPassword(String username) throws SQLException {
+        String query = "SELECT password FROM utenti WHERE username = ?";
+        try (Connection con = DbConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("password"); // qui si recupera l'hash salvato
+                } else {
+                    return null; // utente non trovato
+                }
+            }
+        }
+    }
+
+    // Metodo per verificare se un utente è amministratore
+    public static Boolean isAdmin(String username) throws SQLException {
+        String query = "SELECT is_admin FROM utenti WHERE username = ?";
+        try (Connection con = DbConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean("is_admin");
+                } else {
+                    return null; // utente non trovato
+                }
+            }
+        }
+    }
+
 
 }

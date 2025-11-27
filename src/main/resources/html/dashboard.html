@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard - Autostrada</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="topbar py-2 mb-3">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <h4 class="mb-0">Gestionale Autostradale</h4>
+                <span id="roleBadge" class="role-badge" style="display:none;">Amministratore</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container-fluid py-2">
+    <!-- KPI row -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-2">
+            <div class="p-3 bg-white kpi">
+                <div class="text-muted small">Traffico medio / giorno</div>
+                <div id="kpiTrafficAvg" class="value"></div>
+                <div class="text-muted small">Auto oggi: <span id="kpiTrafficToday"></span></div>
+                <div id="kpiTrafficVar" class="text-success small"></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-2">
+            <div class="p-3 bg-white kpi">
+                <div class="text-muted small">Numero di caselli</div>
+                <div id="kpiPeak" class="value"></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-2">
+            <div class="p-3 bg-white kpi">
+                <div class="text-muted small">Numero di corsie</div>
+                <div id="kpiLanes" class="value"></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-2">
+            <div class="p-3 bg-white kpi">
+                <div class="text-muted small">Numero di dispositivi</div>
+                <div id="kpiToll" class="value"></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-2">
+            <div class="p-3 bg-white kpi">
+                <div class="text-muted small">Multe giornaliere</div>
+                <div id="kpiFines" class="value"></div>
+                <div class="small-muted">Ultime 24h</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-2">
+            <div class="p-3 bg-white kpi">
+                <div class="text-muted small">Pagamenti da incassare</div>
+                <div id="kpiPayments" class="value"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafici -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+            <div class="card bg-white p-3 card-chart mb-3">
+                <h6 class="mb-2">Trend traffico</h6>
+                <canvas id="trafficChart" aria-label="Grafico traffico giornaliero" role="img"></canvas>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card bg-white p-3 card-chart mb-3">
+                <h6 class="mb-2">Picchi orari</h6>
+                <canvas id="peaksChart" aria-label="Grafico picchi orari" role="img"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gestione Caselli -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+            <div class="card bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Caselli</h6>
+                    <div class="admin-tools" style="display:none;">
+                        <button class="btn btn-sm btn-success">Aggiungi casello</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="small text-muted">
+                        <tr><th>Casello</th><th>Tratto</th><th>Stato</th><th>Interventi</th><th>Dispositivi</th><th>Azioni</th></tr>
+                        </thead>
+                        <tbody id="caselliTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestione Corsie -->
+        <div class="col-12 col-lg-6">
+            <div class="card bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Corsie</h6>
+                    <div class="admin-tools" style="display:none;">
+                        <button class="btn btn-sm btn-success">Aggiungi corsia</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-borderless table-sm mb-0">
+                        <thead class="small text-muted">
+                        <tr><th>Corsia</th><th>Tratto</th><th>Stato</th><th>Note</th><th>Azioni</th></tr>
+                        </thead>
+                        <tbody id="corsieTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dispositivi -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+            <div class="card bg-white p-3">
+                <h6 class="mb-0">Dispositivi</h6>
+                <div id="devicesList"></div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card bg-white p-3">
+                <h6 class="mb-0">Storico veicoli</h6>
+                <input type="text" class="form-control form-control-sm mb-2" placeholder="Ricerca targa">
+                <div id="vehiclesList">Nessun transito recente</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multe -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-8">
+            <div class="card bg-white p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Multe</h6>
+                    <div class="admin-tools" style="display:none;">
+                        <button class="btn btn-sm btn-success">Genera multa</button>
+                        <button class="btn btn-sm btn-primary">Check veicolo (Tutor)</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="small text-muted">
+                        <tr><th>ID</th><th>Data</th><th>Casello/Corsia</th><th>Importo</th><th>Stato</th><th>Azioni</th></tr>
+                        </thead>
+                        <tbody id="finesTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-4">
+            <div class="card bg-white p-3">
+                <h6 class="mb-0">Pagamenti Telepass</h6>
+                <div id="paymentsList">Incassi disponibili: <span class="text-danger">€475</span></div>
+                <div class="admin-tools" style="display:none;">
+                    <button class="btn btn-sm btn-success mt-2">Incassa pagamenti</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calcolo pedaggio -->
+    <div class="card bg-white p-3 mt-3">
+        <h6>Calcola pedaggio</h6>
+        <div class="row g-2 align-items-end mb-2">
+            <div class="col-12 col-md-5">
+                <label class="form-label small">Origine (lat,lng)</label>
+                <input id="tollOrigin" class="form-control form-control-sm" placeholder="es. 45.4642,9.1900">
+            </div>
+            <div class="col-12 col-md-5">
+                <label class="form-label small">Destinazione (lat,lng)</label>
+                <input id="tollDestination" class="form-control form-control-sm" placeholder="es. 45.0703,7.6869">
+            </div>
+            <div class="col-12 col-md-2 d-grid">
+                <button id="calcTollBtn" class="btn btn-primary btn-sm">Calcola</button>
+            </div>
+        </div>
+        <div class="small-muted" id="tollResult">Inserisci origine/destinazione e premi "Calcola".</div>
+    </div>
+</main>
+
+<footer class="text-center py-3 small text-muted">
+    © Gestionale Autostradale — <span id="buildInfo">v1.0</span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+      fetch('/logout', { method: 'POST', credentials: 'same-origin' })
+        .then(response => {
+          if (response.redirected) {
+            window.location.href = response.url;
+          }
+        }).catch(err => console.error('Errore nel logout:', err));
+    });
+
+    // Controlla se utente è admin e mostra/nasconde bottoni
+    fetch('/api/session')
+      .then(res => res.json())
+      .then(data => {
+        if (!data.loggedIn) {
+          window.location.href = "/login.html";
+          return;
+        }
+        const adminTools = document.querySelectorAll('.admin-tools');
+        if (data.isAdmin) {
+          adminTools.forEach(el => el.style.display = '');
+          document.body.classList.add('is-admin');
+          document.getElementById('roleBadge').style.display = '';
+        } else {
+          adminTools.forEach(el => el.style.display = 'none');
+          document.body.classList.remove('is-admin');
+          document.getElementById('roleBadge').style.display = 'none';
+        }
+      })
+      .catch(err => console.error("Errore nel recupero ruolo:", err));
+
+    // KPI traffico
+    fetch('/api/traffic')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Errore HTTP: ' + res.status);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data.error) {
+          console.error("Errore API KPI traffico:", data.error);
+          document.getElementById("kpiTrafficAvg").textContent = "N/D";
+          return;
+        }
+
+        const mediaFormatted = Number(data.media).toLocaleString();
+        document.getElementById("kpiTrafficAvg").textContent = mediaFormatted;
+
+        const oggiFormatted = Number(data.oggi).toLocaleString();
+        document.getElementById('kpiTrafficToday').textContent = oggiFormatted;
+
+        const varEl = document.getElementById("kpiTrafficVar");
+        const variazione = Number(data.variazione);
+        if (variazione >= 0) {
+          varEl.textContent = "+" + variazione.toFixed(1) + "% vs ieri";
+          varEl.classList.add("text-success");
+          varEl.classList.remove("text-danger");
+        } else {
+          varEl.textContent = variazione.toFixed(1) + "% vs ieri";
+          varEl.classList.add("text-danger");
+          varEl.classList.remove("text-success");
+        }
+      })
+      .catch(err => {
+        console.error("Errore fetch KPI traffico:", err);
+        document.getElementById("kpiTrafficAvg").textContent = "Errore";
+      });
+
+    // KPI asset: caselli, corsie, dispositivi
+    fetch('/api/assets')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Errore HTTP: ' + res.status);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data.error) {
+          console.error("Errore API assets:", data.error);
+          document.getElementById("kpiPeak").textContent = "N/D";
+          document.getElementById("kpiLanes").textContent = "N/D";
+          document.getElementById("kpiToll").textContent = "N/D";
+          return;
+        }
+
+        document.getElementById("kpiPeak").textContent   = Number(data.caselli).toLocaleString();
+        document.getElementById("kpiLanes").textContent  = Number(data.corsie).toLocaleString();
+        document.getElementById("kpiToll").textContent   = Number(data.dispositivi).toLocaleString();
+      })
+      .catch(err => {
+        console.error("Errore fetch KPI assets:", err);
+        document.getElementById("kpiPeak").textContent  = "Errore";
+        document.getElementById("kpiLanes").textContent = "Errore";
+        document.getElementById("kpiToll").textContent  = "Errore";
+      });
+
+    // KPI multe giornaliere
+    fetch('/api/fines')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Errore HTTP: ' + res.status);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data.error) {
+          console.error("Errore API multe:", data.error);
+          document.getElementById("kpiFines").textContent = "N/D";
+          return;
+        }
+        document.getElementById("kpiFines").textContent = Number(data.fines).toLocaleString();
+      })
+      .catch(err => {
+        console.error("Errore fetch KPI multe:", err);
+        document.getElementById("kpiFines").textContent = "Errore";
+      });
+
+    // KPI pagamenti da incassare
+    fetch('/api/payments')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Errore HTTP: ' + res.status);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data.error) {
+          console.error("Errore API pagamenti:", data.error);
+          document.getElementById("kpiPayments").textContent = "N/D";
+          return;
+        }
+        document.getElementById("kpiPayments").textContent = Number(data.pending).toLocaleString();
+      })
+      .catch(err => {
+        console.error("Errore fetch KPI pagamenti:", err);
+        document.getElementById("kpiPayments").textContent = "Errore";
+      });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+</body>
+</html>
