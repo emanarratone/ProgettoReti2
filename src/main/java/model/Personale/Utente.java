@@ -24,7 +24,6 @@ public class Utente {
         this.isAdmin = isAdmin;
     }
 
-
     public String getUser() {
         return user;
     }
@@ -64,7 +63,6 @@ public class Utente {
         //visualizza dispositivi()
     }
 
-
     public void visualizzaMulte(){
         //
     }
@@ -72,7 +70,6 @@ public class Utente {
     public void addCasello(){
         //
     }
-
 
     public void addDispositivo(){
         //
@@ -82,11 +79,9 @@ public class Utente {
         //
     }
 
-
     public void RemoveCasello(){
         //
     }
-
 
     public void RemoveDispositivo(){
         //
