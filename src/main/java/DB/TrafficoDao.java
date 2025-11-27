@@ -7,11 +7,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-
-
 public class TrafficoDao {
     public static long countAutoOggi() throws SQLException {
-        String SQL = "SELECT COUNT(*) AS auto_oggi FROM Biglietto WHERE timestamp_in::date = CURRENT_DATE";
+        String SQL = "SELECT COUNT(*) AS auto_oggi " +
+                "FROM Biglietto " +
+                "WHERE timestamp_in::date = CURRENT_DATE";
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL);
              ResultSet rs = ps.executeQuery()) {
@@ -38,7 +38,9 @@ public class TrafficoDao {
     }
 
     public static long countAutoIeri() throws SQLException {
-        String SQL = "SELECT COUNT(*) AS auto_ieri FROM Biglietto WHERE timestamp_in::date = CURRENT_DATE - INTERVAL '1 day'";
+        String SQL = "SELECT COUNT(*) AS auto_ieri " +
+                "FROM Biglietto " +
+                "WHERE timestamp_in::date = CURRENT_DATE - INTERVAL '1 day'";
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL);
              ResultSet rs = ps.executeQuery()) {
@@ -67,7 +69,12 @@ public class TrafficoDao {
 
     // Restituisce JSON: [ {"day":"2025-11-01","count":1234}, ... ]
     public String getTrendUltimi30GiorniJson() throws SQLException {
-        String sql = "SELECT date_trunc('day', timestamp_in) AS day, COUNT(*) AS count  FROM Biglietto  WHERE timestamp_in >= CURRENT_DATE - INTERVAL '29 days'  GROUP BY day  ORDER BY day";
+        String sql = "SELECT date_trunc('day', timestamp_in) AS day, " +
+                "COUNT(*) AS count  " +
+                "FROM Biglietto  " +
+                "WHERE timestamp_in >= CURRENT_DATE - INTERVAL '29 days'  " +
+                "GROUP BY day  " +
+                "ORDER BY day";
 
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -98,7 +105,11 @@ public class TrafficoDao {
 
     // Restituisce JSON: [ {"hour":0,"count":100}, {"hour":8,"count":350}, ... ]
     public String getPicchiOrariOggiJson() throws SQLException {
-        String sql = "SELECT EXTRACT(HOUR FROM timestamp_in)::int AS hour, COUNT(*) AS count FROM Biglietto WHERE timestamp_in >= date_trunc('day', NOW())  AND timestamp_in <  date_trunc('day', NOW()) + INTERVAL '1 day'  GROUP BY hour  ORDER BY hour";
+        String sql = "SELECT EXTRACT(HOUR FROM timestamp_in)::int AS hour, COUNT(*) AS count " +
+                "FROM Biglietto " +
+                "WHERE timestamp_in >= date_trunc('day', NOW())  AND timestamp_in <  date_trunc('day', NOW()) + INTERVAL '1 day'  " +
+                "GROUP BY hour  " +
+                "ORDER BY hour";
 
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);

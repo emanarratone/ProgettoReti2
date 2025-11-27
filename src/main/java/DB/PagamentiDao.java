@@ -11,7 +11,9 @@ public class PagamentiDao {
     private static final String STATO_DA_INCASSARE = "PENDING";
 
     public int contaPagamentiDaIncassare() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Pagamento WHERE stato = ?";
+        String sql = "SELECT COUNT(*) " +
+                "FROM Pagamento " +
+                "WHERE stato = ?";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 

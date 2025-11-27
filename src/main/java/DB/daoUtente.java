@@ -10,7 +10,9 @@ import java.sql.SQLException;
 public class daoUtente {
 
     public static Utente login(String username, String password) throws Exception {
-        String sql = "SELECT username, password, is_admin FROM utenti WHERE username = ? AND password = ?";
+        String sql = "SELECT username, password, is_admin " +
+                "FROM utenti " +
+                "WHERE username = ? AND password = ?";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
