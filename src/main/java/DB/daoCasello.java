@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class daoCasello {
-    public static int contaCaselli() throws SQLException {
+    public int contaCaselli() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Casello";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);

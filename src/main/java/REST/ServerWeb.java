@@ -2,12 +2,10 @@ package REST;
 
 import DB.*;
 import model.Autostrada.Traffico;
-import model.Personale.Utente;
 
 import java.net.URL;
 import java.nio.file.Paths;
 
-import static DB.daoUtente.*;   // oppure: import DB.daoUtente;
 import static spark.Spark.*;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -29,7 +27,7 @@ public class ServerWeb {
         String keystoreFile = Paths.get(url.toURI()).toString();
         secure(keystoreFile, "changeit", null, null);
 
-        // Static files
+        // Static files (src/main/resources/html)
         staticFiles.location("/html");
 
         // Home -> login
@@ -141,7 +139,7 @@ public class ServerWeb {
             return String.format("{\"loggedIn\":%b,\"isAdmin\":%b}", loggedIn, isAdmin);
         });
 
-        // KPI TRAFFICO (già esistente)
+        // KPI TRAFFICO
         get("/api/traffic", (req, res) -> {
             try {
                 System.out.println("Ricevuta richiesta /api/traffic");
@@ -164,19 +162,18 @@ public class ServerWeb {
             }
         });
 
-        // =========================
-        // NUOVE API PER I KPI
-        // =========================
-
         // Numero di caselli / corsie / dispositivi
         get("/api/assets", (req, res) -> {
             try {
-                int caselli     = daoCasello.contaCaselli();
-                int corsie      = daoCorsie.contaCorsie();
-                int dispositivi = daoDispositivi.contaDispositivi();
+                daoCasello caselloDao   = new daoCasello();
+                daoCorsie corsiaDao     = new daoCorsie();
+                daoDispositivi dispDao  = new daoDispositivi();
+
+                int caselli     = caselloDao.contaCaselli();
+                int corsie      = corsiaDao.contaCorsie();
+                int dispositivi = dispDao.contaDispositivi();
 
                 res.type("application/json");
-
                 return String.format(
                         "{\"caselli\":%d,\"corsie\":%d,\"dispositivi\":%d}",
                         caselli, corsie, dispositivi
@@ -192,10 +189,10 @@ public class ServerWeb {
         // Multe giornaliere (ultime 24h)
         get("/api/fines", (req, res) -> {
             try {
-                int count = daoMulte.contaMulteUltime24h();
+                daoMulte dao = new daoMulte();
+                int count = dao.contaMulteUltime24h();
 
                 res.type("application/json");
-                // kpiFines <- fines
                 return String.format("{\"fines\":%d}", count);
             } catch (Exception e) {
                 System.err.println("ERRORE in /api/fines:");
@@ -212,10 +209,41 @@ public class ServerWeb {
                 int count = dao.contaPagamentiDaIncassare();
 
                 res.type("application/json");
-                // kpiPayments <- pending
                 return String.format("{\"pending\":%d}", count);
             } catch (Exception e) {
                 System.err.println("ERRORE in /api/payments:");
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\":\"Errore interno\"}";
+            }
+        });
+
+        // Trend traffico ultimi 30 giorni
+        get("/api/traffic/trend", (req, res) -> {
+            try {
+                TrafficoDao dao = new TrafficoDao();
+                String json = dao.getTrendUltimi30GiorniJson();
+
+                res.type("application/json");
+                return json;
+            } catch (Exception e) {
+                System.err.println("ERRORE in /api/traffic/trend:");
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\":\"Errore interno\"}";
+            }
+        });
+
+        // Picchi orari di oggi
+        get("/api/traffic/peaks", (req, res) -> {
+            try {
+                TrafficoDao dao = new TrafficoDao();
+                String json = dao.getPicchiOrariOggiJson();
+
+                res.type("application/json");
+                return json;
+            } catch (Exception e) {
+                System.err.println("ERRORE in /api/traffic/peaks:");
                 e.printStackTrace();
                 res.status(500);
                 return "{\"error\":\"Errore interno\"}";

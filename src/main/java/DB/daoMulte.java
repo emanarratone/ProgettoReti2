@@ -9,7 +9,7 @@ import static org.postgresql.core.Oid.INTERVAL;
 
 public class daoMulte {
 
-    public static int contaMulteUltime24h() throws SQLException {
+    public int contaMulteUltime24h() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Multe WHERE timestamp_multa >= NOW() - INTERVAL '24 hours' ";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);

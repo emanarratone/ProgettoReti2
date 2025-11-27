@@ -64,4 +64,64 @@ public class TrafficoDao {
                 (int) trafficToday,
                 variationPercent);
     }
+
+    // Restituisce JSON: [ {"day":"2025-11-01","count":1234}, ... ]
+    public String getTrendUltimi30GiorniJson() throws SQLException {
+        String sql = "SELECT date_trunc('day', timestamp_in) AS day, COUNT(*) AS count  FROM Biglietto  WHERE timestamp_in >= CURRENT_DATE - INTERVAL '29 days'  GROUP BY day  ORDER BY day";
+
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+
+            boolean first = true;
+            while (rs.next()) {
+                if (!first) sb.append(",");
+                first = false;
+
+                // "YYYY-MM-DD"
+                String dayStr = rs.getTimestamp("day")
+                        .toLocalDateTime()
+                        .toLocalDate()
+                        .toString();
+                int count = rs.getInt("count");
+
+                sb.append(String.format(java.util.Locale.US,
+                        "{\"day\":\"%s\",\"count\":%d}", dayStr, count));
+            }
+            sb.append("]");
+            return sb.toString();
+        }
+    }
+
+    // Restituisce JSON: [ {"hour":0,"count":100}, {"hour":8,"count":350}, ... ]
+    public String getPicchiOrariOggiJson() throws SQLException {
+        String sql = "SELECT EXTRACT(HOUR FROM timestamp_in)::int AS hour, COUNT(*) AS count FROM Biglietto WHERE timestamp_in >= date_trunc('day', NOW())  AND timestamp_in <  date_trunc('day', NOW()) + INTERVAL '1 day'  GROUP BY hour  ORDER BY hour";
+
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+
+            boolean first = true;
+            while (rs.next()) {
+                if (!first) sb.append(",");
+                first = false;
+
+                int hour  = rs.getInt("hour");
+                int count = rs.getInt("count");
+
+                sb.append(String.format(java.util.Locale.US,
+                        "{\"hour\":%d,\"count\":%d}", hour, count));
+            }
+            sb.append("]");
+            return sb.toString();
+        }
+    }
+
+
 }

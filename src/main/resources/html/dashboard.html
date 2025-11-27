@@ -340,6 +340,90 @@
         console.error("Errore fetch KPI pagamenti:", err);
         document.getElementById("kpiPayments").textContent = "Errore";
       });
+
+    // Trend traffico (line chart)
+    fetch('/api/traffic/trend')
+      .then(res => {
+        if (!res.ok) throw new Error('Errore HTTP: ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (data.error) {
+          console.error("Errore API trend traffico:", data.error);
+          return;
+        }
+
+        const labels = data.map(p => p.day);
+        const values = data.map(p => p.count);
+
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Veicoli / giorno',
+              data: values,
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'rgba(54, 162, 235, 0.1)',
+              tension: 0.2,
+              pointRadius: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+      })
+      .catch(err => console.error("Errore fetch trend traffico:", err));
+
+    // Picchi orari (bar chart)
+    fetch('/api/traffic/peaks')
+      .then(res => {
+        if (!res.ok) throw new Error('Errore HTTP: ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (data.error) {
+          console.error("Errore API picchi orari:", data.error);
+          return;
+        }
+
+        const hours = Array.from({ length: 24 }, (_, h) => h);
+        const counts = Array(24).fill(0);
+
+        data.forEach(p => {
+          const h = Number(p.hour);
+          if (h >= 0 && h < 24) {
+            counts[h] = p.count;
+          }
+        });
+
+        const hourLabels = hours.map(h => h.toString().padStart(2, '0') + ':00');
+
+        const ctx = document.getElementById('peaksChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: hourLabels,
+            datasets: [{
+              label: 'Veicoli / ora (oggi)',
+              data: counts,
+              backgroundColor: 'rgba(255, 159, 64, 0.6)'
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+      })
+      .catch(err => console.error("Errore fetch picchi orari:", err));
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
