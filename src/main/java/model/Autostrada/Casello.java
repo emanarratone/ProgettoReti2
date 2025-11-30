@@ -7,9 +7,6 @@ public class Casello {
     private String sigla;
     private ArrayList<Corsia> corsie;
     private Boolean isClosed;
-
-
-
     private Integer limite;
 
     public Casello(String sigla, ArrayList<Corsia> corsie, Integer limite) {
@@ -19,6 +16,12 @@ public class Casello {
         this.limite = limite;
     }
 
+    public Casello(String sigla, Integer limite) {  //casello senza corsie
+        this.sigla = sigla;
+        this.corsie = new ArrayList<>();
+        this.isClosed = false;
+        this.limite = limite;
+    }
 
     public String getSigla() {
         return sigla;
@@ -39,12 +42,21 @@ public class Casello {
     public Boolean getClosed() {
         return isClosed;
     }
+
     public void setClosed(Boolean closed) {
         isClosed = closed;
     }
 
     public Integer getLimite() {
         return limite;
+    }
+
+    public void addCorsia(Corsia corsia) {
+        this.corsie.add(corsia);
+    }
+
+    public void removeCorsia(Corsia corsia) {
+        this.corsie.remove(corsia);
     }
 
     public void setLimite(Integer limite) {
@@ -59,4 +71,13 @@ public class Casello {
         }
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "Casello " + this.sigla + ":\n" +
+                "N° corsie: " + this.corsie.size() + "\n" +
+                "Limite: " + this.limite + "\n" +
+                "Stato: " + (this.isClosed ? "chiuso" : "aperto");
+    }
+
 }

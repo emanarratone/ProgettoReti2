@@ -3,15 +3,16 @@ package model.Autostrada;
 
 import model.Dispositivi.Dispositivi;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Corsia {
 
-    private List<Dispositivi> dispositivi;
+    private ArrayList<Dispositivi> dispositivi;
     private Dispositivi.Tipo tipo;
     private Boolean isClosed; //
 
-    public Corsia(List<Dispositivi> dispositivi, Dispositivi.Tipo tipo) {
+    public Corsia(ArrayList<Dispositivi> dispositivi, Dispositivi.Tipo tipo) {
         // se ti interessa copiare la lista passata:
         this.dispositivi = dispositivi;
         this.tipo = tipo;
@@ -19,7 +20,7 @@ public class Corsia {
     }
 
     // getter che restituisce una copia "read-only" se vuoi evitare modifiche esterne
-    public List<Dispositivi> getDispositivi() {
+    public ArrayList<Dispositivi> getDispositivi() {
         return dispositivi;
     }
 
@@ -61,7 +62,6 @@ public class Corsia {
         dispositivi.clear();
     }
 
-
     public Boolean getClosed() {
         return isClosed;
     }
@@ -69,4 +69,11 @@ public class Corsia {
     public void setClosed(Boolean closed) {
         isClosed = closed;
     }
+
+    @Override
+    public String toString() {
+        return "Casello di"+ this.tipo.toString() + "\n" +
+                "Stato: " + (this.isClosed ? "aperto" : "chiuso");
+    }
+
 }
