@@ -54,5 +54,40 @@ public class daoAutostrada {
         }
     }
 
+    public String getAutostradeJson() throws SQLException {
+        String sql =
+                "SELECT a.id_autostrada, a.citta AS nome_autostrada, r.nome AS nome_regione " +
+                        "FROM AUTOSTRADA a " +
+                        "LEFT JOIN REGIONE r ON a.regione = r.id_regione " +
+                        "ORDER BY r.nome, a.citta";
+
+        try (Connection con = DbConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            boolean first = true;
+
+            while (rs.next()) {
+                if (!first) sb.append(",");
+                first = false;
+
+                int id         = rs.getInt("id_autostrada");
+                String nome    = rs.getString("nome_autostrada"); // alias di citta
+                String regione = rs.getString("nome_regione");
+
+                sb.append("{")
+                        .append("\"id_autostrada\":").append(id).append(",")
+                        .append("\"nome_autostrada\":\"").append(nome).append("\",")
+                        .append("\"nome_regione\":\"").append(regione != null ? regione : "").append("\"")
+                        .append("}");
+            }
+
+            sb.append("]");
+            return sb.toString();
+        }
+    }
+
 
 }

@@ -24,15 +24,16 @@ public class daoMulte {
     public String getMulteRecentiJson() throws SQLException {
         String SQL =
                 "SELECT " +
-                        "  id_multa, " +
-                        "  targa, " +
-                        "  importo, " +
-                        "  data, " +
-                        "  pagato, " +
-                        "  motivo " +
+                        " id_multa, " +
+                        " targa, " +
+                        " importo, " +
+                        " data, " +
+                        " pagato, " +
+                        " motivo " +
                         "FROM multa " +
                         "WHERE data >= CURRENT_DATE - INTERVAL '7 days' " +
-                        "ORDER BY data DESC, id_multa DESC";
+                        "ORDER BY data DESC, id_multa DESC " +
+                        "LIMIT 5";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL);

@@ -1,12 +1,15 @@
 package REST;
 
 import DB.*;
+import DB.daoVeicoli;
 import model.Autostrada.Traffico;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
-
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Locale;
 
 @RestController
@@ -222,4 +225,89 @@ public class ApiController {
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
         }
     }
+    // -------- RICERCA VEICOLI PER TARGA ----------
+
+    @GetMapping("/vehicles")
+    public ResponseEntity<String> searchVehicles(@RequestParam("plate") String plate) {
+        if (plate == null || plate.isBlank()) {
+            return ResponseEntity.badRequest().body("{\"error\":\"Targa mancante\"}");
+        }
+
+        try {
+            daoVeicoli dao = new daoVeicoli(); // o il nome che usi (adatta sotto)
+            String json = dao.getUltimiPassaggiPerTargaJson(plate.trim().toUpperCase());
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            System.err.println("ERRORE in /api/vehicles:");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
+        }
+    }
+
+// ---------- AUTOSTRADE / CASELLI / CORSIE / DISPOSITIVI EXPLORER ----------
+
+    // Elenco autostrade (per step "Autostrada")
+    @GetMapping("/highways")
+    public ResponseEntity<String> getHighways() {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            // implementa questo metodo nel DAO per restituire un array JSON:
+            // [ { "id_autostrada": 1, "nome_autostrada": "A4", "nome_regione": "Lombardia" }, ... ]
+            String json = dao.getAutostradeJson();
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            System.err.println("ERRORE in GET /api/highways:");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
+        }
+    }
+
+    // Caselli per una singola autostrada (step "Casello")
+    @GetMapping("/highways/{idAutostrada}/tolls")
+    public ResponseEntity<String> getTollsForHighway(@PathVariable("idAutostrada") int idAutostrada) {
+        try {
+            daoCasello dao = new daoCasello();
+            // metodo da implementare: caselli di una autostrada specifica, es.:
+            // [ { "id_casello": 10, "nome_casello": "MI Ovest", "km": 12.5 }, ... ]
+            String json = dao.getCaselliPerAutostrada(idAutostrada);
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            System.err.println("ERRORE in GET /api/highways/" + idAutostrada + "/tolls:");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
+        }
+    }
+
+    // Corsie per un casello (step "Corsia")
+    @GetMapping("/tolls/{idCasello}/lanes")
+    public ResponseEntity<String> getLanesForToll(@PathVariable("idCasello") int idCasello) {
+        try {
+            daoCorsie dao = new daoCorsie();
+            // metodo da implementare: corsie per casello:
+            // [ { "id_corsia": 5, "nome_corsia": "Corsia 1", "direzione": "Nord" }, ... ]
+            String json = dao.getCorsiePerCaselloJson(idCasello);
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            System.err.println("ERRORE in GET /api/tolls/" + idCasello + "/lanes:");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
+        }
+    }
+
+    // Dispositivi per una corsia (step "Dispositivi")
+    @GetMapping("/lanes/{idCorsia}/devices")
+    public ResponseEntity<String> getDevicesForLane(@PathVariable("idCorsia") int idCorsia) {
+        try {
+            daoDispositivi dao = new daoDispositivi();
+            // metodo da implementare: dispositivi per corsia:
+            // [ { "id_dispositivo": 3, "tipo": "INGRESSO_MANUALE", "posizione": "Ingresso" }, ... ]
+            String json = dao.getDispositiviPerCorsiaJson(idCorsia);
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            System.err.println("ERRORE in GET /api/lanes/" + idCorsia + "/devices:");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
+        }
+    }
+
 }

@@ -82,4 +82,44 @@ public class daoDispositivi {
             return rs.getInt(1);
         }
     }
+
+    public String getDispositiviPerCorsiaJson(int idCorsia) throws SQLException {
+        String sql =
+                "SELECT id_dispositivo, stato, tipo_dispositivo " +
+                        "FROM DISPOSITIVO " +
+                        "WHERE id_corsia = ? " +
+                        "ORDER BY id_dispositivo";
+
+        try (Connection con = DbConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idCorsia);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("[");
+                boolean first = true;
+
+                while (rs.next()) {
+                    if (!first) sb.append(",");
+                    first = false;
+
+                    int id        = rs.getInt("id_dispositivo");
+                    String stato  = rs.getString("stato");
+                    String tipo   = rs.getString("tipo_dispositivo");
+
+                    sb.append("{")
+                            .append("\"id_dispositivo\":").append(id).append(",")
+                            .append("\"tipo\":\"").append(tipo).append("\",")
+                            .append("\"posizione\":\"").append(stato).append("\"")
+                            .append("}");
+                }
+
+                sb.append("]");
+                return sb.toString();
+            }
+        }
+    }
+
+
 }

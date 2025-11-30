@@ -44,4 +44,46 @@ public class daoCasello {
             return rs.getInt(1);
         }
     }
+
+    public String getCaselliPerAutostrada(int idAutostrada) throws SQLException {
+        String sql =
+                "SELECT c.id_casello, c.nome, c.sigla, acc.progressiva_km " +
+                        "FROM CASELLO c " +
+                        "JOIN AUTOSTRADA_CONTIENE_CASELLO acc ON acc.id_casello = c.id_casello " +
+                        "WHERE acc.id_autostrada = ? " +
+                        "ORDER BY acc.progressiva_km, c.nome";
+
+        try (Connection con = DbConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idAutostrada);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("[");
+                boolean first = true;
+
+                while (rs.next()) {
+                    if (!first) sb.append(",");
+                    first = false;
+
+                    int id        = rs.getInt("id_casello");
+                    String nome   = rs.getString("nome");
+                    String sigla  = rs.getString("sigla");
+                    double km     = rs.getDouble("progressiva_km");
+
+                    sb.append("{")
+                            .append("\"id_casello\":").append(id).append(",")
+                            .append("\"nome_casello\":\"").append(nome).append("\",")
+                            .append("\"sigla\":\"").append(sigla).append("\",")
+                            .append("\"km\":").append(km)
+                            .append("}");
+                }
+
+                sb.append("]");
+                return sb.toString();
+            }
+        }
+    }
+
 }

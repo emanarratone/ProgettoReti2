@@ -40,3 +40,7 @@ build/
 
 ### API ###
 /.env
+
+/.properties
+
+/.jks
