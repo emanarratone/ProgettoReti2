@@ -10,9 +10,9 @@ import java.sql.SQLException;
 public class daoUtente {
 
     public static Utente login(String username, String password) throws Exception {
-        String sql = "SELECT username, password, is_admin " +
+        String sql = "SELECT username, password_hash, is_admin " +
                 "FROM utenti " +
-                "WHERE username = ? AND password = ?";
+                "WHERE username = ? AND password_hash = ?";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -23,7 +23,7 @@ public class daoUtente {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     String user = rs.getString("username");
-                    String pass = rs.getString("password");
+                    String pass = rs.getString("password_hash");
                     boolean isAdmin = rs.getBoolean("is_admin");
                     return new Utente(user, pass, isAdmin);
                 } else {
@@ -34,7 +34,7 @@ public class daoUtente {
     }
 
     public static boolean registrazione(String username, String password, boolean isAdmin) throws Exception {
-        String sql = "INSERT INTO utenti (username, password, is_admin) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO utenti (username, password_hash, is_admin) VALUES (?, ?, ?)";
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -54,13 +54,13 @@ public class daoUtente {
     }
 
     public static String getHashedPassword(String username) throws SQLException {
-        String query = "SELECT password FROM utenti WHERE username = ?";
+        String query = "SELECT password_hash FROM utenti WHERE username = ?";
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getString("password"); // qui si recupera l'hash salvato
+                    return rs.getString("password_hash"); // qui si recupera l'hash salvato
                 } else {
                     return null; // utente non trovato
                 }

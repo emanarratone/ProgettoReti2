@@ -69,12 +69,13 @@ public class TrafficoDao {
 
     // Restituisce JSON: [ {"day":"2025-11-01","count":1234}, ... ]
     public String getTrendUltimi30GiorniJson() throws SQLException {
-        String sql = "SELECT date_trunc('day', timestamp_in) AS day, " +
-                "COUNT(*) AS count  " +
-                "FROM Biglietto  " +
-                "WHERE timestamp_in >= CURRENT_DATE - INTERVAL '29 days'  " +
-                "GROUP BY day  " +
-                "ORDER BY day";
+        String sql =
+                "SELECT date_trunc('day', timestamp_in) AS day, " +
+                        "       COUNT(*) AS count " +
+                        "FROM biglietto " +                          // <- minuscolo
+                        "WHERE timestamp_in >= CURRENT_DATE - INTERVAL '29 days' " +
+                        "GROUP BY day " +
+                        "ORDER BY day";
 
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -88,11 +89,10 @@ public class TrafficoDao {
                 if (!first) sb.append(",");
                 first = false;
 
-                // "YYYY-MM-DD"
                 String dayStr = rs.getTimestamp("day")
                         .toLocalDateTime()
                         .toLocalDate()
-                        .toString();
+                        .toString();   // "YYYY-MM-DD"
                 int count = rs.getInt("count");
 
                 sb.append(String.format(java.util.Locale.US,
@@ -102,6 +102,7 @@ public class TrafficoDao {
             return sb.toString();
         }
     }
+
 
     // Restituisce JSON: [ {"hour":0,"count":100}, {"hour":8,"count":350}, ... ]
     public String getPicchiOrariOggiJson() throws SQLException {

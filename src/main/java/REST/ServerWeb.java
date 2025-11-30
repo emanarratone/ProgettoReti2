@@ -250,8 +250,37 @@ public class ServerWeb {
             }
         });
 
+        get("/api/tolls",(req, res) ->{
+            try {
+                daoAutostrada dao = new daoAutostrada();
+                String json = dao.getRegioniAutostradeCaselli();
+                return json;
+            }catch (Exception e){
+                System.err.println("ERRORE in GET /api/tolls:");
+                return "{\"error\":\"Errore interno\"}";
+            }
+        });
+
+        // Lista multe recenti (ultimi 7 giorni)
+        get("/api/fines/list", (req, res) -> {
+            try {
+                daoMulte dao = new daoMulte();
+                String json = dao.getMulteRecentiJson();
+                res.type("application/json");
+                return json;
+            } catch (Exception e) {
+                System.err.println("ERRORE in /api/fines/list:");
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\":\"Errore interno\"}";
+            }
+        });
+
+
         System.out.println("✓ Server HTTPS avviato su https://localhost:" + httpsPort);
     }
+
+
 
     // --------- utilità sessione ---------
     private static boolean isLoggedIn(spark.Request req) {
