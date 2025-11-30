@@ -151,21 +151,36 @@
 
 <script>
     // Logout
-    document.getElementById('logoutBtn').addEventListener('click', function() {
-      fetch('/logout', { method: 'POST', credentials: 'same-origin' })
-        .then(response => {
-          if (response.redirected) {
-            window.location.href = response.url;
-          }
-        }).catch(err => console.error('Errore nel logout:', err));
+document.getElementById('logoutBtn').addEventListener('click', function () {
+  fetch('/api/logout', {
+    method: 'POST',
+    credentials: 'same-origin'
+  })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('HTTP ' + res.status);
+      }
+      // anche se è JSON, a noi basta sapere che è ok
+      return res.json().catch(() => ({}));
+    })
+    .then(() => {
+      // dopo invalidazione sessione, vai alla pagina di login
+      window.location.href = '/index.html';
+    })
+    .catch(err => {
+      console.error('Errore nel logout:', err);
+      // fallback comunque alla login
+      window.location.href = '/index.html';
     });
+});
+
 
     // Controlla se utente è admin e mostra/nasconde bottoni
     fetch('/api/session')
       .then(res => res.json())
       .then(data => {
         if (!data.loggedIn) {
-          window.location.href = "/login.html";
+          window.location.href = "/index.html";
           return;
         }
         const adminTools = document.querySelectorAll('.admin-tools');

@@ -9,47 +9,45 @@ import java.sql.SQLException;
 
 public class daoUtente {
 
-    public static Utente login(String username, String password) throws Exception {
+    public static Utente findByUsername(String username) throws Exception {
         String sql = "SELECT username, password_hash, is_admin " +
                 "FROM utenti " +
-                "WHERE username = ? AND password_hash = ?";
+                "WHERE username = ?";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, username);
-            ps.setString(2, password); // per il progetto va bene in chiaro
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    String user = rs.getString("username");
-                    String pass = rs.getString("password_hash");
+                    String user     = rs.getString("username");
+                    String passHash = rs.getString("password_hash");
                     boolean isAdmin = rs.getBoolean("is_admin");
-                    return new Utente(user, pass, isAdmin);
+                    return new Utente(user, passHash, isAdmin);
                 } else {
-                    return null; // credenziali errate
+                    return null;
                 }
             }
         }
     }
 
-    public static boolean registrazione(String username, String password, boolean isAdmin) throws Exception {
+    public static boolean registrazione(String username, String passwordHash, boolean isAdmin) throws Exception {
+        // prima controlla se esiste già
+        if (findByUsername(username) != null) {
+            return false; // username già presente
+        }
+
         String sql = "INSERT INTO utenti (username, password_hash, is_admin) VALUES (?, ?, ?)";
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, username);
-            ps.setString(2, password);      // per il progetto va bene in chiaro
+            ps.setString(2, passwordHash);
             ps.setBoolean(3, isAdmin);
 
             int n = ps.executeUpdate();
             return n == 1;
-        } catch (org.postgresql.util.PSQLException e) {
-            // username duplicato (vincolo UNIQUE)
-            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("duplicate")) {
-                return false;
-            }
-            throw e;
         }
     }
 
@@ -60,15 +58,14 @@ public class daoUtente {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getString("password_hash"); // qui si recupera l'hash salvato
+                    return rs.getString("password_hash");
                 } else {
-                    return null; // utente non trovato
+                    return null;
                 }
             }
         }
     }
 
-    // Metodo per verificare se un utente è amministratore
     public static Boolean isAdmin(String username) throws SQLException {
         String query = "SELECT is_admin FROM utenti WHERE username = ?";
         try (Connection con = DbConnection.getConnection();
@@ -78,11 +75,9 @@ public class daoUtente {
                 if (rs.next()) {
                     return rs.getBoolean("is_admin");
                 } else {
-                    return null; // utente non trovato
+                    return null;
                 }
             }
         }
     }
-
-
 }

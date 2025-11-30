@@ -27,17 +27,11 @@
             <version>2.9.4</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.4.5</version>
         </dependency>
-        <!--
-        Source - https://stackoverflow.com/a
-        Posted by Akta Kalariya, modified by community. See post 'Timeline' for change history
-        Retrieved 2025-11-20, License - CC BY-SA 4.0
-        -->
 
         <dependency>
             <groupId>org.apache.maven</groupId>
@@ -69,6 +63,11 @@
                     <artifactId>log4j</artifactId>
                 </exclusion>
             </exclusions>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-devtools</artifactId>
+                <optional>true</optional>
+            </dependency>
 
         </dependency>
     </dependencies>
