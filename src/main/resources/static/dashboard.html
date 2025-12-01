@@ -85,7 +85,7 @@
     <div class="col-12 col-lg-6">
       <div class="card bg-white p-3">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="mb-0">Autostrada</h6>
+          <h6 class="mb-0"><a href="/autostrada.html" class="text-decoration-none">Gestisci autostrada</a></h6>
         </div>
         <div class="table-responsive">
           <table class="table table-sm mb-0">
@@ -93,7 +93,6 @@
               <tr>
                 <th>Regione</th>
                 <th>Autostrada</th>
-                <th>Casello</th>
               </tr>
             </thead>
             <tbody id="highwaysTable"></tbody>
@@ -105,7 +104,7 @@
     <div class="col-12 col-lg-6">
       <div class="card bg-white p-3">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="mb-0">Multe</h6>
+          <h6 class="mb-0"><a href="/multe.html" class="text-decoration-none">Gestisci multe</a></h6>
         </div>
         <div class="table-responsive">
           <table class="table table-sm mb-0">
@@ -430,13 +429,12 @@ tbody.innerHTML = '';
 data.forEach(row => {
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td>${row.nome_regione}</td>
+    <td>${row.nome}</td>
     <td>
       <a href="/autostrada.html" class="text-decoration-none">
         ${row.nome_autostrada}
       </a>
     </td>
-    <td>${row.nome_casello}</td>
   `;
   tbody.appendChild(tr);
 });
@@ -447,9 +445,19 @@ data.forEach(row => {
 
 // Tabella Multe: ultimi 7 giorni
 fetch('/api/fines/list')
-  .then(res => {
+  .then(async res => {
     if (!res.ok) throw new Error('Errore HTTP: ' + res.status);
-    return res.json();
+
+    const raw = await res.text();
+    console.log('RAW /api/fines/list:', raw);  // <-- guarda questo in console
+
+    // prova a fare il parse solo se sembra JSON
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      console.error('JSON non valido da /api/fines/list:', e);
+      throw e;
+    }
   })
   .then(data => {
     if (data.error) {
@@ -461,23 +469,28 @@ fetch('/api/fines/list')
     if (!tbody) return;
 
     tbody.innerHTML = '';
-    data.forEach(row => {
-      const tr = document.createElement('tr');
 
-      const statoLabel = row.pagato ? 'Pagata' : 'Da pagare';
-      const statoClass = row.pagato ? 'text-success' : 'text-danger';
+data.forEach((row, index) => {
+  if (index >= 5) return;  // esce dopo 5 righe
 
-      tr.innerHTML = `
-        <td>${row.id_multa}</td>
-        <td>${row.targa}</td>
-        <td>${row.data}</td>
-        <td>€ ${Number(row.importo).toFixed(2)}</td>
-        <td class="${statoClass}">${statoLabel}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+  const tr = document.createElement('tr');
+
+  const statoLabel = row.pagato ? 'Pagata' : 'Da pagare';
+  const statoClass = row.pagato ? 'text-success' : 'text-danger';
+
+  tr.innerHTML = `
+    <td>${row.id_multa}</td>
+    <td>${row.targa}</td>
+    <td>${row.data}</td>
+    <td>€ ${Number(row.importo).toFixed(2)}</td>
+    <td class="${statoClass}">${statoLabel}</td>
+  `;
+  tbody.appendChild(tr);
+});
+
   })
   .catch(err => console.error("Errore fetch /api/fines/list:", err));
+
 
 // Ricerca veicoli per targa
 const searchBtn = document.getElementById('searchPlateBtn');
