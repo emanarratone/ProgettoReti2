@@ -24,16 +24,17 @@ public class daoMulte {
     public String getMulteRecentiJson() throws SQLException {
         String SQL =
                 "SELECT " +
-                        " id_multa, " +
-                        " targa, " +
-                        " importo, " +
-                        " data, " +
-                        " pagato, " +
-                        " motivo " +
-                        "FROM multa " +
-                        "WHERE data >= CURRENT_DATE - INTERVAL '7 days' " +
-                        "ORDER BY data DESC, id_multa DESC " +
-                        "LIMIT 5";
+                        "    m.id_multa, " +
+                        "    m.targa, " +
+                        "    m.importo, " +
+                        "    m.data, " +
+                        "    m.pagato, " +
+                        "    r.nome AS nome_regione " +
+                        "FROM MULTA m " +
+                        "LEFT JOIN BIGLIETTO b ON b.id_biglietto = m.id_biglietto " +
+                        "LEFT JOIN CASELLO c   ON c.id_casello   = b.casello_in " +
+                        "LEFT JOIN AUTOSTRADA a ON a.id_autostrada = c.id_autostrada " +
+                        "LEFT JOIN REGIONE r    ON r.id_regione   = a.regione";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL);
@@ -47,30 +48,40 @@ public class daoMulte {
                 if (!first) sb.append(",");
                 first = false;
 
-                int id     = rs.getInt("id_multa");
-                String targa = rs.getString("targa");
-                double imp = rs.getDouble("importo");
-                java.sql.Date data = rs.getDate("data");
-                boolean pagato = rs.getBoolean("pagato");
-                String motivo = rs.getString("motivo");
+                int id              = rs.getInt("id_multa");
+                String targa        = rs.getString("targa");
+                double imp          = rs.getDouble("importo");
+                java.sql.Date data  = rs.getDate("data");
+                boolean pagato      = rs.getBoolean("pagato");
+                String nomeRegione  = rs.getString("nome_regione");
 
-                // escape base per JSON
-                targa  = targa.replace("\\", "\\\\").replace("\"", "\\\"");
-                motivo = motivo.replace("\\", "\\\\").replace("\"", "\\\"");
+                if (targa == null) targa = "";
+                if (nomeRegione == null) nomeRegione = "";
+
+                // escape base per stringhe JSON
+                targa       = targa.replace("\\", "\\\\").replace("\"", "\\\"");
+                nomeRegione = nomeRegione.replace("\\", "\\\\").replace("\"", "\\\"");
 
                 sb.append(String.format(java.util.Locale.US,
-                        "{\"id_multa\":%d," +
+                        "{" +
+                                "\"id_multa\":%d," +
                                 "\"targa\":\"%s\"," +
                                 "\"importo\":%.2f," +
                                 "\"data\":\"%s\"," +
                                 "\"pagato\":%s," +
-                                "\"motivo\":\"%s\"}",
-                        id, targa, imp, data.toString(),
+                                "\"nome_regione\":\"%s\"" +
+                                "}",
+                        id,
+                        targa,
+                        imp,
+                        data != null ? data.toString() : "",
                         pagato ? "true" : "false",
-                        motivo));
+                        nomeRegione
+                ));
             }
             sb.append("]");
             return sb.toString();
         }
     }
+
 }

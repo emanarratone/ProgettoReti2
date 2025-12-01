@@ -203,6 +203,10 @@ public class ApiController {
         try {
             daoMulte dao = new daoMulte();
             String json = dao.getMulteRecentiJson();
+
+            // rimuove le virgole prima di } o ] (trailing comma)
+            json = json.replaceAll(",\\s*([}\\]])", "$1");
+
             return ResponseEntity.ok(json);
         } catch (Exception e) {
             System.err.println("ERRORE in /api/fines/list:");
@@ -210,6 +214,7 @@ public class ApiController {
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
         }
     }
+
 
     // -------- AUTOSTRADE / CASELLI ----------
 
@@ -309,5 +314,40 @@ public class ApiController {
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
         }
     }
+
+    // -------- REGIONI / AUTOSTRADE PER REGIONE ----------
+
+    // Elenco regioni (step "Regione")
+    @GetMapping("/regions")
+    public ResponseEntity<String> getRegions() {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            String json = dao.getRegioniJson(); // qui potrebbe esplodere
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            e.printStackTrace(); // importante: guarda lo stack trace in console
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+
+    // Autostrade per una regione (step "Autostrada" dopo "Regione")
+    @GetMapping("/regions/{idRegione}/highways")
+    public ResponseEntity<String> getHighwaysForRegion(@PathVariable("idRegione") int idRegione) {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            // Implementa nel DAO qualcosa come:
+            // [ { "id_autostrada": 1, "nome_autostrada": "A4", "nome_regione": "Lombardia" }, ... ]
+            String json = dao.getAutostradePerRegioneJson(idRegione);
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            System.err.println("ERRORE in GET /api/regions/" + idRegione + "/highways:");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore interno\"}");
+        }
+    }
+
 
 }
