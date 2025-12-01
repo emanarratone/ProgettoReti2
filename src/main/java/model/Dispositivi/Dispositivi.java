@@ -1,17 +1,15 @@
 package model.Dispositivi;
 
-import model.Autostrada.Corsia.Tipo;
+import model.Autostrada.Corsia.Verso;
 
 public abstract class Dispositivi {
     private final Integer corsia;
     protected final Integer ID;
     protected Boolean status; //guasto = 0 o funzionante = 1
-    protected Tipo tipo;
 
-    public Dispositivi(Integer ID, Boolean status, Tipo tipo, Integer corsia) {
+    public Dispositivi(Integer ID, Boolean status, Integer corsia) {
         this.ID = ID;
         this.status = status;
-        this.tipo = tipo;
         this.corsia = corsia;
     }
 
@@ -27,11 +25,4 @@ public abstract class Dispositivi {
 
     public void setStatus(Boolean status) {this.status = status;}
 
-    public String getTipo() {
-        return tipo.toString();
-    }
-
-    public void setTipo(Tipo tipo) {
-        this.tipo = tipo;
-    }
 }

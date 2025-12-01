@@ -10,15 +10,26 @@ public class Corsia {
 
     private final String casello;
     private final Integer ID;
+    private Verso verso;
     private Tipo tipo;
-    public enum Tipo { ENTRATA, USCITA }
+    public enum Tipo {MANUALE, TELEPASS}
+    public enum Verso { ENTRATA, USCITA }
     private Boolean isClosed;
 
-    public Corsia(String casello,Integer ID,  boolean verso) {
+    public Corsia(String casello,Integer ID, Verso verso, Tipo tipo) {
         this.casello = casello;
         this.ID = ID;
-
+        this.verso = verso;
+        this.tipo = tipo;
         this.isClosed = false;
+    }
+
+    public Tipo getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(Tipo tipo) {
+        this.tipo = tipo;
     }
 
     public Boolean getClosed() {
@@ -33,8 +44,12 @@ public class Corsia {
         return casello;
     }
 
-    public Tipo getTipo() {
-        return
+    public Verso getVerso() {
+        return verso;
+    }
+
+    public void setVerso(Verso verso) {
+        this.verso = verso;
     }
 
     public Integer getID() {
@@ -42,7 +57,7 @@ public class Corsia {
     }
 
     @Override
-    public String toString() {
+    public String toString() {      //sistemare toString
         return "Casello "+ this.casello + "\n" +
                 "ID "+ this.ID + "\n" +
                 "Stato: " + (this.isClosed ? "aperto" : "chiuso");

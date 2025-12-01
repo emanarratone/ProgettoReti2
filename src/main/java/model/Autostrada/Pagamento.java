@@ -5,14 +5,14 @@ import java.time.Duration;
 
 public class Pagamento {
 
-    private String ID_transazione;
+    private Integer ID_transazione;
     private Biglietto biglietto;
     private Casello casello_out;
     private Double prezzo;
     private Boolean Status; //pagato = false
     private LocalDateTime timestamp_out;
 
-    public Pagamento(String ID_transazione, Biglietto biglietto, Double prezzo, Boolean status, LocalDateTime timestamp_out, Casello casello_out) {
+    public Pagamento(Integer ID_transazione, Biglietto biglietto, Double prezzo, Boolean status, LocalDateTime timestamp_out, Casello casello_out) {
         this.ID_transazione = ID_transazione;
         this.biglietto = biglietto;
         this.prezzo = prezzo;
@@ -22,11 +22,11 @@ public class Pagamento {
         checkMulta(biglietto.getCasello_in().getLimite());
     }
 
-    public String getID_transazione() {
+    public Integer getID_transazione() {
         return ID_transazione;
     }
 
-    public void setID_transazione(String ID_transazione) {
+    public void setID_transazione(Integer ID_transazione) {
         this.ID_transazione = ID_transazione;
     }
 
@@ -54,20 +54,19 @@ public class Pagamento {
         Status = status;
     }
 
-    public LocalDateTime getTimestamp_in() {
+    public LocalDateTime getTimestamp_out() {
         return timestamp_out;
     }
 
-    public void setTimestamp_in(LocalDateTime timestamp_out) {
+    public void setTimestamp_out(LocalDateTime timestamp_out) {
         this.timestamp_out= timestamp_out;
     }
 
     public void checkMulta(Integer limite){
         long durata = Duration.between(timestamp_out, biglietto.getTimestamp_in()).toMinutes();
         if(durata<limite){
-            Multa multa = new Multa(10d, LocalDateTime.now(),
-                                        biglietto.getAuto().getTarga());
-            biglietto.getAuto().getMulte().add(multa);
+            Multa multa = new Multa(11, biglietto, 10.0, LocalDateTime.now(), biglietto.getAuto().getTarga());
+            //biglietto.getAuto().getMulte().add(multa);  ????
         }
     }
 

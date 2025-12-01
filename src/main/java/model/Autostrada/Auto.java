@@ -9,7 +9,7 @@ public class Auto {
     private Veicolo tipoVeicolo;
     private static final Random RANDOM = new Random();
 
-    private enum Veicolo { AUTO, MOTO, CAMION }
+    public enum Veicolo { AUTO, MOTO, CAMION }
 
     public Auto(String targa) {
         this.targa = targa;
@@ -29,8 +29,8 @@ public class Auto {
         this.targa = targa;
     }
 
-    public String getTipoVeicolo() {
-        return tipoVeicolo.toString();
+    public Veicolo getTipoVeicolo() {
+        return tipoVeicolo;
     }
 
     public void setTipoVeicolo(Veicolo tipoVeicolo) {

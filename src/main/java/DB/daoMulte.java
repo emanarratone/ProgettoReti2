@@ -1,9 +1,8 @@
 package DB;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import model.Autostrada.Multa;
+
+import java.sql.*;
 
 
 public class daoMulte {
@@ -81,6 +80,22 @@ public class daoMulte {
             }
             sb.append("]");
             return sb.toString();
+        }
+    }
+
+    public void insertMulta(Multa m) throws SQLException {
+        String s = "INSERT INTO MULTA (id_multa, targa, importo, data, pagato, id_biglietto) VALUES (?,?,?,?,?,?)";
+
+        try(Connection conn = DbConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(s)) {
+            ps.setInt(1, m.getId());
+            ps.setString(2, m.getTarga());
+            ps.setDouble(3, m.getImporto());
+            ps.setDate(4, new Date(m.getData().getYear(),
+                    m.getData().getMonth().getValue(),
+                    m.getData().getDayOfMonth()));
+            ps.setBoolean(5, m.getPagato());
+            ps.setInt(6, m.getBiglietto().getID_biglietto());
         }
     }
 

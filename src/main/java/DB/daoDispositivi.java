@@ -1,6 +1,6 @@
 package DB;
 
-import model.Dispositivi.Dispositivi;
+import model.Dispositivi.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,11 +19,17 @@ public class daoDispositivi {
                 ps.setInt(1, d.getID());
                 ps.setString(2, d.getStatus());
                 ps.setInt(3, d.getCorsia());
-                ps.setString(4, d.getTipo());
+                ps.setString(4, getTipoDispositivo(d));
 
                 ps.executeQuery();
         }
 
+    }
+
+    public String  getTipoDispositivo(Dispositivi d) {
+        if(d instanceof Sbarra) return "SBARRA";
+        else if(d instanceof Telecamera) return "TELECAMERA";
+        else return "TOTEM";
     }
 
     public void aggiornaDispositivo(int id, String nuovoStato) throws SQLException {

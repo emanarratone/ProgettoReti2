@@ -15,7 +15,9 @@ public class daoCorsie {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, c.getID());
             ps.setString(2, c.getCasello());
-            ps.setString(3, c.);
+            ps.setString(3, c.getVerso().toString());
+            ps.setString(4, c.getTipo().toString());
+            //isClosed??
             ps.executeUpdate();
         }
     }

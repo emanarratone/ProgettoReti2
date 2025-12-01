@@ -13,7 +13,7 @@ public class daoVeicoli {
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(s)) {
             ps.setString(1, a.getTarga());
-            ps.setString(2, a.getTipoVeicolo());
+            ps.setString(2, a.getTipoVeicolo().toString());
         }
     }
 

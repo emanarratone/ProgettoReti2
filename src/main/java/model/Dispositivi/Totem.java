@@ -1,11 +1,11 @@
 package model.Dispositivi;
 
-import model.Autostrada.Corsia.Tipo;
+import model.Autostrada.Corsia.Verso;
 
 public class Totem extends Dispositivi {
 
-    public Totem(Integer ID, Boolean status, Tipo tipo, Integer corsia) {
-        super(ID,status,tipo, corsia);
+    public Totem(Integer ID, Boolean status, Integer corsia) {
+        super(ID,status, corsia);
     }
 
     public void PagaBiglietto(){

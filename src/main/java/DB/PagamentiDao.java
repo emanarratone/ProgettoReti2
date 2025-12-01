@@ -1,9 +1,8 @@
 package DB;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import model.Autostrada.Pagamento;
+
+import java.sql.*;
 
 public class PagamentiDao {
 
@@ -23,5 +22,22 @@ public class PagamentiDao {
                 return rs.getInt(1);
             }
         }
+    }
+
+    public void insertPagamenti(Pagamento p)  throws SQLException {
+        String sql = "INSERT INTO Pagamento (id_pagamento, id_biglietto, importo, stato, timestamp_out, casello_out) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = DbConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, p.getID_transazione());
+            ps.setInt(2, p.getBiglietto().getID_biglietto());
+            ps.setDouble(3, p.getPrezzo());
+            ps.setString(4, (p.getStatus())? "PAGATO" : "NON PAGATO");
+            ps.setDate(5, new Date(p.getTimestamp_out().getYear(),
+                    p.getTimestamp_out().getMonth().getValue(),
+                    p.getTimestamp_out().getDayOfMonth()));
+            ps.setInt(6, p.getCasello_out().getId());
+        }
+
     }
 }
