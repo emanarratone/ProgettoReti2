@@ -54,7 +54,7 @@ public class Utente {
     }
 
     public void login(String username, String password) {
-        //
+        // GESTITO DA SALVO
     }
 
     public Casello visualizzaCasello(Casello casello) {
@@ -64,38 +64,38 @@ public class Utente {
     }
 
     public void visualizzaMulte(){
-        //
+        // IN BASE A COSA LE GUARDO? DI CHI?
     }
 
     public void addCasello(){
-        //
+        // VA MESSO SU AUTOSTRADA -----> UN AUTOSTRADA "HAS A" CASELLO
     }
 
     public void addDispositivo(){
-        //
+        //METODO DI CORSIA
     }
 
     public void addCorsia(){
-        //
+        // METODO DI CASELLO
     }
 
     public void RemoveCasello(){
-        //
+        // VA MESSO SU AUTOSTRADA -----> UN AUTOSTRADA "HAS A" CASELLO
     }
 
     public void RemoveDispositivo(){
-        //
+        //METODO DI CORSIA
     }
 
     public void RemoveCorsia(){
-        //
+        // METODO DI CASELLO
     }
 
     public void RemoveAllCorsie(){
-        //se elimino un casello
+        //METODO DI CASELLO
     }
 
     public void RemoveAllDispositivi(){
-        //se elimino un casello
+        //METODO DI CORSIA
     }
 }

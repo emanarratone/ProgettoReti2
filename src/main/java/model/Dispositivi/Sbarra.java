@@ -6,7 +6,7 @@ public class Sbarra extends Dispositivi {
     }
 
     public void apriSbarra(){
-        //
+        // LEGGERE TELECAMERA
     }
 
     public void chiudiSbarra(){

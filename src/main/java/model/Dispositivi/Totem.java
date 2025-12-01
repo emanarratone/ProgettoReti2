@@ -9,7 +9,7 @@ public class Totem extends Dispositivi {
     public void PagaBiglietto(){
         //
     }
-
+    // !!!!!!!!!!!!!TELEPASS!!!!!!!!!!!!!
     public void generaBiglietto(){
         //
     }
