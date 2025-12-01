@@ -1,16 +1,22 @@
 package DB;
 
+import model.Autostrada.Casello;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class daoCasello {
-    public void inserisciCasello(String sigla) throws SQLException {
-        String sql = "INSERT INTO Casello (Sigla) VALUES (?)";
+    public void inserisciCasello(Casello c) throws SQLException {
+        String sql = "INSERT INTO Casello (id_casello, Sigla, autostrada, isClosed, limite) VALUES (?,?,?,?,?)";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, sigla);
+            ps.setInt(1, c.getId());
+            ps.setInt(2, c.getAutostrada());
+            ps.setBoolean(3, c.getClosed());
+            ps.setInt(4, c.getLimite());
+            //da aggiungere isClosed al DB
             ps.executeUpdate();
         }
     }

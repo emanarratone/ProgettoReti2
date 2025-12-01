@@ -8,58 +8,17 @@ import java.util.List;
 
 public class Corsia {
 
-    private ArrayList<Dispositivi> dispositivi;
-    private Dispositivi.Tipo tipo;
-    private Boolean isClosed; //
+    private final String casello;
+    private final Integer ID;
+    private Tipo tipo;
+    public enum Tipo { ENTRATA, USCITA }
+    private Boolean isClosed;
 
-    public Corsia(ArrayList<Dispositivi> dispositivi, Dispositivi.Tipo tipo) {
-        // se ti interessa copiare la lista passata:
-        this.dispositivi = dispositivi;
-        this.tipo = tipo;
+    public Corsia(String casello,Integer ID,  boolean verso) {
+        this.casello = casello;
+        this.ID = ID;
+
         this.isClosed = false;
-    }
-
-    // getter che restituisce una copia "read-only" se vuoi evitare modifiche esterne
-    public ArrayList<Dispositivi> getDispositivi() {
-        return dispositivi;
-    }
-
-    public Dispositivi.Tipo getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(Dispositivi.Tipo tipo) {
-        this.tipo = tipo;
-    }
-
-    // aggiunge un dispositivo
-    public void aggiungiDispositivo(Dispositivi d) {
-        dispositivi.add(d);
-    }
-
-    // rimuove un dispositivo (per equals)
-    public boolean rimuoviDispositivo(Dispositivi d) {
-        return dispositivi.remove(d);
-    }
-
-    // rimuove per indice
-    public Dispositivi rimuoviDispositivo(int index) {
-        return dispositivi.remove(index);
-    }
-
-    // restituisce un dispositivo per indice
-    public Dispositivi getDispositivo(int index) {
-        return dispositivi.get(index);
-    }
-
-    // numero di dispositivi
-    public int getNumeroDispositivi() {
-        return dispositivi.size();
-    }
-
-    // svuota la lista
-    public void svuotaDispositivi() {
-        dispositivi.clear();
     }
 
     public Boolean getClosed() {
@@ -70,9 +29,22 @@ public class Corsia {
         isClosed = closed;
     }
 
+    public String getCasello() {
+        return casello;
+    }
+
+    public Tipo getTipo() {
+        return
+    }
+
+    public Integer getID() {
+        return ID;
+    }
+
     @Override
     public String toString() {
-        return "Casello di"+ this.tipo.toString() + "\n" +
+        return "Casello "+ this.casello + "\n" +
+                "ID "+ this.ID + "\n" +
                 "Stato: " + (this.isClosed ? "aperto" : "chiuso");
     }
 

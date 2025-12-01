@@ -1,9 +1,11 @@
 package model.Dispositivi;
 
+import model.Autostrada.Corsia.Tipo;
+
 public class Telecamera extends Dispositivi {
 
-    public Telecamera(String ID, Boolean status, Tipo tipo){
-        super(ID,status, tipo);
+    public Telecamera(Integer ID, Boolean status, Tipo tipo, Integer corsia) {
+        super(ID,status,tipo, corsia);
     }
 
     public void getTarga(){

@@ -1,5 +1,8 @@
 package DB;
 
+import model.Autostrada.Autostrada;
+import model.Autostrada.Casello;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -89,5 +92,15 @@ public class daoAutostrada {
         }
     }
 
+    public void insertAutostrada(Autostrada au) throws SQLException {
+        String s = "INSERT INTO AUTOSTRADA (id_autostrada, citta, regione) VALUES (?,?,?)";
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(s)) {
+            ps.setInt(1, au.getID());
+            ps.setString(2, au.getCittà());
+            ps.setString(3, au.getRegione());
+            ps.executeUpdate();
+        }
+    }
 
 }

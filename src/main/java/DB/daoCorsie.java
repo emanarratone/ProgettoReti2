@@ -1,5 +1,7 @@
 package DB;
 
+import model.Autostrada.Corsia;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -7,12 +9,13 @@ import java.sql.SQLException;
 
 public class daoCorsie {
 
-    public void inserisciCorsia(int numCorsia, String verso) throws SQLException {
-        String sql = "INSERT INTO Corsia (Num_corsia, verso) VALUES (?, ?)";
+    public void inserisciCorsia(Corsia c) throws SQLException {
+        String sql = "INSERT INTO Corsia (id_corsia, id_casello, verso, tipo) VALUES (?,?,?,?)";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, numCorsia);
-            ps.setString(2, verso);
+            ps.setInt(1, c.getID());
+            ps.setString(2, c.getCasello());
+            ps.setString(3, c.);
             ps.executeUpdate();
         }
     }

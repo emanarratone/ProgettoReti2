@@ -53,23 +53,6 @@ public class Utente {
         return isAdmin != null && isAdmin;
     }
 
-    public void login(String username, String password) {
-        // GESTITO DA SALVO
-    }
-
-    public Casello visualizzaCasello(Casello casello) {
-        return casello; //lololol
-        //visualizza corsie()
-        //visualizza dispositivi()
-    }
-
-    public void visualizzaMulte(){
-        // IN BASE A COSA LE GUARDO? DI CHI?
-    }
-
-    public void addCasello(){
-        // VA MESSO SU AUTOSTRADA -----> UN AUTOSTRADA "HAS A" CASELLO
-    }
 
     public void addDispositivo(){
         //METODO DI CORSIA

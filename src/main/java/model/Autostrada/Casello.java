@@ -4,23 +4,23 @@ import java.util.ArrayList;
 
 public class Casello {
 
+    private final Integer id;
     private String sigla;
-    private ArrayList<Corsia> corsie;
+    private Integer autostrada;
     private Boolean isClosed;
     private Integer limite;
 
-    public Casello(String sigla, ArrayList<Corsia> corsie, Integer limite) {
+    public Casello(Integer id, String sigla, Integer autostrada, Integer limite) {
+        this.id = id;
         this.sigla = sigla;
-        this.corsie = corsie;   //costruisco corsie altrove e lo passo al costruttore
-        this.isClosed = chiudiCasello();
+        this.autostrada = autostrada;
+        this.isClosed = false;  //chiudi casello da sistemare e aggiungere chiudi corsia
+        //this.isClosed = chiudiCasello();
         this.limite = limite;
     }
 
-    public Casello(String sigla, Integer limite) {  //casello senza corsie
-        this.sigla = sigla;
-        this.corsie = new ArrayList<>();
-        this.isClosed = false;
-        this.limite = limite;
+    public Integer getId() {
+        return id;
     }
 
     public String getSigla() {
@@ -31,13 +31,6 @@ public class Casello {
         this.sigla = sigla;
     }
 
-    public ArrayList<Corsia> getCorsie() {
-        return corsie;
-    }
-
-    public void setCorsie(ArrayList<Corsia> corsie) {
-        this.corsie = corsie;
-    }
 
     public Boolean getClosed() {
         return isClosed;
@@ -51,18 +44,18 @@ public class Casello {
         return limite;
     }
 
-    public void addCorsia(Corsia corsia) {
-        this.corsie.add(corsia);
-    }
-
-    public void removeCorsia(Corsia corsia) {
-        this.corsie.remove(corsia);
-    }
-
     public void setLimite(Integer limite) {
         this.limite = limite;
     }
 
+    public Integer getAutostrada() {
+        return autostrada;
+    }
+
+    public void setAutostrada(Integer autostrada) {
+        this.autostrada = autostrada;
+    }
+/*
     public boolean chiudiCasello() { //setCasello
         for (Corsia corsia : corsie) {
             if (!corsia.getClosed()) { //per ogni corsia se è aperta ritorna false
@@ -71,11 +64,11 @@ public class Casello {
         }
         return true;
     }
-
+*/
     @Override
     public String toString() {
         return "Casello " + this.sigla + ":\n" +
-                "N° corsie: " + this.corsie.size() + "\n" +
+                "Autostrada: " + this.autostrada + "\n" +
                 "Limite: " + this.limite + "\n" +
                 "Stato: " + (this.isClosed ? "chiuso" : "aperto");
     }

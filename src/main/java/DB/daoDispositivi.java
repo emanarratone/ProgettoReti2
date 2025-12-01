@@ -1,5 +1,7 @@
 package DB;
 
+import model.Dispositivi.Dispositivi;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -7,34 +9,21 @@ import java.sql.SQLException;
 
 public class daoDispositivi {
 
-    public void inserisciDispositivo(int id, String stato, int numCorsia, String sigla) throws SQLException {
-        String sqlElenco = "INSERT INTO Elenco (Num_corsia, sigla, ID) VALUES (?, ?, ?)";
+    public void inserisciDispositivo(Dispositivi d) throws SQLException {
+
         String sqlDisp   = "INSERT INTO Dispositivo (ID, Stato, Num_corsia, sigla) VALUES (?, ?, ?, ?)";
 
-        try (Connection conn = DbConnection.getConnection()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement psE = conn.prepareStatement(sqlElenco);
-                 PreparedStatement psD = conn.prepareStatement(sqlDisp)) {
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlDisp)) {
 
-                psE.setInt(1, numCorsia);
-                psE.setString(2, sigla);
-                psE.setInt(3, id);
-                psE.executeUpdate();
+                ps.setInt(1, d.getID());
+                ps.setString(2, d.getStatus());
+                ps.setInt(3, d.getCorsia());
+                ps.setString(4, d.getTipo());
 
-                psD.setInt(1, id);
-                psD.setString(2, stato);
-                psD.setInt(3, numCorsia);
-                psD.setString(4, sigla);
-                psD.executeUpdate();
-
-                conn.commit();
-            } catch (SQLException ex) {
-                conn.rollback();
-                throw ex;
-            } finally {
-                conn.setAutoCommit(true);
-            }
+                ps.executeQuery();
         }
+
     }
 
     public void aggiornaDispositivo(int id, String nuovoStato) throws SQLException {

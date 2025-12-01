@@ -1,10 +1,22 @@
 package DB;
 
+import model.Autostrada.Auto;
+
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 public class daoVeicoli {
+
+    public void insertVeicoli(Auto a)  throws SQLException {
+        String s = "INSERT INTO Auto (targa, classe_veicolo) VALUES (?,?)";
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(s)) {
+            ps.setString(1, a.getTarga());
+            ps.setString(2, a.getTipoVeicolo());
+        }
+    }
+
 
     public String getUltimiPassaggiPerTargaJson(String targa) throws SQLException {
         String sql =

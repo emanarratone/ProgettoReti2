@@ -1,28 +1,34 @@
 package model.Dispositivi;
 
-public abstract class Dispositivi {
+import model.Autostrada.Corsia.Tipo;
 
-    protected String ID;
+public abstract class Dispositivi {
+    private final Integer corsia;
+    protected final Integer ID;
     protected Boolean status; //guasto = 0 o funzionante = 1
     protected Tipo tipo;
-    public enum Tipo { ENTRATA, USCITA }
 
-    public Dispositivi(String ID, Boolean status, Tipo tipo) {
+    public Dispositivi(Integer ID, Boolean status, Tipo tipo, Integer corsia) {
         this.ID = ID;
         this.status = status;
         this.tipo = tipo;
+        this.corsia = corsia;
     }
 
-    public String getID() { return ID; }
+    public Integer getCorsia() {
+        return corsia;
+    }
 
-    public void setID(String ID) {this.ID = ID;}
+    public Integer getID() { return ID; }
 
-    public Boolean getStatus() {return status;}
+    public String getStatus() {
+        return (status)? "ATTIVO" : "INATTIVO";
+    }
 
     public void setStatus(Boolean status) {this.status = status;}
 
-    public Tipo getTipo() {
-        return tipo;
+    public String getTipo() {
+        return tipo.toString();
     }
 
     public void setTipo(Tipo tipo) {

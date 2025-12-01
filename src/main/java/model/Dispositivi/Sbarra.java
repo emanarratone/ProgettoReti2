@@ -1,8 +1,11 @@
 package model.Dispositivi;
 
+import model.Autostrada.Corsia.Tipo;
+
 public class Sbarra extends Dispositivi {
-    public Sbarra(String ID, Boolean status, Tipo tipo){
-        super(ID,status,tipo);
+
+    public Sbarra(Integer ID, Boolean status, Tipo tipo, Integer corsia) {
+        super(ID,status,tipo, corsia);
     }
 
     public void apriSbarra(){
