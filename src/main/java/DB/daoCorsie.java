@@ -75,8 +75,7 @@ public class daoCorsie {
         String sql =
                 "SELECT id_corsia, verso, tipo_corsia " +
                         "FROM CORSIA " +
-                        "WHERE id_casello = ? " +
-                        "ORDER BY numero_corsia";
+                        "WHERE id_casello = ? ";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -94,12 +93,10 @@ public class daoCorsie {
 
                     int id       = rs.getInt("id_corsia");
                     String verso = rs.getString("verso");
-                    int num      = rs.getInt("numero_corsia");
                     String tipo  = rs.getString("tipo_corsia");
 
                     sb.append("{")
                             .append("\"id_corsia\":").append(id).append(",")
-                            .append("\"nome_corsia\":\"Corsia ").append(num).append("\",")
                             .append("\"direzione\":\"").append(verso).append("\",")
                             .append("\"tipo_corsia\":\"").append(tipo).append("\"")
                             .append("}");

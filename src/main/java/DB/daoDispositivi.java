@@ -97,7 +97,7 @@ public class daoDispositivi {
 
     public String getDispositiviPerCorsiaJson(int idCorsia) throws SQLException {
         String sql =
-                "SELECT id_dispositivo, stato, tipo_dispositivo " +
+                "SELECT id_dispositivo, stato " +
                         "FROM DISPOSITIVO " +
                         "WHERE id_corsia = ? " +
                         "ORDER BY id_dispositivo";
