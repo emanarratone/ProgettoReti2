@@ -1,0 +1,843 @@
+document.addEventListener('DOMContentLoaded', function () {
+  // Logout coerente con dashboard
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+      fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'same-origin'
+      })
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('HTTP ' + res.status);
+          }
+          return res.json().catch(() => ({}));
+        })
+        .then(() => {
+          window.location.href = '/index.html';
+        })
+        .catch(err => {
+          console.error('Errore nel logout:', err);
+          window.location.href = '/index.html';
+        });
+    });
+  }
+
+  // Stato corrente
+  const state = {
+    region: null,
+    highway: null,
+    toll: null,
+    lane: null
+  };
+
+  const itemsList   = document.getElementById('itemsList');
+  const statusEl    = document.getElementById('status');
+  const levelTitle  = document.getElementById('levelTitle');
+  const pathSummary = document.getElementById('pathSummary');
+  const levelList   = document.getElementById('levelList');
+
+  const btnAdd    = document.getElementById('btnAdd');
+
+  const crudModalEl    = document.getElementById('crudModal');
+  const crudModal      = new bootstrap.Modal(crudModalEl);
+  const crudForm       = document.getElementById('crudForm');
+  const crudModalTitle = document.getElementById('crudModalTitle');
+  const fieldName      = document.getElementById('fieldName');
+  const fieldNameLabel = document.getElementById('fieldNameLabel');
+  const fieldExtraGroup = document.getElementById('fieldExtraGroup');
+  const fieldExtraLabel = document.getElementById('fieldExtraLabel');
+  const fieldExtra      = document.getElementById('fieldExtra');
+
+  let currentLevel  = 'regions';   // regions | highways | tolls | lanes | devices
+  let selectedItem  = null;        // { id, ... }
+  let currentAction = null;        // create | edit
+
+  function setStatus(msg) {
+    statusEl.textContent = msg || '';
+  }
+
+  // Attiva livello nella barra orizzontale
+  function setActiveLevel(level) {
+    const order = ['regions', 'highways', 'tolls', 'lanes', 'devices'];
+    const currentIndex = order.indexOf(level);
+
+    document.querySelectorAll('#levelList .list-group-item').forEach(li => {
+      const liLevel = li.dataset.level;
+      const liIndex = order.indexOf(liLevel);
+      li.classList.toggle('active-level', liLevel === level);
+      if (liIndex !== -1 && liIndex < currentIndex) {
+        li.classList.add('visited-level');
+      } else {
+        li.classList.remove('visited-level');
+      }
+    });
+
+    // stato CRUD per livello
+    currentLevel = level;
+    updateAddButtonLabel();
+    selectedItem = null;
+  }
+
+  // Reset livelli sottostanti
+  function resetBelow(level) {
+    if (level === 'region') {
+      state.highway = null;
+      state.toll = null;
+      state.lane = null;
+    } else if (level === 'highway') {
+      state.toll = null;
+      state.lane = null;
+    } else if (level === 'toll') {
+      state.lane = null;
+    }
+  }
+
+  // PATH SUMMARY: breadcrumb cliccabile
+  function updatePathSummary() {
+    pathSummary.innerHTML = '';
+
+    if (!state.region) {
+      pathSummary.textContent = 'Seleziona una regione per iniziare.';
+      return;
+    }
+
+    const separator = document.createTextNode(' > ');
+
+    // Regione
+    if (state.region) {
+      const aRegion = document.createElement('a');
+      aRegion.textContent = state.region.name;
+      aRegion.addEventListener('click', () => {
+        state.region = null;
+        state.highway = null;
+        state.toll = null;
+        state.lane = null;
+        loadRegions();
+        updatePathSummary();
+      });
+      pathSummary.appendChild(aRegion);
+    }
+
+    // Autostrada
+    if (state.highway) {
+      pathSummary.appendChild(separator.cloneNode());
+      const aHighway = document.createElement('a');
+      aHighway.textContent = state.highway.name;
+      aHighway.addEventListener('click', () => {
+        if (!state.region) return;
+        resetBelow('region');
+        loadHighwaysForRegion(state.region.id);
+        updatePathSummary();
+      });
+      pathSummary.appendChild(aHighway);
+    }
+
+    // Casello
+    if (state.toll) {
+      pathSummary.appendChild(separator.cloneNode());
+      const aToll = document.createElement('a');
+      aToll.textContent = state.toll.name;
+      aToll.addEventListener('click', () => {
+        resetBelow('highway');
+        loadTollsForHighway(state.highway.id);
+        updatePathSummary();
+      });
+      pathSummary.appendChild(aToll);
+    }
+
+    // Corsia
+    if (state.lane) {
+      pathSummary.appendChild(separator.cloneNode());
+      const aLane = document.createElement('a');
+      aLane.textContent = state.lane.name;
+      aLane.addEventListener('click', () => {
+        resetBelow('toll');
+        loadLanesForToll(state.toll.id);
+        updatePathSummary();
+      });
+      pathSummary.appendChild(aLane);
+    }
+
+    // Livello finale "Dispositivi"
+    const currentLevelLi = document.querySelector('#levelList .list-group-item.active-level');
+    if (currentLevelLi && currentLevelLi.dataset.level === 'devices') {
+      pathSummary.appendChild(separator.cloneNode());
+      const spanDevices = document.createElement('span');
+      spanDevices.textContent = 'Dispositivi';
+      pathSummary.appendChild(spanDevices);
+    }
+  }
+
+  // Gestione click barra livelli (navigazione manuale)
+  levelList.addEventListener('click', function (e) {
+    const li = e.target.closest('.list-group-item');
+    if (!li) return;
+    const level = li.dataset.level;
+
+    if (level === 'regions') {
+      state.region = null;
+      state.highway = null;
+      state.toll = null;
+      state.lane = null;
+      loadRegions();
+    } else if (level === 'highways' && state.region) {
+      resetBelow('region');
+      loadHighwaysForRegion(state.region.id);
+    } else if (level === 'tolls' && state.highway) {
+      resetBelow('highway');
+      loadTollsForHighway(state.highway.id);
+    } else if (level === 'lanes' && state.toll) {
+      resetBelow('toll');
+      loadLanesForToll(state.toll.id);
+    } else if (level === 'devices' && state.lane) {
+      loadDevicesForLane(state.lane.id);
+    }
+    updatePathSummary();
+  });
+
+  // helper: rende selezionabile una li per CRUD
+  function makeSelectableLi(li, obj) {
+    li.addEventListener('click', (evt) => {
+      // non interferisce con la logica di navigazione esistente:
+      // la navigazione usa il listener che aggiungiamo noi sotto,
+      // questo si limita ad aggiungere la selezione visuale.
+      document.querySelectorAll('#itemsList .list-group-item').forEach(x => x.classList.remove('active'));
+      li.classList.add('active');
+      selectedItem = obj;
+    });
+  }
+
+  // --- Caricamenti ---
+
+  // REGIONI
+  function loadRegions() {
+setActiveLevel('regions');
+levelTitle.textContent = 'REGIONI';
+setStatus('Caricamento regioni...');
+itemsList.innerHTML = '';
+
+fetch('/api/regions')
+.then(res => {
+if (!res.ok) throw new Error('HTTP ' + res.status);
+return res.json();
+})
+.then(data => {
+if (!Array.isArray(data) || data.length === 0) {
+setStatus('Nessuna regione trovata.');
+return;
+}
+setStatus('Seleziona una regione per vedere le autostrade.');
+data.forEach(r => {
+const li = document.createElement('li');
+li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+    const name = r.nome;
+    const obj  = { id: r.id_regione || r.id, name };
+
+    li.innerHTML = `
+      <div>
+        <strong>${name}</strong>
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-primary btn-edit-row">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-delete-row">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    `;
+
+    makeSelectableLi(li, obj);
+
+    // navigazione
+    li.addEventListener('click', () => {
+      state.region = { id: obj.id, name };
+      state.highway = null;
+      state.toll = null;
+      state.lane = null;
+      updatePathSummary();
+      loadHighwaysForRegion(state.region.id);
+    });
+
+    // matita
+    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+      currentAction = 'edit';
+      crudModalTitle.textContent = getModalTitle();
+      configureModalFields();
+      crudModal.show();
+    });
+
+    // X
+    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+        doDelete();
+      }
+    });
+
+    itemsList.appendChild(li);
+  });
+})
+.catch(err => {
+  console.error('Errore caricamento regioni:', err);
+  setStatus('Errore nel caricamento delle regioni.');
+});
+}
+
+  // AUTOSTRADE per regione
+ function loadHighwaysForRegion(regionId) {
+if (!regionId) return;
+setActiveLevel('highways');
+
+const regionName = state.region ? state.region.name : '';
+levelTitle.textContent = 'AUTOSTRADE DI ' + regionName;
+
+setStatus('Caricamento autostrade...');
+itemsList.innerHTML = '';
+
+fetch('/api/regions/' + encodeURIComponent(regionId) + '/highways')
+.then(res => {
+if (!res.ok) throw new Error('HTTP ' + res.status);
+return res.json();
+})
+.then(data => {
+if (!Array.isArray(data) || data.length === 0) {
+setStatus('Nessuna autostrada trovata per questa regione.');
+return;
+}
+setStatus('Seleziona un'+ ' autostrada per vedere i caselli.');
+data.forEach(h => {
+const li = document.createElement('li');
+li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+    const name = h.nome_autostrada || h.name || ('Autostrada ' + h.id);
+    const obj  = { id: h.id_autostrada || h.id, name };
+
+    li.innerHTML = `
+      <div>
+        <strong>${name}</strong>
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-primary btn-edit-row">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-delete-row">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    `;
+
+    makeSelectableLi(li, obj);
+
+    // navigazione
+    li.addEventListener('click', () => {
+      state.highway = { id: obj.id, name };
+      state.toll = null;
+      state.lane = null;
+      updatePathSummary();
+      loadTollsForHighway(state.highway.id);
+    });
+
+    // matita
+    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+      currentAction = 'edit';
+      crudModalTitle.textContent = getModalTitle();
+      configureModalFields();
+      crudModal.show();
+    });
+
+    // X
+    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+        doDelete();
+      }
+    });
+
+    itemsList.appendChild(li);
+  });
+})
+.catch(err => {
+  console.error('Errore caricamento autostrade:', err);
+  setStatus('Errore nel caricamento delle autostrade.');
+});
+}
+
+  // CASELLI per autostrada
+  function loadTollsForHighway(highwayId) {
+if (!highwayId) return;
+setActiveLevel('tolls');
+levelTitle.textContent = 'CASELLI DI ' + state.highway.name;
+setStatus('Caricamento caselli...');
+itemsList.innerHTML = '';
+
+fetch('/api/highways/' + encodeURIComponent(highwayId) + '/tolls')
+.then(res => {
+if (!res.ok) throw new Error('HTTP ' + res.status);
+return res.json();
+})
+.then(data => {
+if (!Array.isArray(data) || data.length === 0) {
+setStatus('Nessun casello trovato per questa autostrada.');
+return;
+}
+setStatus('Seleziona un casello per vedere le corsie.');
+data.forEach(t => {
+const li = document.createElement('li');
+li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+    const name = t.nome_casello || t.name || ('Casello ' + t.id);
+    const obj  = { id: t.id_casello || t.id, name, km: t.km };
+
+    li.innerHTML = `
+      <div>
+        <strong>${name}</strong>
+        <div class="small-muted">${t.km ? ('Km ' + t.km) : ''}</div>
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-primary btn-edit-row">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-delete-row">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    `;
+
+    makeSelectableLi(li, obj);
+
+    // navigazione
+    li.addEventListener('click', () => {
+      state.toll = { id: obj.id, name };
+      state.lane = null;
+      updatePathSummary();
+      loadLanesForToll(state.toll.id);
+    });
+
+    // matita
+    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+      currentAction = 'edit';
+      crudModalTitle.textContent = getModalTitle();
+      configureModalFields();
+      crudModal.show();
+    });
+
+    // X
+    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+        doDelete();
+      }
+    });
+
+    itemsList.appendChild(li);
+  });
+})
+.catch(err => {
+  console.error('Errore caricamento caselli:', err);
+  setStatus('Errore nel caricamento dei caselli.');
+});
+}
+function loadLanesForToll(tollId) {
+if (!tollId) return;
+setActiveLevel('lanes');
+levelTitle.textContent = 'CORSIE DI ' + state.toll.name;
+setStatus('Caricamento corsie...');
+itemsList.innerHTML = '';
+
+fetch('/api/tolls/' + encodeURIComponent(tollId) + '/lanes')
+.then(res => {
+if (!res.ok) throw new Error('HTTP ' + res.status);
+return res.json();
+})
+.then(data => {
+if (!Array.isArray(data) || data.length === 0) {
+setStatus('Nessuna corsia trovata per questo casello.');
+return;
+}
+setStatus('Seleziona una corsia per vedere i dispositivi.');
+data.forEach(l => {
+const li = document.createElement('li');
+li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+    const name = l.nome_corsia || l.name || ('Corsia ' + l.id);
+    const obj  = { id: l.id_corsia || l.id, name, direzione: l.direzione };
+
+    li.innerHTML = `
+      <div>
+        <strong>${name}</strong>
+        <div class="small-muted">${l.direzione || ''}</div>
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-primary btn-edit-row">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-delete-row">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    `;
+
+    makeSelectableLi(li, obj);
+
+    // navigazione
+    li.addEventListener('click', () => {
+      state.lane = { id: obj.id, name };
+      updatePathSummary();
+      loadDevicesForLane(state.lane.id);
+    });
+
+    // matita
+    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+      currentAction = 'edit';
+      crudModalTitle.textContent = getModalTitle();
+      configureModalFields();
+      crudModal.show();
+    });
+
+    // X
+    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+
+      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+        doDelete();
+      }
+    });
+
+    itemsList.appendChild(li);
+  });
+})
+.catch(err => {
+  console.error('Errore caricamento corsie:', err);
+  setStatus('Errore nel caricamento delle corsie.');
+});
+}
+
+  // DISPOSITIVI per corsia
+ function loadDevicesForLane(laneId) {
+if (!laneId) return;
+setActiveLevel('devices');
+levelTitle.textContent = 'DISPOSITIVI DI ' + state.lane.name;
+setStatus('Caricamento dispositivi...');
+itemsList.innerHTML = '';
+
+fetch('/api/lanes/' + encodeURIComponent(laneId) + '/devices')
+.then(res => {
+if (!res.ok) throw new Error('HTTP ' + res.status);
+return res.json();
+})
+.then(data => {
+if (!Array.isArray(data) || data.length === 0) {
+setStatus('Nessun dispositivo trovato per questa corsia.');
+return;
+}
+setStatus('Elenco dispositivi.');
+data.forEach(d => {
+const li = document.createElement('li');
+li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+    const type = d.tipo || d.type || 'Dispositivo';
+    const id   = d.id_dispositivo || d.id;
+    const pos  = d.posizione || '';
+    const obj  = { id, type, posizione: pos };
+
+    li.innerHTML = `
+      <div>
+        <strong>${type}</strong>
+        <div class="small-muted">ID: ${id} ${pos ? '— ' + pos : ''}</div>
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-primary btn-edit-row">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-delete-row">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+    `;
+
+    makeSelectableLi(li, obj);
+
+    // matita (qui niente navigazione ulteriore)
+    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+      currentAction = 'edit';
+      crudModalTitle.textContent = getModalTitle();
+      configureModalFields();
+      crudModal.show();
+    });
+
+    // X
+    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      selectedItem = obj;
+      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+        doDelete();
+      }
+    });
+
+    itemsList.appendChild(li);
+  });
+})
+.catch(err => {
+  console.error('Errore caricamento dispositivi:', err);
+  setStatus('Errore nel caricamento dei dispositivi.');
+});
+}
+  // --- CRUD: dialog separato ---
+
+  function getModalTitle() {
+    if (currentAction === 'create') {
+      switch (currentLevel) {
+        case 'regions':  return 'Nuova regione';
+        case 'highways': return 'Nuova autostrada';
+        case 'tolls':    return 'Nuovo casello';
+        case 'lanes':    return 'Nuova corsia';
+        case 'devices':  return 'Nuovo dispositivo';
+      }
+    } else {
+      switch (currentLevel) {
+        case 'regions':  return 'Modifica regione';
+        case 'highways': return 'Modifica autostrada';
+        case 'tolls':    return 'Modifica casello';
+        case 'lanes':    return 'Modifica corsia';
+        case 'devices':  return 'Modifica dispositivo';
+      }
+    }
+    return 'Modifica';
+  }
+
+  function configureModalFields() {
+    fieldExtraGroup.classList.add('d-none');
+    fieldExtra.value = '';
+
+    switch (currentLevel) {
+      case 'regions':
+        fieldNameLabel.textContent = 'Nome regione';
+        break;
+      case 'highways':
+        fieldNameLabel.textContent = 'Nome autostrada';
+        break;
+      case 'tolls':
+        fieldNameLabel.textContent = 'Nome casello';
+        fieldExtraGroup.classList.remove('d-none');
+        fieldExtraLabel.textContent = 'Km (opzionale)';
+        break;
+      case 'lanes':
+        fieldNameLabel.textContent = 'Nome corsia';
+        fieldExtraGroup.classList.remove('d-none');
+        fieldExtraLabel.textContent = 'Direzione (opzionale)';
+        break;
+      case 'devices':
+        fieldNameLabel.textContent = 'Tipo dispositivo';
+        fieldExtraGroup.classList.remove('d-none');
+        fieldExtraLabel.textContent = 'Posizione (opzionale)';
+        break;
+    }
+
+    if (currentAction === 'edit' && selectedItem) {
+      fieldName.value = selectedItem.name || selectedItem.type || '';
+      if (currentLevel === 'tolls') {
+        fieldExtra.value = selectedItem.km || '';
+      } else if (currentLevel === 'lanes') {
+        fieldExtra.value = selectedItem.direzione || '';
+      } else if (currentLevel === 'devices') {
+        fieldExtra.value = selectedItem.posizione || '';
+      }
+    } else {
+      fieldName.value = '';
+      fieldExtra.value = '';
+    }
+  }
+
+  btnAdd.addEventListener('click', () => {
+    currentAction = 'create';
+    crudModalTitle.textContent = getModalTitle();
+    configureModalFields();
+    crudModal.show();
+  });
+
+  crudForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!fieldName.value.trim()) return;
+    if (currentAction === 'create') {
+      doCreate();
+    } else if (currentAction === 'edit') {
+      doUpdate();
+    }
+  });
+
+  function getEndpointAndBodyForCreate() {
+    const name  = fieldName.value.trim();
+    const extra = fieldExtra.value.trim();
+    switch (currentLevel) {
+      case 'regions':
+        return { url: '/api/regions', body: { nome: name } };
+      case 'highways':
+        return {
+          url: `/api/regions/${encodeURIComponent(state.region.id)}/highways`,
+          body: { nome_autostrada: name }
+        };
+      case 'tolls':
+        return {
+          url: `/api/highways/${encodeURIComponent(state.highway.id)}/tolls`,
+          body: { nome_casello: name, km: extra || null }
+        };
+      case 'lanes':
+        return {
+          url: `/api/tolls/${encodeURIComponent(state.toll.id)}/lanes`,
+          body: { nome_corsia: name, direzione: extra || null }
+        };
+      case 'devices':
+        return {
+          url: `/api/lanes/${encodeURIComponent(state.lane.id)}/devices`,
+          body: { tipo: name, posizione: extra || null }
+        };
+    }
+  }
+
+  function getEndpointForUpdateOrDelete() {
+    const id = selectedItem && selectedItem.id;
+    if (!id) return null;
+    switch (currentLevel) {
+      case 'regions':  return `/api/regions/${encodeURIComponent(id)}`;
+      case 'highways': return `/api/highways/${encodeURIComponent(id)}`;
+      case 'tolls':    return `/api/tolls/${encodeURIComponent(id)}`;
+      case 'lanes':    return `/api/lanes/${encodeURIComponent(id)}`;
+      case 'devices':  return `/api/devices/${encodeURIComponent(id)}`;
+    }
+  }
+
+  function reloadCurrentLevel() {
+    switch (currentLevel) {
+      case 'regions':
+        loadRegions();
+        break;
+      case 'highways':
+        if (state.region)  loadHighwaysForRegion(state.region.id);
+        break;
+      case 'tolls':
+        if (state.highway) loadTollsForHighway(state.highway.id);
+        break;
+      case 'lanes':
+        if (state.toll)    loadLanesForToll(state.toll.id);
+        break;
+      case 'devices':
+        if (state.lane)    loadDevicesForLane(state.lane.id);
+        break;
+    }
+  }
+
+  function doCreate() {
+    const cfg = getEndpointAndBodyForCreate();
+    if (!cfg) return;
+    fetch(cfg.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cfg.body)
+    })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(() => {
+        crudModal.hide();
+        reloadCurrentLevel();
+      })
+      .catch(err => {
+        console.error('Errore creazione:', err);
+        alert('Errore nella creazione.');
+      });
+  }
+
+  function doUpdate() {
+    const url = getEndpointForUpdateOrDelete();
+    if (!url) return;
+    const name  = fieldName.value.trim();
+    const extra = fieldExtra.value.trim();
+    let body = {};
+    switch (currentLevel) {
+      case 'regions':
+        body = { nome: name };
+        break;
+      case 'highways':
+        body = { nome_autostrada: name };
+        break;
+      case 'tolls':
+        body = { nome_casello: name, km: extra || null };
+        break;
+      case 'lanes':
+        body = { nome_corsia: name, direzione: extra || null };
+        break;
+      case 'devices':
+        body = { tipo: name, posizione: extra || null };
+        break;
+    }
+
+    fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(() => {
+        crudModal.hide();
+        reloadCurrentLevel();
+      })
+      .catch(err => {
+        console.error('Errore modifica:', err);
+        alert('Errore nella modifica.');
+      });
+  }
+
+  function doDelete() {
+    const url = getEndpointForUpdateOrDelete();
+    if (!url) return;
+    fetch(url, { method: 'DELETE' })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json().catch(() => ({})); })
+      .then(() => {
+        reloadCurrentLevel();
+      })
+      .catch(err => {
+        console.error('Errore cancellazione:', err);
+        alert('Errore nella cancellazione.');
+      });
+  }
+
+    function updateAddButtonLabel() {
+    switch (currentLevel) {
+      case 'regions':
+        btnAdd.textContent = 'Aggiungi regione';
+        break;
+      case 'highways':
+        btnAdd.textContent = 'Nuova autostrada';
+        break;
+      case 'tolls':
+        btnAdd.textContent = 'Nuovo casello';
+        break;
+      case 'lanes':
+        btnAdd.textContent = 'Nuova corsia';
+        break;
+      case 'devices':
+        btnAdd.textContent = 'Nuovo dispositivo';
+        break;
+      default:
+       btnAdd.textContent = 'Nuovo';
+    }
+  }
+
+  // Avvio
+  loadRegions();
+});

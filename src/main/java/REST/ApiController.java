@@ -407,51 +407,31 @@ public class ApiController {
 
     @GetMapping("/insert/dispositivi/{dispositivo}")
     public ResponseEntity<String> insertDispositivi(@PathVariable("dispositivo") Dispositivi d) {
-        try {
-            daoDispositivi dao = new daoDispositivi();
-            dao.inserisciDispositivo(d);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Dispositivo inserito correttamente");
-        } catch (SQLException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Errore nell'inserimento: " + e.getMessage());
-        }
+        daoDispositivi dao = new daoDispositivi();
+        dao.insertDispositivo(d);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Dispositivo inserito correttamente");
     }
 
 
     @GetMapping("/insert/multa/{multa}")
     public ResponseEntity<String> insertMulta(@PathVariable("multa") Multa m) {
-        try {
-            daoMulte dao = new daoMulte();
-            dao.insertMulta(m);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Multa inserita correttamente");
-        } catch (SQLException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Errore nell'inserimento: " + e.getMessage());
-        }
+        daoMulte dao = new daoMulte();
+        dao.insertMulta(m);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Multa inserita correttamente");
     }
 
     @GetMapping("/insert/veicoli/{veicolo}")
     public ResponseEntity<String> insertVeicolo(@PathVariable("veicolo") Auto a) {
-        try {
-            daoVeicoli dao = new daoVeicoli();
-            dao.insertVeicoli(a);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Veicolo inserito correttamente");
-        } catch (SQLException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Errore nell'inserimento: " + e.getMessage());
-        }
+        daoVeicoli dao = new daoVeicoli();
+        dao.insertVeicoli(a);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Veicolo inserito correttamente");
     }
 
     @GetMapping("/insert/pagamento/{pagamento}")
     public ResponseEntity<String> insertPagamenti(@PathVariable("pagamento") Pagamento p) {
-        try {
-            daoPagamenti dao = new daoPagamenti();
-            dao.insertPagamenti(p);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Pagamento inserito correttamente");
-        } catch (SQLException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Errore nell'inserimento: " + e.getMessage());
-        }
+        daoPagamenti dao = new daoPagamenti();
+        //dao.insert(p);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Pagamento inserito correttamente");
     }
 
 }

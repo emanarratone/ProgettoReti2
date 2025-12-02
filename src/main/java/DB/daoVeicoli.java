@@ -1,6 +1,7 @@
 package DB;
 
 import model.Autostrada.Auto;
+import org.springframework.http.ResponseEntity;
 
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
@@ -86,7 +87,7 @@ public class daoVeicoli {
 
         try (Connection conn = DbConnection.getConnection()) {
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, targa);
+                ps.setString(1, targa);
                 int righeEliminate = ps.executeUpdate();
 
                 if (righeEliminate == 0) {

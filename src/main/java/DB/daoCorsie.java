@@ -73,7 +73,7 @@ public class daoCorsie {
 
     public String getCorsiePerCaselloJson(int idCasello) throws SQLException {
         String sql =
-                "SELECT id_corsia, verso, numero_corsia, tipo_corsia " +
+                "SELECT id_corsia, verso, tipo_corsia " +
                         "FROM CORSIA " +
                         "WHERE id_casello = ? " +
                         "ORDER BY numero_corsia";

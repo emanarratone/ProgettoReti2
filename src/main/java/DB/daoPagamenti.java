@@ -1,6 +1,7 @@
 package DB;
 
 import model.Autostrada.Pagamento;
+import org.springframework.http.ResponseEntity;
 
 import java.sql.*;
 
@@ -24,7 +25,7 @@ public class daoPagamenti {
         }
     }
 
-    public ResponseEntity<String> insertPagamenti(Pagamento p)  throws SQLException {
+   /* public ResponseEntity<String> insertPagamenti(Pagamento p)  throws SQLException {
         String sql = "INSERT INTO Pagamento (id_pagamento, id_biglietto, importo, stato, timestamp_out, casello_out) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DbConnection.getConnection();
@@ -38,8 +39,7 @@ public class daoPagamenti {
                     p.getTimestamp_out().getDayOfMonth()));
             ps.setInt(6, p.getCasello_out().getId());
         }
-    }
-
+    }*/
     public ResponseEntity<String> updatePagamento(int id, Boolean nuovoStato) {
         String sql = "UPDATE Pagamento SET Stato = ? WHERE id_pagamento = ?";
         try (Connection conn = DbConnection.getConnection();

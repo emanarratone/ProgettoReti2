@@ -7,108 +7,19 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css">
-  <style>
-.breadcrumb-custom {
-  font-size: 0.9rem;
-}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
-.breadcrumb-custom span {
-  color: var(--muted);
-}
-
-.breadcrumb-custom a {
-  text-decoration: none;
-  color: var(--accent);
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.breadcrumb-custom a:hover {
-  text-decoration: underline;
-}
-
-/* Titolo livello corrente */
-.level-title {
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--muted);
-}
-
-/* Barra livelli (list-group) */
-#levelList .list-group-item {
-  cursor: pointer;
-  border: 1px solid transparent;
-  padding: .45rem .75rem;
-  font-size: 0.85rem;
-  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
-}
-
-/* Livello corrente */
-.list-group-item.active-level {
-  background-color: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  font-weight: 600;
-}
-
-/* Livelli già superati: “corsia percorsa” */
-.list-group-item.visited-level {
-  background-color: #a5b4fc;   /* indaco chiaro ma vivo */
-  border-color: #818cf8;
-  color: #111827;              /* testo scuro per contrasto */
-}
-
-/* Livelli futuri (non ancora raggiunti) */
-#levelList .list-group-item:not(.active-level):not(.visited-level) {
-  background-color: transparent;
-  color: var(--muted);
-}
-
-/* Hover sugli elementi cliccabili (non current) */
-#levelList .list-group-item.visited-level:hover,
-#levelList .list-group-item:not(.active-level):hover {
-  background-color: #c7d2fe;   /* un gradino sopra ai visitati */
-  border-color: #818cf8;
-  color: #111827;
-}
-
-/* Card che contengono la barra livelli e la lista */
-.card.bg-white {
-  border: 1px solid #e5e7f5;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, .04);
-}
-
-/* Lista elementi (autostrade, caselli, ecc.) */
-#itemsList .list-group-item {
-  border: 1px solid #e5e7f5;
-  margin-bottom: .4rem;
-  transition: background-color .12s ease, box-shadow .12s ease, transform .06s ease;
-}
-
-#itemsList .list-group-item:hover {
-  background-color: #f9fafb;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, .06);
-  transform: translateY(-1px);
-}
-
-#itemsList .list-group-item strong {
-  font-weight: 600;
-}
-
-  </style>
 </head>
 <body>
 <header class="topbar py-2 mb-3">
-  <div class="container-fluid">
-    <div class="d-flex align-items-center justify-content-between">
-      <div class="d-flex align-items-center gap-3">
-        <h4 class="mb-0">Gestionale Autostradale</h4>
-        <span id="roleBadge" class="role-badge" style="display:none;">Amministratore</span>
-      </div>
-      <div class="d-flex align-items-center gap-3">
-        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
-      </div>
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <h4 class="mb-0">Gestionale Autostradale</h4>
+      <span id="roleBadge" class="role-badge" style="display:none;">Amministratore</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="dashboard.html" class="btn btn-outline-secondary btn-sm">Dashboard</a>
+      <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
     </div>
   </div>
 </header>
@@ -144,430 +55,45 @@
       <div>
         <div class="level-title" id="levelTitle">REGIONI</div>
       </div>
-      <div id="status" class="small-muted"></div>
+
+      <div id="status" class="small-muted me-2"></div>
+
+      <div class="btn-group btn-group-sm" role="group" aria-label="Azioni livello"> <button id="btnAdd" class="btn btn-success">Nuovo</button> </div>
     </div>
+
     <ul class="list-group" id="itemsList"></ul>
   </div>
+
+  <!-- Dialog CRUD -->
+  <div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="crudForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="crudModalTitle"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="fieldName" class="form-label" id="fieldNameLabel">Nome</label>
+            <input type="text" class="form-control" id="fieldName" required>
+          </div>
+          <div class="mb-3 d-none" id="fieldExtraGroup">
+            <label for="fieldExtra" class="form-label" id="fieldExtraLabel"></label>
+            <input type="text" class="form-control" id="fieldExtra">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+          <button type="submit" class="btn btn-primary">Salva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </main>
 
-<footer class="text-center py-3 small text-muted">
-  © Gestionale Autostradale — <span id="buildInfo">v1.0</span>
-</footer>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  // Logout coerente con dashboard
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', function () {
-      fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'same-origin'
-      })
-        .then(res => {
-          if (!res.ok) {
-            throw new Error('HTTP ' + res.status);
-          }
-          return res.json().catch(() => ({}));
-        })
-        .then(() => {
-          window.location.href = '/index.html';
-        })
-        .catch(err => {
-          console.error('Errore nel logout:', err);
-          window.location.href = '/index.html';
-        });
-    });
-  }
-
-  // Stato corrente: aggiunta REGION
-  const state = {
-    region: null,
-    highway: null,
-    toll: null,
-    lane: null
-  };
-
-  const itemsList   = document.getElementById('itemsList');
-  const statusEl    = document.getElementById('status');
-  const levelTitle  = document.getElementById('levelTitle');
-  const pathSummary = document.getElementById('pathSummary');
-  const levelList   = document.getElementById('levelList');
-
-  function setStatus(msg) {
-    statusEl.textContent = msg || '';
-  }
-
-  // Attiva livello nella barra orizzontale
- function setActiveLevel(level) {
-  const order = ['regions', 'highways', 'tolls', 'lanes', 'devices'];
-
-  const currentIndex = order.indexOf(level);
-
-  document.querySelectorAll('#levelList .list-group-item').forEach(li => {
-    const liLevel = li.dataset.level;
-    const liIndex = order.indexOf(liLevel);
-
-    // livello corrente
-    li.classList.toggle('active-level', liLevel === level);
-
-    // livelli precedenti come "visited"
-    if (liIndex !== -1 && liIndex < currentIndex) {
-      li.classList.add('visited-level');
-    } else {
-      li.classList.remove('visited-level');
-    }
-  });
-}
-
-
-  // Reset livelli sottostanti
-  function resetBelow(level) {
-    if (level === 'region') {
-      state.highway = null;
-      state.toll = null;
-      state.lane = null;
-    } else if (level === 'highway') {
-      state.toll = null;
-      state.lane = null;
-    } else if (level === 'toll') {
-      state.lane = null;
-    }
-  }
-
-  // PATH SUMMARY: costruisce breadcrumb cliccabile
-// PATH SUMMARY: costruisce breadcrumb cliccabile
-function updatePathSummary() {
-  pathSummary.innerHTML = '';
-
-  // Se non è selezionato nulla
-  if (!state.region) {
-    pathSummary.textContent = "Seleziona una regione per iniziare.";
-    return;
-  }
-
-  const separator = document.createTextNode(' > ');
-
-  // Regione
-  if (state.region) {
-    const aRegion = document.createElement('a');
-    aRegion.textContent = state.region.name;
-    aRegion.addEventListener('click', () => {
-      // torno alla lista regioni
-      state.region = null;
-      state.highway = null;
-      state.toll = null;
-      state.lane = null;
-      loadRegions();
-      updatePathSummary();
-    });
-    pathSummary.appendChild(aRegion);
-  }
-
-  // Autostrada
-  if (state.highway) {
-    pathSummary.appendChild(separator.cloneNode());
-    const aHighway = document.createElement('a');
-    aHighway.textContent = state.highway.name;
-    aHighway.addEventListener('click', () => {
-      if (!state.region) return; // safety
-      resetBelow('region'); // tolgo autostrada e sotto
-      loadHighwaysForRegion(state.region.id);
-      updatePathSummary();
-    });
-    pathSummary.appendChild(aHighway);
-  }
-
-  // Casello
-  if (state.toll) {
-    pathSummary.appendChild(separator.cloneNode());
-    const aToll = document.createElement('a');
-    aToll.textContent = state.toll.name;
-    aToll.addEventListener('click', () => {
-      resetBelow('highway');
-      loadTollsForHighway(state.highway.id);
-      updatePathSummary();
-    });
-    pathSummary.appendChild(aToll);
-  }
-
-  // Corsia
-  if (state.lane) {
-    pathSummary.appendChild(separator.cloneNode());
-    const aLane = document.createElement('a');
-    aLane.textContent = state.lane.name;
-    aLane.addEventListener('click', () => {
-      resetBelow('toll');
-      loadLanesForToll(state.toll.id);
-      updatePathSummary();
-    });
-    pathSummary.appendChild(aLane);
-  }
-
-  // Livello finale "Dispositivi" solo testo (se siamo sui dispositivi)
-  const currentLevelLi = document.querySelector('#levelList .list-group-item.active-level');
-  if (currentLevelLi && currentLevelLi.dataset.level === 'devices') {
-    pathSummary.appendChild(separator.cloneNode());
-    const spanDevices = document.createElement('span');
-    spanDevices.textContent = 'Dispositivi';
-    pathSummary.appendChild(spanDevices);
-  }
-}
-
-
-  // Gestione click sulla barra dei livelli (torna a quel livello)
-  levelList.addEventListener('click', function (e) {
-    const li = e.target.closest('.list-group-item');
-    if (!li) return;
-    const level = li.dataset.level;
-
-    if (level === 'regions') {
-      state.region = null;
-      state.highway = null;
-      state.toll = null;
-      state.lane = null;
-      loadRegions();
-    } else if (level === 'highways' && state.region) {
-      resetBelow('region');
-      loadHighwaysForRegion(state.region.id);
-    } else if (level === 'tolls' && state.highway) {
-      resetBelow('highway');
-      loadTollsForHighway(state.highway.id);
-    } else if (level === 'lanes' && state.toll) {
-      resetBelow('toll');
-      loadLanesForToll(state.toll.id);
-    } else if (level === 'devices' && state.lane) {
-      loadDevicesForLane(state.lane.id);
-    }
-    updatePathSummary();
-  });
-
-  // --- Caricamenti ---
-
-  // REGIONI
-  function loadRegions() {
-    setActiveLevel('regions');
-    levelTitle.textContent = 'REGIONI';
-    setStatus('Caricamento regioni...');
-    itemsList.innerHTML = '';
-
-    fetch('/api/regions')
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (!Array.isArray(data) || data.length === 0) {
-          setStatus('Nessuna regione trovata.');
-          return;
-        }
-        setStatus('Seleziona una regione per vedere le autostrade.');
-        data.forEach(r => {
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
-          const name = r.nome;
-          li.innerHTML = `
-            <div>
-              <strong>${name}</strong>
-            </div>
-          `;
-          li.addEventListener('click', () => {
-            state.region = { id: r.id_regione || r.id, name };
-            state.highway = null;
-            state.toll = null;
-            state.lane = null;
-            updatePathSummary();
-            loadHighwaysForRegion(state.region.id);
-          });
-          itemsList.appendChild(li);
-        });
-      })
-      .catch(err => {
-        console.error('Errore caricamento regioni:', err);
-        setStatus('Errore nel caricamento delle regioni.');
-      });
-  }
-
-  // AUTOSTRADE per regione
-  // AUTOSTRADE per regione
-function loadHighwaysForRegion(regionId) {
-  if (!regionId) return;
-  setActiveLevel('highways');
-
-  const regionName = state.region ? state.region.name : '';
-  levelTitle.textContent = 'AUTOSTRADE DI ' + regionName;
-
-  setStatus('Caricamento autostrade...');
-  itemsList.innerHTML = '';
-
-  fetch('/api/regions/' + encodeURIComponent(regionId) + '/highways')
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
-    .then(data => {
-      if (!Array.isArray(data) || data.length === 0) {
-        setStatus('Nessuna autostrada trovata per questa regione.');
-        return;
-      }
-      setStatus('Seleziona un\'autostrada per vedere i caselli.');
-      data.forEach(h => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        const name = h.nome_autostrada || h.name || ('Autostrada ' + h.id);
-        li.innerHTML = `
-          <div>
-            <strong>${name}</strong>
-          </div>
-        `;
-        li.addEventListener('click', () => {
-          state.highway = { id: h.id_autostrada || h.id, name };
-          state.toll = null;
-          state.lane = null;
-          updatePathSummary();
-          loadTollsForHighway(state.highway.id);
-        });
-        itemsList.appendChild(li);
-      });
-    })
-    .catch(err => {
-      console.error('Errore caricamento autostrade:', err);
-      setStatus('Errore nel caricamento delle autostrade.');
-    });
-}
-
-  // CASELLI per autostrada
-  function loadTollsForHighway(highwayId) {
-    if (!highwayId) return;
-    setActiveLevel('tolls');
-    levelTitle.textContent = 'CASELLI DI ' + state.highway.name;
-    setStatus('Caricamento caselli...');
-    itemsList.innerHTML = '';
-
-    fetch('/api/highways/' + encodeURIComponent(highwayId) + '/tolls')
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (!Array.isArray(data) || data.length === 0) {
-          setStatus('Nessun casello trovato per questa autostrada.');
-          return;
-        }
-        setStatus('Seleziona un casello per vedere le corsie.');
-        data.forEach(t => {
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
-          const name = t.nome_casello || t.name || ('Casello ' + t.id);
-          li.innerHTML = `
-            <div>
-              <strong>${name}</strong>
-              <div class="small-muted">${t.km ? ('Km ' + t.km) : ''}</div>
-            </div>
-          `;
-          li.addEventListener('click', () => {
-            state.toll = { id: t.id_casello || t.id, name };
-            state.lane = null;
-            updatePathSummary();
-            loadLanesForToll(state.toll.id);
-          });
-          itemsList.appendChild(li);
-        });
-      })
-      .catch(err => {
-        console.error('Errore caricamento caselli:', err);
-        setStatus('Errore nel caricamento dei caselli.');
-      });
-  }
-
-  // CORSIE per casello
-  function loadLanesForToll(tollId) {
-    if (!tollId) return;
-    setActiveLevel('lanes');
-    levelTitle.textContent = 'CORSIE DI ' + state.toll.name;
-    setStatus('Caricamento corsie...');
-    itemsList.innerHTML = '';
-
-    fetch('/api/tolls/' + encodeURIComponent(tollId) + '/lanes')
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (!Array.isArray(data) || data.length === 0) {
-          setStatus('Nessuna corsia trovata per questo casello.');
-          return;
-        }
-        setStatus('Seleziona una corsia per vedere i dispositivi.');
-        data.forEach(l => {
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
-          const name = l.nome_corsia || l.name || ('Corsia ' + l.id);
-          li.innerHTML = `
-            <div>
-              <strong>${name}</strong>
-              <div class="small-muted">${l.direzione || ''}</div>
-            </div>
-          `;
-          li.addEventListener('click', () => {
-            state.lane = { id: l.id_corsia || l.id, name };
-            updatePathSummary();
-            loadDevicesForLane(state.lane.id);
-          });
-          itemsList.appendChild(li);
-        });
-      })
-      .catch(err => {
-        console.error('Errore caricamento corsie:', err);
-        setStatus('Errore nel caricamento delle corsie.');
-      });
-  }
-
-  // DISPOSITIVI per corsia
-  function loadDevicesForLane(laneId) {
-    if (!laneId) return;
-    setActiveLevel('devices');
-    levelTitle.textContent = 'DISPOSITIVI DI ' + state.lane.name;
-    setStatus('Caricamento dispositivi...');
-    itemsList.innerHTML = '';
-
-    fetch('/api/lanes/' + encodeURIComponent(laneId) + '/devices')
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (!Array.isArray(data) || data.length === 0) {
-          setStatus('Nessun dispositivo trovato per questa corsia.');
-          return;
-        }
-        setStatus('Elenco dispositivi.');
-        data.forEach(d => {
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
-          const type = d.tipo || d.type || 'Dispositivo';
-          const id   = d.id_dispositivo || d.id;
-          const pos  = d.posizione || '';
-          li.innerHTML = `
-            <div>
-              <strong>${type}</strong>
-              <div class="small-muted">ID: ${id} ${pos ? '— ' + pos : ''}</div>
-            </div>
-          `;
-          itemsList.appendChild(li);
-        });
-      })
-      .catch(err => {
-        console.error('Errore caricamento dispositivi:', err);
-        setStatus('Errore nel caricamento dei dispositivi.');
-      });
-  }
-
-  // Avvio
-  loadRegions();
-});
-</script>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+
+<script src="js/autostrada.js"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 package DB;
 
 import model.Autostrada.Multa;
+import org.springframework.http.ResponseEntity;
 
 import java.sql.*;
 
