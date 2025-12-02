@@ -4,7 +4,7 @@ import model.Autostrada.Pagamento;
 
 import java.sql.*;
 
-public class PagamentiDao {
+public class daoPagamenti {
 
     // Pagamenti da incassare: adatta il valore di stato a ciò che usi nel DB
     private static final String STATO_DA_INCASSARE = "PENDING";
@@ -38,6 +38,5 @@ public class PagamentiDao {
                     p.getTimestamp_out().getDayOfMonth()));
             ps.setInt(6, p.getCasello_out().getId());
         }
-
     }
 }

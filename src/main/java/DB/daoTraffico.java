@@ -7,7 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class TrafficoDao {
+public class daoTraffico {
     public static long countAutoOggi() throws SQLException {
         String SQL = "SELECT COUNT(*) AS auto_oggi " +
                 "FROM Biglietto " +

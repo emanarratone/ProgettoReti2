@@ -16,7 +16,6 @@ public class daoCasello {
             ps.setInt(2, c.getAutostrada());
             ps.setBoolean(3, c.getClosed());
             ps.setInt(4, c.getLimite());
-            //da aggiungere isClosed al DB
             ps.executeUpdate();
         }
     }
