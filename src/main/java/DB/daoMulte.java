@@ -83,19 +83,74 @@ public class daoMulte {
         }
     }
 
-    public void insertMulta(Multa m) throws SQLException {
+    public ResponseEntity<String> insertMulta(Multa m) {
         String s = "INSERT INTO MULTA (id_multa, targa, importo, data, pagato, id_biglietto) VALUES (?,?,?,?,?,?)";
 
-        try(Connection conn = DbConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(s)) {
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(s)) {
             ps.setInt(1, m.getId());
             ps.setString(2, m.getTarga());
             ps.setDouble(3, m.getImporto());
-            ps.setDate(4, new Date(m.getData().getYear(),
-                    m.getData().getMonth().getValue(),
+            ps.setDate(4, new Date(m.getData().getYear() - 1900,
+                    m.getData().getMonthValue() - 1,
                     m.getData().getDayOfMonth()));
             ps.setBoolean(5, m.getPagato());
             ps.setInt(6, m.getBiglietto().getID_biglietto());
+
+            int righeInserite = ps.executeUpdate();
+            if (righeInserite > 0) {
+                return ResponseEntity.ok("{\"message\":\"Multa inserita con successo\"}");
+            } else {
+                return ResponseEntity.internalServerError().body("{\"error\":\"Inserimento multa fallito\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'inserimento\"}");
+        }
+    }
+
+
+
+    public ResponseEntity<String> updateMulta(int id, Boolean nuovoStato) {
+        String sql = "UPDATE Multa SET Pagato = ? WHERE id_multa = ?";  // Corretta a tabella Multa
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, nuovoStato);
+            ps.setInt(2, id);
+            int righeAggiornate = ps.executeUpdate();
+            if (righeAggiornate > 0) {
+                return ResponseEntity.ok("{\"message\":\"Multa aggiornata con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Multa non trovata\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'aggiornamento\"}");
+        }
+    }
+
+    public ResponseEntity<String> deleteMulta(int id) {
+        String sql = "DELETE FROM Multa WHERE id_multa = ?";
+
+        try (Connection conn = DbConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, id);
+                int righeEliminate = ps.executeUpdate();
+
+                if (righeEliminate == 0) {
+                    conn.rollback();
+                    return ResponseEntity.status(404).body("{\"error\":\"Multa non trovata\"}");
+                }
+
+                conn.commit();
+                return ResponseEntity.ok("{\"message\":\"Multa eliminata con successo\"}");
+            } catch (SQLException ex) {
+                conn.rollback();
+                return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore di connessione al database\"}");
         }
     }
 

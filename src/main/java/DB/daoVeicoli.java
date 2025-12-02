@@ -8,15 +8,25 @@ import java.util.Locale;
 
 public class daoVeicoli {
 
-    public void insertVeicoli(Auto a)  throws SQLException {
+    public ResponseEntity<String> insertVeicoli(Auto a) {
         String s = "INSERT INTO Auto (targa, classe_veicolo) VALUES (?,?)";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(s)) {
+
             ps.setString(1, a.getTarga());
             ps.setString(2, a.getTipoVeicolo().toString());
+
+            int righeInserite = ps.executeUpdate(); // INSERT usa executeUpdate()[web:3][web:17]
+
+            if (righeInserite > 0) {
+                return ResponseEntity.ok("{\"message\":\"Veicolo inserito con successo\"}");
+            } else {
+                return ResponseEntity.internalServerError().body("{\"error\":\"Inserimento veicolo fallito\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'inserimento\"}");
         }
     }
-
 
     public String getUltimiPassaggiPerTargaJson(String targa) throws SQLException {
         String sql =
@@ -68,6 +78,32 @@ public class daoVeicoli {
                 sb.append("]");
                 return sb.toString();
             }
+        }
+    }
+
+    public ResponseEntity<String> deleteVeicolo(String targa) {
+        String sql = "DELETE FROM Auto WHERE Targa = ?";
+
+        try (Connection conn = DbConnection.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, targa);
+                int righeEliminate = ps.executeUpdate();
+
+                if (righeEliminate == 0) {
+                    conn.rollback();
+                    return ResponseEntity.status(404).body("{\"error\":\"Auto non trovata\"}");
+                }
+
+                conn.commit();
+                return ResponseEntity.ok("{\"message\":\"Auto eliminata con successo\"}");
+            } catch (SQLException ex) {
+                conn.rollback();
+                return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore di connessione al database\"}");
         }
     }
 }

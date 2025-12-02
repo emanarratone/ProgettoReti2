@@ -9,22 +9,28 @@ import java.sql.SQLException;
 
 public class daoDispositivi {
 
-    public void inserisciDispositivo(Dispositivi d) throws SQLException {
-
-        String sqlDisp   = "INSERT INTO Dispositivo (ID, Stato, Num_corsia, sigla) VALUES (?, ?, ?, ?)";
+    public ResponseEntity<String> insertDispositivo(Dispositivi d) {
+        String sqlDisp = "INSERT INTO Dispositivo (id_dispositivo, Stato, Num_corsia, sigla) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sqlDisp)) {
 
-                ps.setInt(1, d.getID());
-                ps.setString(2, d.getStatus());
-                ps.setInt(3, d.getCorsia());
-                ps.setString(4, getTipoDispositivo(d));
+            ps.setInt(1, d.getID());
+            ps.setString(2, d.getStatus());
+            ps.setInt(3, d.getCorsia());
+            ps.setString(4, getTipoDispositivo(d));
 
-                ps.executeQuery();
+            int righeInserite = ps.executeUpdate();  // Corretto: executeUpdate() per INSERT
+            if (righeInserite > 0) {
+                return ResponseEntity.ok("{\"message\":\"Dispositivo inserito con successo\"}");
+            } else {
+                return ResponseEntity.internalServerError().body("{\"error\":\"Inserimento dispositivo fallito\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'inserimento\"}");
         }
-
     }
+
 
     public String  getTipoDispositivo(Dispositivi d) {
         if(d instanceof Sbarra) return "SBARRA";
@@ -32,41 +38,51 @@ public class daoDispositivi {
         else return "TOTEM";
     }
 
-    public void aggiornaDispositivo(int id, String nuovoStato) throws SQLException {
-        String sql = "UPDATE Dispositivo SET Stato = ? WHERE ID = ?";
+    public ResponseEntity<String> updateDispositivo(int id, String nuovoStato) throws SQLException {
+        String sql = "UPDATE Dispositivo SET Stato = ? WHERE id_dispositivo = ?";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nuovoStato);
             ps.setInt(2, id);
-            ps.executeUpdate();
+            int righeAggiornate = ps.executeUpdate();
+            if (righeAggiornate > 0) {
+                return ResponseEntity.ok("{\"message\":\"Aggiornamento avvenuto con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Dispositivo non trovato\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
         }
     }
 
-    public void eliminaDispositivo(int id) throws SQLException {
-        String sqlDisp   = "DELETE FROM Dispositivo WHERE ID = ?";
-        String sqlElenco = "DELETE FROM Elenco      WHERE ID = ?";
+    public ResponseEntity<String> deleteDispositivo(int id) {
+        String sql = "DELETE FROM Dispositivo WHERE id_dispositivo = ?";
 
         try (Connection conn = DbConnection.getConnection()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement psD = conn.prepareStatement(sqlDisp);
-                 PreparedStatement psE = conn.prepareStatement(sqlElenco)) {
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
-                psD.setInt(1, id);
-                psD.executeUpdate();
+                ps.setInt(1, id);
+                int righeEliminate= ps.executeUpdate();
 
-                psE.setInt(1, id);
-                psE.executeUpdate();
+                if (righeEliminate == 0) {
+                    conn.rollback();
+                    return ResponseEntity.status(404).body("{\"error\":\"Dispositivo non trovato\"}");
+                }
 
                 conn.commit();
+                return ResponseEntity.ok("{\"message\":\"Dispositivo eliminato con successo\"}");
             } catch (SQLException ex) {
                 conn.rollback();
-                throw ex;
+                return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
             } finally {
                 conn.setAutoCommit(true);
             }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore di connessione al database\"}");
         }
     }
-    
+
+
     public  int contaDispositivi() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Dispositivo";
         try (Connection conn = DbConnection.getConnection();
@@ -115,6 +131,4 @@ public class daoDispositivi {
             }
         }
     }
-
-
 }
