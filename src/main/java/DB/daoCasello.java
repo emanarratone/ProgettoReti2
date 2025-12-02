@@ -1,6 +1,7 @@
 package DB;
 
 import model.Autostrada.Casello;
+import org.springframework.http.ResponseEntity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,34 +9,53 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class daoCasello {
-    public void inserisciCasello(Casello c) throws SQLException {
+    public void insertCasello(Casello c) throws SQLException {
         String sql = "INSERT INTO Casello (id_casello, Sigla, autostrada, isClosed, limite) VALUES (?,?,?,?,?)";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, c.getId());
-            ps.setInt(2, c.getAutostrada());
-            ps.setBoolean(3, c.getClosed());
-            ps.setInt(4, c.getLimite());
+            ps.setString(2, c.getSigla());
+            ps.setInt(3, c.getAutostrada());
+            ps.setBoolean(4, c.getClosed());
+            ps.setInt(5, c.getLimite());
             ps.executeUpdate();
         }
     }
 
-    public void aggiornaCasello(String vecchiaSigla, String nuovaSigla) throws SQLException {
-        String sql = "UPDATE Casello SET Sigla = ? WHERE Sigla = ?";
+    public ResponseEntity<String> aggiornaCasello(Casello c1, Casello c2) throws SQLException {
+        String sql = "UPDATE Casello SET id_casello=?, Sigla=?, autostrada=?, isClosed=?, limite=? WHERE Sigla = ?";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, nuovaSigla);
-            ps.setString(2, vecchiaSigla);
+            ps.setInt(1, c2.getId());
+            ps.setString(2, c2.getSigla());
+            ps.setInt(3, c2.getAutostrada());
+            ps.setBoolean(4, c2.getClosed());
+            ps.setInt(5, c2.getLimite());
+            ps.setInt(6, c1.getId());
             ps.executeUpdate();
+            if (ps.executeUpdate() > 0) {
+                return ResponseEntity.ok("{\"message\":\"Casello aggiornato con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Casello non trovato\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'aggiornamento\"}");
         }
     }
 
-    public void eliminaCasello(String sigla) throws SQLException {
+    public ResponseEntity<String> eliminaCasello(Casello c) throws SQLException {
         String sql = "DELETE FROM Casello WHERE Sigla = ?";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, sigla);
+            ps.setString(1, c.getSigla());
             ps.executeUpdate();
+            if (ps.executeUpdate() > 0) {
+                return ResponseEntity.ok("{\"message\":\"Casello eliminato con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Casello non trovato\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
         }
     }
 

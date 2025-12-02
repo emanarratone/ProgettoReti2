@@ -2,6 +2,7 @@ package DB;
 
 import model.Autostrada.Autostrada;
 import model.Autostrada.Casello;
+import org.springframework.http.ResponseEntity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -104,6 +105,41 @@ public class daoAutostrada {
             ps.setString(2, au.getCittà());
             ps.setString(3, au.getRegione());
             ps.executeUpdate();
+        }
+    }
+
+    public ResponseEntity<String> aggiornaAutostrada(Autostrada a1, Autostrada a2) throws SQLException {
+        String sql = "UPDATE AUTOSTRADA SET id_autostrada=?, citta=?, regione=? WHERE id_autostrada=?";
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, a2.getID());
+            ps.setString(2, a2.getCittà());
+            ps.setString(3, a2.getRegione());
+            ps.setInt(4, a1.getID());
+            ps.executeUpdate();
+            if (ps.executeUpdate() > 0) {
+                return ResponseEntity.ok("{\"message\":\"Autostrada aggiornata con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Autostrada non trovata\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'aggiornamento\"}");
+        }
+    }
+
+    public ResponseEntity<String> eliminaAutostrada(Autostrada a) throws SQLException {
+        String sql = "DELETE FROM Autostrada WHERE id_autostrada = ?";
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, a.getID());
+            ps.executeUpdate();
+            if (ps.executeUpdate() > 0) {
+                return ResponseEntity.ok("{\"message\":\"Autostrada eliminata con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Autostrada non trovata\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
         }
     }
 

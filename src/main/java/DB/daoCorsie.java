@@ -1,6 +1,7 @@
 package DB;
 
 import model.Autostrada.Corsia;
+import org.springframework.http.ResponseEntity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,35 +10,53 @@ import java.sql.SQLException;
 
 public class daoCorsie {
 
-    public void inserisciCorsia(Corsia c) throws SQLException {
-        String sql = "INSERT INTO Corsia (id_corsia, id_casello, verso, tipo) VALUES (?,?,?,?)";
+    public void insertCorsia(Corsia c) throws SQLException {
+        String sql = "INSERT INTO Corsia (id_corsia, id_casello, verso, tipo, isClosed) VALUES (?,?,?,?)";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, c.getID());
             ps.setString(2, c.getCasello());
             ps.setString(3, c.getVerso().toString());
             ps.setString(4, c.getTipo().toString());
-            //isClosed??
+            ps.setBoolean(5, c.getClosed());
             ps.executeUpdate();
         }
     }
 
-    public void aggiornaCorsia(int numCorsia, String nuovoVerso) throws SQLException {
-        String sql = "UPDATE Corsia SET verso = ? WHERE Num_corsia = ?";
+    public ResponseEntity<String> aggiornaCorsia(Corsia c1, Corsia c2) throws SQLException {
+        String sql = "UPDATE Corsia SET id_corsia=?, id_casello=?, verso=?, tipo=?, isClosed=? WHERE id_corsia = ?";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, nuovoVerso);
-            ps.setInt(2, numCorsia);
+            ps.setInt(1, c2.getID());
+            ps.setString(2, c2.getCasello());
+            ps.setString(3, c2.getVerso().toString());
+            ps.setString(4, c2.getTipo().toString());
+            ps.setBoolean(5, c2.getClosed());
+            ps.setInt(6, c1.getID());
             ps.executeUpdate();
+            if (ps.executeUpdate() > 0) {
+                return ResponseEntity.ok("{\"message\":\"Corsia aggiornata con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Corsia non trovata\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'aggiornamento\"}");
         }
     }
 
-    public void eliminaCorsia(int numCorsia) throws SQLException {
-        String sql = "DELETE FROM Corsia WHERE Num_corsia = ?";
+    public ResponseEntity<String> eliminaCorsia(Corsia c) throws SQLException {
+        String sql = "DELETE FROM Corsia WHERE id_corsia = ?";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, numCorsia);
+            ps.setInt(1, c.getID());
             ps.executeUpdate();
+            if (ps.executeUpdate() > 0) {
+                return ResponseEntity.ok("{\"message\":\"Corsia eliminata con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Autostrada non trovata\"}");
+            }
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
         }
     }
     

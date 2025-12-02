@@ -53,32 +53,4 @@ public class Utente {
         return isAdmin != null && isAdmin;
     }
 
-
-    public void addDispositivo(){
-        //METODO DI CORSIA
-    }
-
-    public void addCorsia(){
-        // METODO DI CASELLO
-    }
-
-    public void RemoveCasello(){
-        // VA MESSO SU AUTOSTRADA -----> UN AUTOSTRADA "HAS A" CASELLO
-    }
-
-    public void RemoveDispositivo(){
-        //METODO DI CORSIA
-    }
-
-    public void RemoveCorsia(){
-        // METODO DI CASELLO
-    }
-
-    public void RemoveAllCorsie(){
-        //METODO DI CASELLO
-    }
-
-    public void RemoveAllDispositivi(){
-        //METODO DI CORSIA
-    }
 }

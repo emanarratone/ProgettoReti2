@@ -355,6 +355,8 @@ public class ApiController {
 
 
     //------------------INSERT------------------
+
+
     @GetMapping("/insert/highways/{autostrada}")
     public ResponseEntity<String> insertHighways(@PathVariable("autostrada") Autostrada a) {
         try {
@@ -383,7 +385,7 @@ public class ApiController {
     public ResponseEntity<String> insertCasello(@PathVariable("casello") Casello c) {
         try {
             daoCasello dao = new daoCasello();
-            dao.inserisciCasello(c);
+            dao.insertCasello(c);
             return ResponseEntity.status(HttpStatus.CREATED).body("Casello inserito correttamente");
         } catch (SQLException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -395,7 +397,7 @@ public class ApiController {
     public ResponseEntity<String> insertCorsia(@PathVariable("corsia") Corsia c) {
         try {
             daoCorsie dao = new daoCorsie();
-            dao.inserisciCorsia(c);
+            dao.insertCorsia(c);
             return ResponseEntity.status(HttpStatus.CREATED).body("Corsia inserita correttamente");
         } catch (SQLException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
