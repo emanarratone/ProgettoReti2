@@ -8,7 +8,7 @@ import java.util.List;
 
 public class Corsia {
 
-    private final String casello;
+    private final Casello casello;
     private final Integer ID;
     private Verso verso;
     private Tipo tipo;
@@ -16,7 +16,7 @@ public class Corsia {
     public enum Verso { ENTRATA, USCITA }
     private Boolean isClosed;
 
-    public Corsia(String casello,Integer ID, Verso verso, Tipo tipo) {
+    public Corsia(Casello casello,Integer ID, Verso verso, Tipo tipo) {
         this.casello = casello;
         this.ID = ID;
         this.verso = verso;
@@ -40,7 +40,7 @@ public class Corsia {
         isClosed = closed;
     }
 
-    public String getCasello() {
+    public Casello getCasello() {
         return casello;
     }
 
@@ -57,7 +57,7 @@ public class Corsia {
     }
 
     @Override
-    public String toString() {      //sistemare toString
+    public String toString() {
         return "Casello "+ this.casello + "\n" +
                 "ID "+ this.ID + "\n" +
                 "Stato: " + (this.isClosed ? "aperto" : "chiuso");

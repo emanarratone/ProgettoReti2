@@ -9,7 +9,7 @@ import java.util.Locale;
 
 public class daoVeicoli {
 
-    public ResponseEntity<String> insertVeicoli(Auto a) {
+    public ResponseEntity<String> insertVeicoli(Auto a) throws SQLException {
         String s = "INSERT INTO Auto (targa, classe_veicolo) VALUES (?,?)";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(s)) {

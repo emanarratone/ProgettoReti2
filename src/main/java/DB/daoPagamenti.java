@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 
 import java.sql.*;
 
+import static java.sql.Timestamp.valueOf;
+
 public class daoPagamenti {
 
     // Pagamenti da incassare: adatta il valore di stato a ciò che usi nel DB
@@ -25,7 +27,7 @@ public class daoPagamenti {
         }
     }
 
-   /* public ResponseEntity<String> insertPagamenti(Pagamento p)  throws SQLException {
+   public ResponseEntity<String> insertPagamenti(Pagamento p)  throws SQLException {
         String sql = "INSERT INTO Pagamento (id_pagamento, id_biglietto, importo, stato, timestamp_out, casello_out) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DbConnection.getConnection();
@@ -34,20 +36,10 @@ public class daoPagamenti {
             ps.setInt(2, p.getBiglietto().getID_biglietto());
             ps.setDouble(3, p.getPrezzo());
             ps.setString(4, (p.getStatus())? "PAGATO" : "NON PAGATO");
-            ps.setDate(5, new Date(p.getTimestamp_out().getYear(),
-                    p.getTimestamp_out().getMonth().getValue(),
-                    p.getTimestamp_out().getDayOfMonth()));
+            ps.setTimestamp(5, valueOf(p.getTimestamp_out()));
             ps.setInt(6, p.getCasello_out().getId());
-        }
-    }*/
-    public ResponseEntity<String> updatePagamento(int id, Boolean nuovoStato) {
-        String sql = "UPDATE Pagamento SET Stato = ? WHERE id_pagamento = ?";
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setBoolean(1, nuovoStato);
-            ps.setInt(2, id);
-            int righeAggiornate = ps.executeUpdate();
-            if (righeAggiornate > 0) {
+            int n = ps.executeUpdate();
+            if (n > 0) {
                 return ResponseEntity.ok("{\"message\":\"Pagamento aggiornato con successo\"}");
             } else {
                 return ResponseEntity.status(404).body("{\"error\":\"Pagamento non trovato\"}");
@@ -57,33 +49,40 @@ public class daoPagamenti {
         }
     }
 
+   public ResponseEntity<String> updatePagamento(Pagamento p1, Pagamento p2) throws SQLException {
+       String sql = "UPDATE Pagamento SET Stato = ? WHERE id_pagamento = ?";
+       try (Connection conn = DbConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+           ps.setBoolean(1, p2.getStatus());
+           ps.setInt(2, p1.getID_transazione());
+           int righeAggiornate = ps.executeUpdate();
+           if (righeAggiornate > 0) {
+               return ResponseEntity.ok("{\"message\":\"Pagamento aggiornato con successo\"}");
+           } else {
+               return ResponseEntity.status(404).body("{\"error\":\"Pagamento non trovato\"}");
+           }
+       } catch (SQLException e) {
+           return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'aggiornamento\"}");
+       }
+   }
 
-    public ResponseEntity<String> deletePagamento(int id) {
+
+    public ResponseEntity<String> deletePagamento(Pagamento p) throws SQLException {
         String sql = "DELETE FROM Pagamento WHERE id_pagamento = ?";
 
-        try (Connection conn = DbConnection.getConnection()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DbConnection.getConnection();
+              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-                ps.setInt(1, id);
+                ps.setInt(1, p.getID_transazione());
                 int righeEliminate = ps.executeUpdate();
 
                 if (righeEliminate == 0) {
-                    conn.rollback();
                     return ResponseEntity.status(404).body("{\"error\":\"Pagamento non trovato\"}");
                 }
 
-                conn.commit();
                 return ResponseEntity.ok("{\"message\":\"Pagamento eliminato con successo\"}");
-            } catch (SQLException ex) {
-                conn.rollback();
-                return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
-            } finally {
-                conn.setAutoCommit(true);
-            }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore di connessione al database\"}");
+        } catch (SQLException ex) {
+            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
         }
     }
-
 }

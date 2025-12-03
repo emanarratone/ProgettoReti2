@@ -354,7 +354,7 @@ public class ApiController {
     }
 
 
-    //------------------INSERT------------------
+    //------------------INSERT------------------//
 
 
     @GetMapping("/insert/highways/{autostrada}")
@@ -407,31 +407,215 @@ public class ApiController {
 
     @GetMapping("/insert/dispositivi/{dispositivo}")
     public ResponseEntity<String> insertDispositivi(@PathVariable("dispositivo") Dispositivi d) {
-        daoDispositivi dao = new daoDispositivi();
-        dao.insertDispositivo(d);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Dispositivo inserito correttamente");
+        try {
+            daoDispositivi dao = new daoDispositivi();
+            dao.insertDispositivo(d);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Dispositivo inserito correttamente");
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'inserimento: " + e.getMessage());
+        }
     }
 
 
     @GetMapping("/insert/multa/{multa}")
     public ResponseEntity<String> insertMulta(@PathVariable("multa") Multa m) {
-        daoMulte dao = new daoMulte();
-        dao.insertMulta(m);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Multa inserita correttamente");
+        try{
+            daoMulte dao = new daoMulte();
+            dao.insertMulta(m);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Multa inserita correttamente");
+        }catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'inserimento: " + e.getMessage());
+        }
     }
 
     @GetMapping("/insert/veicoli/{veicolo}")
     public ResponseEntity<String> insertVeicolo(@PathVariable("veicolo") Auto a) {
-        daoVeicoli dao = new daoVeicoli();
-        dao.insertVeicoli(a);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Veicolo inserito correttamente");
+        try{
+            daoVeicoli dao = new daoVeicoli();
+            dao.insertVeicoli(a);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Veicolo inserito correttamente");
+        }catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'inserimento: " + e.getMessage());
+        }
     }
 
     @GetMapping("/insert/pagamento/{pagamento}")
     public ResponseEntity<String> insertPagamenti(@PathVariable("pagamento") Pagamento p) {
-        daoPagamenti dao = new daoPagamenti();
-        //dao.insert(p);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Pagamento inserito correttamente");
+        try{
+            daoPagamenti dao = new daoPagamenti();
+            dao.insertPagamenti(p);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Pagamento inserito correttamente");
+        }catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'inserimento: " + e.getMessage());
+        }
     }
 
+    //------------------ UPDATE ------------------//
+
+    @GetMapping("/update/highways/{autostrada1}-{autostrada2}")
+    public ResponseEntity<String> updateHighways(@PathVariable("autostrada1") Autostrada a1,
+                                                 @PathVariable("autostrada2") Autostrada a2) {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            return dao.aggiornaAutostrada(a1, a2);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("update/ticket/{biglietto1}-{biglietto2}")
+    public ResponseEntity<String> updateTicket(@PathVariable("biglietto1") Biglietto b1,
+                                               @PathVariable("biglietto2") Biglietto b2){
+        try {
+            daoBiglietto dao = new daoBiglietto();
+            return dao.aggiornaBiglietto(b1, b2);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("update/casello/{casello1}-{casello2}")
+    public ResponseEntity<String> updateCasello(@PathVariable("casello1") Casello c1,
+                                               @PathVariable("casello2") Casello c2){
+        try {
+            daoCasello dao = new daoCasello();
+            return dao.aggiornaCasello(c1, c2);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("update/corsia/{corsia1}-{corsia2}")
+    public ResponseEntity<String> updateCorsia(@PathVariable("corsia1") Corsia c1,
+                                               @PathVariable("corsia2") Corsia c2){
+        try {
+            daoCorsie dao = new daoCorsie();
+            return dao.aggiornaCorsia(c1, c2);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("update/dispositivi/{dispositivo1}-{dispositivo2}")
+    public ResponseEntity<String> updateDispositivi(@PathVariable("dispositivo1") Dispositivi d1,
+                                                    @PathVariable("dispositivo2") Dispositivi d2){
+        try {
+            daoDispositivi dao = new daoDispositivi();
+            return dao.updateDispositivo(d1, d2);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("update/multe/{multa1}-{multa2}")
+    public ResponseEntity<String> updateMulte(@PathVariable("multa1") Multa m1,
+                                              @PathVariable("multa2") Multa m2){
+        try {
+            daoMulte dao = new daoMulte();
+            return dao.updateMulta(m1, m2);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("update/pagamenti/{pagamento1}-{pagamento2}")
+    public ResponseEntity<String> updateMulte(@PathVariable("pagamento1") Pagamento p1,
+                                              @PathVariable("pagamento2") Pagamento p2){
+        try {
+            daoPagamenti dao = new daoPagamenti();
+            return dao.updatePagamento(p1, p2);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    //------------------ DELETE ------------------//
+
+    @GetMapping("delete/autostrada/{autostrada}")
+    public ResponseEntity<String> deleteHighways(@PathVariable("autostrada") Autostrada a) {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            return dao.eliminaAutostrada(a);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'inserimento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("delete/ticket/{biglietto1}")
+    public ResponseEntity<String> deleteTicket(@PathVariable("biglietto1") Biglietto b1){
+        try {
+            daoBiglietto dao = new daoBiglietto();
+            return dao.eliminaBiglietto(b1);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("delete/casello/{casello1}")
+    public ResponseEntity<String> deleteCasello(@PathVariable("casello1") Casello c1){
+        try {
+            daoCasello dao = new daoCasello();
+            return dao.eliminaCasello(c1);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("delete/corsia/{corsia1}")
+    public ResponseEntity<String> deleteCorsia(@PathVariable("corsia1") Corsia c1){
+        try {
+            daoCorsie dao = new daoCorsie();
+            return dao.eliminaCorsia(c1);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("delete/dispositivi/{dispositivo1}")
+    public ResponseEntity<String> deleteDispositivi(@PathVariable("dispositivo1") Dispositivi d1){
+        try {
+            daoDispositivi dao = new daoDispositivi();
+            return dao.deleteDispositivo(d1);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("delete/multe/{multa1}")
+    public ResponseEntity<String> updateMulte(@PathVariable("multa1") Multa m1){
+        try {
+            daoMulte dao = new daoMulte();
+            return dao.deleteMulta(m1);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("delete/pagamenti/{pagamento1}")
+    public ResponseEntity<String> updateMulte(@PathVariable("pagamento1") Pagamento p1){
+        try {
+            daoPagamenti dao = new daoPagamenti();
+            return dao.deletePagamento(p1);
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Errore nell'aggiornamento: " + e.getMessage());
+        }
+    }
 }

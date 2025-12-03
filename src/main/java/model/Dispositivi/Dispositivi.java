@@ -1,19 +1,20 @@
 package model.Dispositivi;
 
+import model.Autostrada.Corsia;
 import model.Autostrada.Corsia.Verso;
 
 public abstract class Dispositivi {
-    private final Integer corsia;
+    private final Corsia corsia;
     protected final Integer ID;
     protected Boolean status; //guasto = 0 o funzionante = 1
 
-    public Dispositivi(Integer ID, Boolean status, Integer corsia) {
+    public Dispositivi(Integer ID, Boolean status, Corsia corsia) {
         this.ID = ID;
         this.status = status;
         this.corsia = corsia;
     }
 
-    public Integer getCorsia() {
+    public Corsia getCorsia() {
         return corsia;
     }
 

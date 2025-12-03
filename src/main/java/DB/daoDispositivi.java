@@ -10,15 +10,15 @@ import java.sql.SQLException;
 
 public class daoDispositivi {
 
-    public ResponseEntity<String> insertDispositivo(Dispositivi d) {
-        String sqlDisp = "INSERT INTO Dispositivo (id_dispositivo, Stato, Num_corsia, sigla) VALUES (?, ?, ?, ?)";
+    public ResponseEntity<String> insertDispositivo(Dispositivi d) throws SQLException{
+        String sqlDisp = "INSERT INTO Dispositivo (id_dispositivo, Stato, corsia, tipo_dispositivo) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sqlDisp)) {
 
             ps.setInt(1, d.getID());
             ps.setString(2, d.getStatus());
-            ps.setInt(3, d.getCorsia());
+            ps.setInt(3, d.getCorsia().getID());
             ps.setString(4, getTipoDispositivo(d));
 
             int righeInserite = ps.executeUpdate();  // Corretto: executeUpdate() per INSERT
@@ -39,12 +39,15 @@ public class daoDispositivi {
         else return "TOTEM";
     }
 
-    public ResponseEntity<String> updateDispositivo(int id, String nuovoStato) throws SQLException {
-        String sql = "UPDATE Dispositivo SET Stato = ? WHERE id_dispositivo = ?";
+    public ResponseEntity<String> updateDispositivo(Dispositivi d1, Dispositivi d2) throws SQLException {
+        String sql = "UPDATE Dispositivo SET id_dispositivo=?, Stato=?, corsia=?, tipo=? WHERE id_dispositivo = ?";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, nuovoStato);
-            ps.setInt(2, id);
+            ps.setInt(1, d2.getID());
+            ps.setString(2, d2.getStatus());
+            ps.setInt(3, d2.getCorsia().getID());
+            ps.setString(4, getTipoDispositivo(d2));
+            ps.setInt(5, d1.getID());
             int righeAggiornate = ps.executeUpdate();
             if (righeAggiornate > 0) {
                 return ResponseEntity.ok("{\"message\":\"Aggiornamento avvenuto con successo\"}");
@@ -56,13 +59,13 @@ public class daoDispositivi {
         }
     }
 
-    public ResponseEntity<String> deleteDispositivo(int id) {
+    public ResponseEntity<String> deleteDispositivo(Dispositivi d) throws SQLException {
         String sql = "DELETE FROM Dispositivo WHERE id_dispositivo = ?";
 
         try (Connection conn = DbConnection.getConnection()) {
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
-                ps.setInt(1, id);
+                ps.setInt(1, d.getID());
                 int righeEliminate= ps.executeUpdate();
 
                 if (righeEliminate == 0) {

@@ -47,7 +47,7 @@ public class daoCasello {
         String sql = "DELETE FROM Casello WHERE Sigla = ?";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, c.getSigla());
+            ps.setInt(1, c.getId());
             ps.executeUpdate();
             if (ps.executeUpdate() > 0) {
                 return ResponseEntity.ok("{\"message\":\"Casello eliminato con successo\"}");

@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 
 import java.sql.*;
 
+import static java.sql.Timestamp.valueOf;
+
 
 public class daoMulte {
 
@@ -84,7 +86,7 @@ public class daoMulte {
         }
     }
 
-    public ResponseEntity<String> insertMulta(Multa m) {
+    public ResponseEntity<String> insertMulta(Multa m) throws SQLException {
         String s = "INSERT INTO MULTA (id_multa, targa, importo, data, pagato, id_biglietto) VALUES (?,?,?,?,?,?)";
 
         try (Connection conn = DbConnection.getConnection();
@@ -92,9 +94,7 @@ public class daoMulte {
             ps.setInt(1, m.getId());
             ps.setString(2, m.getTarga());
             ps.setDouble(3, m.getImporto());
-            ps.setDate(4, new Date(m.getData().getYear() - 1900,
-                    m.getData().getMonthValue() - 1,
-                    m.getData().getDayOfMonth()));
+            ps.setTimestamp(4, valueOf(m.getData()));
             ps.setBoolean(5, m.getPagato());
             ps.setInt(6, m.getBiglietto().getID_biglietto());
 
@@ -111,12 +111,12 @@ public class daoMulte {
 
 
 
-    public ResponseEntity<String> updateMulta(int id, Boolean nuovoStato) {
+    public ResponseEntity<String> updateMulta(Multa m1, Multa m2) throws SQLException {
         String sql = "UPDATE Multa SET Pagato = ? WHERE id_multa = ?";  // Corretta a tabella Multa
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setBoolean(1, nuovoStato);
-            ps.setInt(2, id);
+            ps.setBoolean(1, m2.getPagato());
+            ps.setInt(2, m1.getId());
             int righeAggiornate = ps.executeUpdate();
             if (righeAggiornate > 0) {
                 return ResponseEntity.ok("{\"message\":\"Multa aggiornata con successo\"}");
@@ -128,13 +128,13 @@ public class daoMulte {
         }
     }
 
-    public ResponseEntity<String> deleteMulta(int id) {
+    public ResponseEntity<String> deleteMulta(Multa m) throws SQLException {
         String sql = "DELETE FROM Multa WHERE id_multa = ?";
 
         try (Connection conn = DbConnection.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, id);
+                ps.setInt(1, m.getId());
                 int righeEliminate = ps.executeUpdate();
 
                 if (righeEliminate == 0) {

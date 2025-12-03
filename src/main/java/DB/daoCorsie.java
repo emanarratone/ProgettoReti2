@@ -15,7 +15,7 @@ public class daoCorsie {
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, c.getID());
-            ps.setString(2, c.getCasello());
+            ps.setInt(2, c.getCasello().getId());
             ps.setString(3, c.getVerso().toString());
             ps.setString(4, c.getTipo().toString());
             ps.setBoolean(5, c.getClosed());
@@ -28,7 +28,7 @@ public class daoCorsie {
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, c2.getID());
-            ps.setString(2, c2.getCasello());
+            ps.setInt(2, c2.getCasello().getId());
             ps.setString(3, c2.getVerso().toString());
             ps.setString(4, c2.getTipo().toString());
             ps.setBoolean(5, c2.getClosed());
