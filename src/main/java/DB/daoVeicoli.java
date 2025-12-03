@@ -95,13 +95,10 @@ public class daoVeicoli {
                     return ResponseEntity.status(404).body("{\"error\":\"Auto non trovata\"}");
                 }
 
-                conn.commit();
                 return ResponseEntity.ok("{\"message\":\"Auto eliminata con successo\"}");
+
             } catch (SQLException ex) {
-                conn.rollback();
                 return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
-            } finally {
-                conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore di connessione al database\"}");

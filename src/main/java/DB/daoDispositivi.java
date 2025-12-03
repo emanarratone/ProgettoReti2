@@ -11,14 +11,15 @@ import java.sql.SQLException;
 public class daoDispositivi {
 
     public ResponseEntity<String> insertDispositivo(Dispositivi d) throws SQLException{
-        String sqlDisp = "INSERT INTO Dispositivo (id_dispositivo, Stato, corsia, tipo_dispositivo) VALUES (?, ?, ?, ?)";
+        String sqlDisp = "INSERT INTO Dispositivo (id_dispositivo, Stato, corsia, casello, tipo_dispositivo) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sqlDisp)) {
 
             ps.setInt(1, d.getID());
             ps.setString(2, d.getStatus());
-            ps.setInt(3, d.getCorsia().getID());
+            ps.setInt(3, d.getCorsia().getNumCorsia());
+            ps.setInt(4, d.getCasello().getId());
             ps.setString(4, getTipoDispositivo(d));
 
             int righeInserite = ps.executeUpdate();  // Corretto: executeUpdate() per INSERT
@@ -45,7 +46,7 @@ public class daoDispositivi {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, d2.getID());
             ps.setString(2, d2.getStatus());
-            ps.setInt(3, d2.getCorsia().getID());
+            ps.setInt(3, d2.getCorsia().getNumCorsia());
             ps.setString(4, getTipoDispositivo(d2));
             ps.setInt(5, d1.getID());
             int righeAggiornate = ps.executeUpdate();
@@ -69,17 +70,13 @@ public class daoDispositivi {
                 int righeEliminate= ps.executeUpdate();
 
                 if (righeEliminate == 0) {
-                    conn.rollback();
                     return ResponseEntity.status(404).body("{\"error\":\"Dispositivo non trovato\"}");
                 }
 
                 conn.commit();
                 return ResponseEntity.ok("{\"message\":\"Dispositivo eliminato con successo\"}");
             } catch (SQLException ex) {
-                conn.rollback();
                 return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
-            } finally {
-                conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore di connessione al database\"}");

@@ -141,14 +141,9 @@ public class daoMulte {
                     conn.rollback();
                     return ResponseEntity.status(404).body("{\"error\":\"Multa non trovata\"}");
                 }
-
-                conn.commit();
                 return ResponseEntity.ok("{\"message\":\"Multa eliminata con successo\"}");
             } catch (SQLException ex) {
-                conn.rollback();
                 return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
-            } finally {
-                conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore di connessione al database\"}");

@@ -1,15 +1,10 @@
 package model.Autostrada;
 
 
-import model.Dispositivi.Dispositivi;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class Corsia {
 
     private final Casello casello;
-    private final Integer ID;
+    private final Integer numCorsia;
     private Verso verso;
     private Tipo tipo;
     public enum Tipo {MANUALE, TELEPASS}
@@ -18,7 +13,7 @@ public class Corsia {
 
     public Corsia(Casello casello,Integer ID, Verso verso, Tipo tipo) {
         this.casello = casello;
-        this.ID = ID;
+        this.numCorsia = ID;
         this.verso = verso;
         this.tipo = tipo;
         this.isClosed = false;
@@ -52,14 +47,14 @@ public class Corsia {
         this.verso = verso;
     }
 
-    public Integer getID() {
-        return ID;
+    public Integer getNumCorsia() {
+        return numCorsia;
     }
 
     @Override
     public String toString() {
         return "Casello "+ this.casello + "\n" +
-                "ID "+ this.ID + "\n" +
+                "ID "+ this.numCorsia + "\n" +
                 "Stato: " + (this.isClosed ? "aperto" : "chiuso");
     }
 
