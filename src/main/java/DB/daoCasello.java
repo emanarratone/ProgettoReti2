@@ -72,11 +72,15 @@ public class daoCasello {
 
     public String getCaselliPerAutostrada(int idAutostrada) throws SQLException {
         String sql =
-                "SELECT c.id_casello, c.nome, c.sigla, acc.progressiva_km " +
+                "SELECT " +
+                        "  c.id_casello, " +
+                        "  c.sigla AS nome_casello, " +
+                        "  acc.progressiva_km AS km " +
                         "FROM CASELLO c " +
-                        "JOIN AUTOSTRADA_CONTIENE_CASELLO acc ON acc.id_casello = c.id_casello " +
-                        "WHERE acc.id_autostrada = ? " +
-                        "ORDER BY acc.progressiva_km, c.nome";
+                        "LEFT JOIN AUTOSTRADA_CONTIENE_CASELLO acc " +
+                        "  ON acc.id_casello = c.id_casello " +
+                        "WHERE c.id_autostrada = ? " +
+                        "ORDER BY acc.progressiva_km NULLS FIRST, c.sigla";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -86,29 +90,41 @@ public class daoCasello {
             try (ResultSet rs = ps.executeQuery()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("[");
-                boolean first = true;
 
+                boolean first = true;
                 while (rs.next()) {
                     if (!first) sb.append(",");
                     first = false;
 
-                    int id        = rs.getInt("id_casello");
-                    String nome   = rs.getString("nome");
-                    String sigla  = rs.getString("sigla");
-                    double km     = rs.getDouble("progressiva_km");
+                    int idCasello        = rs.getInt("id_casello");
+                    String nomeCasello   = rs.getString("nome_casello");
+                    double km            = rs.getDouble("km");
+                    boolean kmWasNull    = rs.wasNull();
+
+                    if (nomeCasello == null) nomeCasello = "";
 
                     sb.append("{")
-                            .append("\"id_casello\":").append(id).append(",")
-                            .append("\"nome_casello\":\"").append(nome).append("\",")
-                            .append("\"sigla\":\"").append(sigla).append("\",")
-                            .append("\"km\":").append(km)
-                            .append("}");
+                            .append("\"id_casello\":").append(idCasello).append(",")
+                            .append("\"nome_casello\":\"").append(escapeJson(nomeCasello)).append("\",");
+
+                    if (kmWasNull) {
+                        sb.append("\"km\":null");
+                    } else {
+                        sb.append("\"km\":").append(String.format(java.util.Locale.US, "%.2f", km));
+                    }
+
+                    sb.append("}");
                 }
 
                 sb.append("]");
                 return sb.toString();
             }
         }
+    }
+
+    private String escapeJson(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
 }

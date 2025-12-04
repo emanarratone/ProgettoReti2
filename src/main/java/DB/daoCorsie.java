@@ -73,9 +73,10 @@ public class daoCorsie {
 
     public String getCorsiePerCaselloJson(int idCasello) throws SQLException {
         String sql =
-                "SELECT id_corsia, verso, tipo_corsia " +
+                "SELECT num_corsia, verso, tipo_corsia " +
                         "FROM CORSIA " +
-                        "WHERE id_casello = ? ";
+                        "WHERE id_casello = ? " +
+                        "ORDER BY num_corsia";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -91,12 +92,18 @@ public class daoCorsie {
                     if (!first) sb.append(",");
                     first = false;
 
-                    int id       = rs.getInt("id_corsia");
-                    String verso = rs.getString("verso");
-                    String tipo  = rs.getString("tipo_corsia");
+                    int numCorsia = rs.getInt("num_corsia");
+                    String verso  = rs.getString("verso");
+                    String tipo   = rs.getString("tipo_corsia");
+
+                    if (verso == null) verso = "";
+                    if (tipo  == null) tipo  = "";
+
+                    String nomeCorsia = "Corsia " + numCorsia;
 
                     sb.append("{")
-                            .append("\"id_corsia\":").append(id).append(",")
+                            .append("\"id_corsia\":").append(numCorsia).append(",")
+                            .append("\"nome_corsia\":\"").append(nomeCorsia).append("\",")
                             .append("\"direzione\":\"").append(verso).append("\",")
                             .append("\"tipo_corsia\":\"").append(tipo).append("\"")
                             .append("}");
@@ -107,5 +114,7 @@ public class daoCorsie {
             }
         }
     }
+
+
 
 }

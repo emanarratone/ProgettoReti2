@@ -33,14 +33,14 @@ public class daoVeicoli {
         String sql =
                 "SELECT " +
                         "  b.timestamp_in, " +
-                        "  c_in.nome   AS casello_ingresso, " +
+                        "  c_in.sigla  AS casello_ingresso, " +
                         "  p.timestamp_out, " +
-                        "  c_out.nome  AS casello_uscita, " +
+                        "  c_out.sigla AS casello_uscita, " +
                         "  p.importo " +
-                        "FROM biglietto b " +
-                        "JOIN pagamento p   ON p.id_biglietto = b.id_biglietto " +
-                        "JOIN casello   c_in  ON c_in.id_casello  = b.casello_in " +
-                        "JOIN casello   c_out ON c_out.id_casello = p.casello_out " +
+                        "FROM BIGLIETTO b " +
+                        "JOIN PAGAMENTO p   ON p.id_biglietto = b.id_biglietto " +
+                        "JOIN CASELLO   c_in  ON c_in.id_casello  = b.casello_in " +
+                        "JOIN CASELLO   c_out ON c_out.id_casello = p.casello_out " +
                         "WHERE b.targa = ? " +
                         "ORDER BY b.timestamp_in DESC " +
                         "LIMIT 20";
@@ -68,10 +68,14 @@ public class daoVeicoli {
                     double importo = rs.getDouble("importo");
 
                     sb.append("{")
-                            .append("\"timestampIn\":\"").append(tin.toLocalDateTime().format(fmt)).append("\",")
-                            .append("\"caselloIn\":\"").append(cin).append("\",")
-                            .append("\"timestampOut\":\"").append(tout.toLocalDateTime().format(fmt)).append("\",")
-                            .append("\"caselloOut\":\"").append(cout).append("\",")
+                            .append("\"timestampIn\":\"").append(
+                                    tin != null ? tin.toLocalDateTime().format(fmt) : ""
+                            ).append("\",")
+                            .append("\"caselloIn\":\"").append(cin != null ? cin : "").append("\",")
+                            .append("\"timestampOut\":\"").append(
+                                    tout != null ? tout.toLocalDateTime().format(fmt) : ""
+                            ).append("\",")
+                            .append("\"caselloOut\":\"").append(cout != null ? cout : "").append("\",")
                             .append("\"importo\":").append(String.format(Locale.US, "%.2f", importo))
                             .append("}");
                 }
@@ -81,6 +85,7 @@ public class daoVeicoli {
             }
         }
     }
+
 
     public ResponseEntity<String> deleteVeicolo(String targa) {
         String sql = "DELETE FROM Auto WHERE Targa = ?";

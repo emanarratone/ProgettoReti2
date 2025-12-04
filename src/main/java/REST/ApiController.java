@@ -276,8 +276,6 @@ public class ApiController {
     public ResponseEntity<String> getTollsForHighway(@PathVariable("idAutostrada") int idAutostrada) {
         try {
             daoCasello dao = new daoCasello();
-            // metodo da implementare: caselli di una autostrada specifica, es.:
-            // [ { "id_casello": 10, "nome_casello": "MI Ovest", "km": 12.5 }, ... ]
             String json = dao.getCaselliPerAutostrada(idAutostrada);
             return ResponseEntity.ok(json);
         } catch (Exception e) {

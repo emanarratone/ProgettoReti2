@@ -97,10 +97,12 @@ public class daoDispositivi {
 
     public String getDispositiviPerCorsiaJson(int idCorsia) throws SQLException {
         String sql =
-                "SELECT id_dispositivo, stato " +
-                        "FROM DISPOSITIVO " +
-                        "WHERE id_corsia = ? " +
-                        "ORDER BY id_dispositivo";
+                "SELECT d.id_dispositivo, d.stato, d.tipo_dispositivo " +
+                        "FROM DISPOSITIVO d " +
+                        "JOIN CORSIA c ON d.num_corsia = c.num_corsia " +
+                        "              AND d.id_casello = c.id_casello " +
+                        "WHERE c.num_corsia = ? " +
+                        "ORDER BY d.id_dispositivo";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -116,9 +118,12 @@ public class daoDispositivi {
                     if (!first) sb.append(",");
                     first = false;
 
-                    int id        = rs.getInt("id_dispositivo");
-                    String stato  = rs.getString("stato");
-                    String tipo   = rs.getString("tipo_dispositivo");
+                    int id       = rs.getInt("id_dispositivo");
+                    String stato = rs.getString("stato");
+                    String tipo  = rs.getString("tipo_dispositivo");
+
+                    if (stato == null) stato = "";
+                    if (tipo  == null) tipo  = "";
 
                     sb.append("{")
                             .append("\"id_dispositivo\":").append(id).append(",")
@@ -132,4 +137,5 @@ public class daoDispositivi {
             }
         }
     }
+
 }
