@@ -73,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    // stato CRUD per livello
     currentLevel = level;
     updateAddButtonLabel();
     selectedItem = null;
@@ -169,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Gestione click barra livelli (navigazione manuale)
+  // Gestione click barra livelli
   levelList.addEventListener('click', function (e) {
     const li = e.target.closest('.list-group-item');
     if (!li) return;
@@ -198,407 +197,406 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // helper: rende selezionabile una li per CRUD
   function makeSelectableLi(li, obj) {
-    li.addEventListener('click', (evt) => {
-      // non interferisce con la logica di navigazione esistente:
-      // la navigazione usa il listener che aggiungiamo noi sotto,
-      // questo si limita ad aggiungere la selezione visuale.
-      document.querySelectorAll('#itemsList .list-group-item').forEach(x => x.classList.remove('active'));
+    li.addEventListener('click', () => {
+      document
+        .querySelectorAll('#itemsList .list-group-item')
+        .forEach(x => x.classList.remove('active'));
       li.classList.add('active');
       selectedItem = obj;
     });
   }
 
-  // --- Caricamenti ---
-
   // REGIONI
   function loadRegions() {
-setActiveLevel('regions');
-levelTitle.textContent = 'REGIONI';
-setStatus('Caricamento regioni...');
-itemsList.innerHTML = '';
+    setActiveLevel('regions');
+    levelTitle.textContent = 'REGIONI';
+    setStatus('Caricamento regioni...');
+    itemsList.innerHTML = '';
 
-fetch('/api/regions')
-.then(res => {
-if (!res.ok) throw new Error('HTTP ' + res.status);
-return res.json();
-})
-.then(data => {
-if (!Array.isArray(data) || data.length === 0) {
-setStatus('Nessuna regione trovata.');
-return;
-}
-setStatus('Seleziona una regione per vedere le autostrade.');
-data.forEach(r => {
-const li = document.createElement('li');
-li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    fetch('/api/regions')
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          setStatus('Nessuna regione trovata.');
+          return;
+        }
+        setStatus('Seleziona una regione per vedere le autostrade.');
+        data.forEach(r => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-    const name = r.nome;
-    const obj  = { id: r.id_regione || r.id, name };
+          const name = r.nome || r.nomeRegione || r.name;
+          const obj  = { id: r.id_regione || r.id, name };
 
-    li.innerHTML = `
-      <div>
-        <strong>${name}</strong>
-      </div>
-      <div class="btn-group btn-group-sm">
-        <button type="button" class="btn btn-outline-primary btn-edit-row">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button type="button" class="btn btn-outline-danger btn-delete-row">
-          <i class="bi bi-x"></i>
-        </button>
-      </div>
-    `;
+          li.innerHTML = `
+            <div>
+              <strong>${name}</strong>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-primary btn-edit-row">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-delete-row">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          `;
 
-    makeSelectableLi(li, obj);
+          makeSelectableLi(li, obj);
 
-    // navigazione
-    li.addEventListener('click', () => {
-      state.region = { id: obj.id, name };
-      state.highway = null;
-      state.toll = null;
-      state.lane = null;
-      updatePathSummary();
-      loadHighwaysForRegion(state.region.id);
-    });
+          // navigazione
+          li.addEventListener('click', () => {
+            state.region = { id: obj.id, name };
+            state.highway = null;
+            state.toll = null;
+            state.lane = null;
+            updatePathSummary();
+            loadHighwaysForRegion(state.region.id);
+          });
 
-    // matita
-    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
-      currentAction = 'edit';
-      crudModalTitle.textContent = getModalTitle();
-      configureModalFields();
-      crudModal.show();
-    });
+          // matita
+          li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            currentAction = 'edit';
+            crudModalTitle.textContent = getModalTitle();
+            configureModalFields();
+            crudModal.show();
+          });
 
-    // X
-    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
-      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
-        doDelete();
-      }
-    });
+          // X
+          li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+              doDelete();
+            }
+          });
 
-    itemsList.appendChild(li);
-  });
-})
-.catch(err => {
-  console.error('Errore caricamento regioni:', err);
-  setStatus('Errore nel caricamento delle regioni.');
-});
-}
+          itemsList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Errore caricamento regioni:', err);
+        setStatus('Errore nel caricamento delle regioni.');
+      });
+  }
 
   // AUTOSTRADE per regione
- function loadHighwaysForRegion(regionId) {
-if (!regionId) return;
-setActiveLevel('highways');
+  function loadHighwaysForRegion(regionId) {
+    if (!regionId) return;
+    setActiveLevel('highways');
 
-const regionName = state.region ? state.region.name : '';
-levelTitle.textContent = 'AUTOSTRADE DI ' + regionName;
+    const regionName = state.region ? state.region.name : '';
+    levelTitle.textContent = 'AUTOSTRADE DI ' + regionName;
 
-setStatus('Caricamento autostrade...');
-itemsList.innerHTML = '';
+    setStatus('Caricamento autostrade...');
+    itemsList.innerHTML = '';
 
-fetch('/api/regions/' + encodeURIComponent(regionId) + '/highways')
-.then(res => {
-if (!res.ok) throw new Error('HTTP ' + res.status);
-return res.json();
-})
-.then(data => {
-if (!Array.isArray(data) || data.length === 0) {
-setStatus('Nessuna autostrada trovata per questa regione.');
-return;
-}
-setStatus('Seleziona un'+ ' autostrada per vedere i caselli.');
-data.forEach(h => {
-const li = document.createElement('li');
-li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    fetch('/api/regions/' + encodeURIComponent(regionId) + '/highways')
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          setStatus('Nessuna autostrada trovata per questa regione.');
+          return;
+        }
+        setStatus('Seleziona un\'autostrada per vedere i caselli.');
+        data.forEach(h => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-    const name = h.nome_autostrada || h.name || ('Autostrada ' + h.id);
-    const obj  = { id: h.id_autostrada || h.id, name };
+          const name = h.nome_autostrada || h.citta || h.name || ('Autostrada ' + h.id);
+          const obj  = { id: h.id_autostrada || h.id, name };
 
-    li.innerHTML = `
-      <div>
-        <strong>${name}</strong>
-      </div>
-      <div class="btn-group btn-group-sm">
-        <button type="button" class="btn btn-outline-primary btn-edit-row">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button type="button" class="btn btn-outline-danger btn-delete-row">
-          <i class="bi bi-x"></i>
-        </button>
-      </div>
-    `;
+          li.innerHTML = `
+            <div>
+              <strong>${name}</strong>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-primary btn-edit-row">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-delete-row">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          `;
 
-    makeSelectableLi(li, obj);
+          makeSelectableLi(li, obj);
 
-    // navigazione
-    li.addEventListener('click', () => {
-      state.highway = { id: obj.id, name };
-      state.toll = null;
-      state.lane = null;
-      updatePathSummary();
-      loadTollsForHighway(state.highway.id);
-    });
+          // navigazione
+          li.addEventListener('click', () => {
+            state.highway = { id: obj.id, name };
+            state.toll = null;
+            state.lane = null;
+            updatePathSummary();
+            loadTollsForHighway(state.highway.id);
+          });
 
-    // matita
-    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
-      currentAction = 'edit';
-      crudModalTitle.textContent = getModalTitle();
-      configureModalFields();
-      crudModal.show();
-    });
+          // matita
+          li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            currentAction = 'edit';
+            crudModalTitle.textContent = getModalTitle();
+            configureModalFields();
+            crudModal.show();
+          });
 
-    // X
-    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
-      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
-        doDelete();
-      }
-    });
+          // X
+          li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+              doDelete();
+            }
+          });
 
-    itemsList.appendChild(li);
-  });
-})
-.catch(err => {
-  console.error('Errore caricamento autostrade:', err);
-  setStatus('Errore nel caricamento delle autostrade.');
-});
-}
+          itemsList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Errore caricamento autostrade:', err);
+        setStatus('Errore nel caricamento delle autostrade.');
+      });
+  }
 
   // CASELLI per autostrada
   function loadTollsForHighway(highwayId) {
-if (!highwayId) return;
-setActiveLevel('tolls');
-levelTitle.textContent = 'CASELLI DI ' + state.highway.name;
-setStatus('Caricamento caselli...');
-itemsList.innerHTML = '';
+    if (!highwayId) return;
+    setActiveLevel('tolls');
+    levelTitle.textContent = 'CASELLI DI ' + state.highway.name;
+    setStatus('Caricamento caselli...');
+    itemsList.innerHTML = '';
 
-fetch('/api/highways/' + encodeURIComponent(highwayId) + '/tolls')
-.then(res => {
-if (!res.ok) throw new Error('HTTP ' + res.status);
-return res.json();
-})
-.then(data => {
-if (!Array.isArray(data) || data.length === 0) {
-setStatus('Nessun casello trovato per questa autostrada.');
-return;
-}
-setStatus('Seleziona un casello per vedere le corsie.');
-data.forEach(t => {
-const li = document.createElement('li');
-li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    fetch('/api/highways/' + encodeURIComponent(highwayId) + '/tolls')
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          setStatus('Nessun casello trovato per questa autostrada.');
+          return;
+        }
+        setStatus('Seleziona un casello per vedere le corsie.');
+        data.forEach(t => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-    const name = t.nome_casello || t.name || ('Casello ' + t.id);
-    const obj  = { id: t.id_casello || t.id, name, km: t.km };
+          const name = t.nome_casello || t.name || ('Casello ' + t.id);
+          const obj  = { id: t.id_casello || t.id, name, km: t.km };
 
-    li.innerHTML = `
-      <div>
-        <strong>${name}</strong>
-        <div class="small-muted">${t.km ? ('Km ' + t.km) : ''}</div>
-      </div>
-      <div class="btn-group btn-group-sm">
-        <button type="button" class="btn btn-outline-primary btn-edit-row">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button type="button" class="btn btn-outline-danger btn-delete-row">
-          <i class="bi bi-x"></i>
-        </button>
-      </div>
-    `;
+          li.innerHTML = `
+            <div>
+              <strong>${name}</strong>
+              <div class="small-muted">${t.km ? ('Km ' + t.km) : ''}</div>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-primary btn-edit-row">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-delete-row">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          `;
 
-    makeSelectableLi(li, obj);
+          makeSelectableLi(li, obj);
 
-    // navigazione
-    li.addEventListener('click', () => {
-      state.toll = { id: obj.id, name };
-      state.lane = null;
-      updatePathSummary();
-      loadLanesForToll(state.toll.id);
-    });
+          // navigazione
+          li.addEventListener('click', () => {
+            state.toll = { id: obj.id, name };
+            state.lane = null;
+            updatePathSummary();
+            loadLanesForToll(state.toll.id);
+          });
 
-    // matita
-    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
-      currentAction = 'edit';
-      crudModalTitle.textContent = getModalTitle();
-      configureModalFields();
-      crudModal.show();
-    });
+          // matita
+          li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            currentAction = 'edit';
+            crudModalTitle.textContent = getModalTitle();
+            configureModalFields();
+            crudModal.show();
+          });
 
-    // X
-    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
-      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
-        doDelete();
-      }
-    });
+          // X
+          li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+              doDelete();
+            }
+          });
 
-    itemsList.appendChild(li);
-  });
-})
-.catch(err => {
-  console.error('Errore caricamento caselli:', err);
-  setStatus('Errore nel caricamento dei caselli.');
-});
-}
-function loadLanesForToll(tollId) {
-if (!tollId) return;
-setActiveLevel('lanes');
-levelTitle.textContent = 'CORSIE DI ' + state.toll.name;
-setStatus('Caricamento corsie...');
-itemsList.innerHTML = '';
+          itemsList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Errore caricamento caselli:', err);
+        setStatus('Errore nel caricamento dei caselli.');
+      });
+  }
 
-fetch('/api/tolls/' + encodeURIComponent(tollId) + '/lanes')
-.then(res => {
-if (!res.ok) throw new Error('HTTP ' + res.status);
-return res.json();
-})
-.then(data => {
-if (!Array.isArray(data) || data.length === 0) {
-setStatus('Nessuna corsia trovata per questo casello.');
-return;
-}
-setStatus('Seleziona una corsia per vedere i dispositivi.');
-data.forEach(l => {
-const li = document.createElement('li');
-li.className = 'list-group-item d-flex justify-content-between align-items-center';
+  // CORSIE per casello
+  function loadLanesForToll(tollId) {
+    if (!tollId) return;
+    setActiveLevel('lanes');
+    levelTitle.textContent = 'CORSIE DI ' + state.toll.name;
+    setStatus('Caricamento corsie...');
+    itemsList.innerHTML = '';
 
-    const name = l.nome_corsia || l.name || ('Corsia ' + l.id);
-    const obj  = { id: l.id_corsia || l.id, name, direzione: l.direzione };
+    fetch('/api/tolls/' + encodeURIComponent(tollId) + '/lanes')
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          setStatus('Nessuna corsia trovata per questo casello.');
+          return;
+        }
+        setStatus('Seleziona una corsia per vedere i dispositivi.');
+        data.forEach(l => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-    li.innerHTML = `
-      <div>
-        <strong>${name}</strong>
-        <div class="small-muted">${l.direzione || ''}</div>
-      </div>
-      <div class="btn-group btn-group-sm">
-        <button type="button" class="btn btn-outline-primary btn-edit-row">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button type="button" class="btn btn-outline-danger btn-delete-row">
-          <i class="bi bi-x"></i>
-        </button>
-      </div>
-    `;
+          const name = l.nome_corsia || l.name || ('Corsia ' + l.id);
+          const obj  = { id: l.id_corsia || l.id, name, direzione: l.direzione };
 
-    makeSelectableLi(li, obj);
+          li.innerHTML = `
+            <div>
+              <strong>${name}</strong>
+              <div class="small-muted">${l.direzione || ''}</div>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-primary btn-edit-row">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-delete-row">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          `;
 
-    // navigazione
-    li.addEventListener('click', () => {
-      state.lane = { id: obj.id, name };
-      updatePathSummary();
-      loadDevicesForLane(state.lane.id);
-    });
+          makeSelectableLi(li, obj);
 
-    // matita
-    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
-      currentAction = 'edit';
-      crudModalTitle.textContent = getModalTitle();
-      configureModalFields();
-      crudModal.show();
-    });
+          // navigazione
+          li.addEventListener('click', () => {
+            state.lane = { id: obj.id, name };
+            updatePathSummary();
+            loadDevicesForLane(state.lane.id);
+          });
 
-    // X
-    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
+          // matita
+          li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            currentAction = 'edit';
+            crudModalTitle.textContent = getModalTitle();
+            configureModalFields();
+            crudModal.show();
+          });
 
-      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
-        doDelete();
-      }
-    });
+          // X
+          li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+              doDelete();
+            }
+          });
 
-    itemsList.appendChild(li);
-  });
-})
-.catch(err => {
-  console.error('Errore caricamento corsie:', err);
-  setStatus('Errore nel caricamento delle corsie.');
-});
-}
+          itemsList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Errore caricamento corsie:', err);
+        setStatus('Errore nel caricamento delle corsie.');
+      });
+  }
 
   // DISPOSITIVI per corsia
- function loadDevicesForLane(laneId) {
-if (!laneId) return;
-setActiveLevel('devices');
-levelTitle.textContent = 'DISPOSITIVI DI ' + state.lane.name;
-setStatus('Caricamento dispositivi...');
-itemsList.innerHTML = '';
+  function loadDevicesForLane(laneId) {
+    if (!laneId) return;
+    setActiveLevel('devices');
+    levelTitle.textContent = 'DISPOSITIVI DI ' + state.lane.name;
+    setStatus('Caricamento dispositivi...');
+    itemsList.innerHTML = '';
 
-fetch('/api/lanes/' + encodeURIComponent(laneId) + '/devices')
-.then(res => {
-if (!res.ok) throw new Error('HTTP ' + res.status);
-return res.json();
-})
-.then(data => {
-if (!Array.isArray(data) || data.length === 0) {
-setStatus('Nessun dispositivo trovato per questa corsia.');
-return;
-}
-setStatus('Elenco dispositivi.');
-data.forEach(d => {
-const li = document.createElement('li');
-li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    fetch('/api/lanes/' + encodeURIComponent(laneId) + '/devices')
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          setStatus('Nessun dispositivo trovato per questa corsia.');
+          return;
+        }
+        setStatus('Elenco dispositivi.');
+        data.forEach(d => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-    const type = d.tipo || d.type || 'Dispositivo';
-    const id   = d.id_dispositivo || d.id;
-    const pos  = d.posizione || '';
-    const obj  = { id, type, posizione: pos };
+          const type = d.tipo || d.type || 'Dispositivo';
+          const id   = d.id_dispositivo || d.id;
+          const pos  = d.posizione || '';
+          const obj  = { id, type, posizione: pos };
 
-    li.innerHTML = `
-      <div>
-        <strong>${type}</strong>
-        <div class="small-muted">ID: ${id} ${pos ? '— ' + pos : ''}</div>
-      </div>
-      <div class="btn-group btn-group-sm">
-        <button type="button" class="btn btn-outline-primary btn-edit-row">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button type="button" class="btn btn-outline-danger btn-delete-row">
-          <i class="bi bi-x"></i>
-        </button>
-      </div>
-    `;
+          li.innerHTML = `
+            <div>
+              <strong>${type}</strong>
+              <div class="small-muted">ID: ${id} ${pos ? '— ' + pos : ''}</div>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-primary btn-edit-row">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-delete-row">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          `;
 
-    makeSelectableLi(li, obj);
+          makeSelectableLi(li, obj);
 
-    // matita (qui niente navigazione ulteriore)
-    li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
-      currentAction = 'edit';
-      crudModalTitle.textContent = getModalTitle();
-      configureModalFields();
-      crudModal.show();
-    });
+          // matita
+          li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            currentAction = 'edit';
+            crudModalTitle.textContent = getModalTitle();
+            configureModalFields();
+            crudModal.show();
+          });
 
-    // X
-    li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      selectedItem = obj;
-      if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
-        doDelete();
-      }
-    });
+          // X
+          li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+              doDelete();
+            }
+          });
 
-    itemsList.appendChild(li);
-  });
-})
-.catch(err => {
-  console.error('Errore caricamento dispositivi:', err);
-  setStatus('Errore nel caricamento dei dispositivi.');
-});
-}
+          itemsList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Errore caricamento dispositivi:', err);
+        setStatus('Errore nel caricamento dei dispositivi.');
+      });
+  }
+
   // --- CRUD: dialog separato ---
 
   function getModalTitle() {
@@ -687,11 +685,19 @@ li.className = 'list-group-item d-flex justify-content-between align-items-cente
     const extra = fieldExtra.value.trim();
     switch (currentLevel) {
       case 'regions':
-        return { url: '/api/regions', body: { nome: name } };
+        return {
+          url: '/api/regions',
+          body: {
+            nomeRegione: name
+          }
+        };
       case 'highways':
         return {
-          url: `/api/regions/${encodeURIComponent(state.region.id)}/highways`,
-          body: { nome_autostrada: name }
+          url: '/api/highways',
+          body: {
+            citta: name,
+            idRegione: state.region.id   // regione selezionata
+          }
         };
       case 'tolls':
         return {
@@ -745,12 +751,13 @@ li.className = 'list-group-item d-flex justify-content-between align-items-cente
 
   function doCreate() {
     const cfg = getEndpointAndBodyForCreate();
-    if (!cfg) return;
-    fetch(cfg.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cfg.body)
-    })
+        if (!cfg) return;
+        console.log('Sending:', cfg.body);  // Add this line
+        fetch(cfg.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cfg.body)
+        })
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(() => {
         crudModal.hide();
@@ -770,10 +777,13 @@ li.className = 'list-group-item d-flex justify-content-between align-items-cente
     let body = {};
     switch (currentLevel) {
       case 'regions':
-        body = { nome: name };
+        body = { nomeRegione: name };
         break;
       case 'highways':
-        body = { nome_autostrada: name };
+        body = {
+          citta: name,
+          idRegione: state.region.id
+        };
         break;
       case 'tolls':
         body = { nome_casello: name, km: extra || null };
@@ -816,7 +826,7 @@ li.className = 'list-group-item d-flex justify-content-between align-items-cente
       });
   }
 
-    function updateAddButtonLabel() {
+  function updateAddButtonLabel() {
     switch (currentLevel) {
       case 'regions':
         btnAdd.textContent = 'Aggiungi regione';
@@ -834,7 +844,7 @@ li.className = 'list-group-item d-flex justify-content-between align-items-cente
         btnAdd.textContent = 'Nuovo dispositivo';
         break;
       default:
-       btnAdd.textContent = 'Nuovo';
+        btnAdd.textContent = 'Nuovo';
     }
   }
 

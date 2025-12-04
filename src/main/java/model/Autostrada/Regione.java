@@ -21,4 +21,6 @@ public class Regione {
     public void setNome(String nome) {
         this.nome = nome;
     }
+
+    public String getNomeRegione() {return nome;}
 }

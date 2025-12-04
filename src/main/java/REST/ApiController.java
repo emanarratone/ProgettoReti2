@@ -226,7 +226,7 @@ public class ApiController {
     public ResponseEntity<String> tolls() {
         try {
             daoAutostrada dao = new daoAutostrada();
-            String json = dao.getRegioniAutostradeCaselli();
+            String json = dao.getregioneAutostradeCaselli();
             return ResponseEntity.ok(json);
         } catch (Exception e) {
             System.err.println("ERRORE in /api/tolls:");
@@ -324,7 +324,7 @@ public class ApiController {
     public ResponseEntity<String> getRegions() {
         try {
             daoAutostrada dao = new daoAutostrada();
-            String json = dao.getRegioniJson(); // qui potrebbe esplodere
+            String json = dao.getregioneJson(); // qui potrebbe esplodere
             return ResponseEntity.ok(json);
         } catch (Exception e) {
             e.printStackTrace(); // importante: guarda lo stack trace in console
@@ -332,6 +332,112 @@ public class ApiController {
                     .body("{\"error\":\"" + e.getMessage() + "\"}");
         }
     }
+    @PostMapping("/regions")
+    public ResponseEntity<String> createRegion(@RequestBody Regione regione) {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            dao.insertRegione(regione);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("{\"status\":\"ok\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore creazione regione\"}");
+        }
+    }
+
+    @PostMapping("/highways")
+    public ResponseEntity<String> createHighway(@RequestBody Autostrada autostrada) {
+        try {
+            if (autostrada.getCittà() == null || autostrada.getCittà().isBlank()) {  // Changed getCittà() to getCitta()
+                return ResponseEntity.badRequest()
+                        .body("{\"error\":\"Nome autostrada mancante\"}");
+            }
+            if (autostrada.getIdRegione() == null) {
+                return ResponseEntity.badRequest()
+                        .body("{\"error\":\"Regione mancante\"}");
+            }
+
+            daoAutostrada dao = new daoAutostrada();
+            dao.insertAutostrada(autostrada);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("{\"status\":\"ok\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore creazione autostrada\"}");
+        }
+    }
+
+
+    @PutMapping("/regions/{idRegione}")
+    public ResponseEntity<String> updateRegion(
+            @PathVariable("idRegione") int idRegione,
+            @RequestBody Regione regione) {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            dao.updateRegione(idRegione, regione);
+            return ResponseEntity.ok("{\"status\":\"ok\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore aggiornamento regione\"}");
+        }
+    }
+
+    // UPDATE autostrada
+    @PutMapping("/highways/{idAutostrada}")
+    public ResponseEntity<String> updateHighway(
+            @PathVariable int idAutostrada,
+            @RequestBody Autostrada autostrada) {
+        try {
+            // Fix: Check for città instead of regione
+            if (autostrada.getCittà() == null || autostrada.getCittà().isBlank()) {
+                return ResponseEntity.badRequest()
+                        .body("{\"error\":\"Nome autostrada mancante\"}");
+            }
+            if (autostrada.getIdRegione() == null) {
+                return ResponseEntity.badRequest()
+                        .body("{\"error\":\"Regione mancante\"}");
+            }
+
+            daoAutostrada dao = new daoAutostrada();
+            dao.updateAutostrada(idAutostrada, autostrada);
+            return ResponseEntity.ok("{\"status\":\"ok\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore aggiornamento autostrada: " + e.getMessage() + "\"}");
+        }
+    }
+
+    @DeleteMapping("/regions/{idRegione}")
+    public ResponseEntity<String> deleteRegion(@PathVariable("idRegione") int idRegione) {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            dao.deleteRegione(idRegione);
+            return ResponseEntity.ok("{\"status\":\"ok\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore cancellazione regione\"}");
+        }
+    }
+
+    // DELETE autostrada
+    @DeleteMapping("/highways/{idAutostrada}")
+    public ResponseEntity<String> deleteHighway(@PathVariable int idAutostrada) {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            dao.deleteAutostrada(idAutostrada);
+            return ResponseEntity.ok("{\"status\":\"ok\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore cancellazione autostrada\"}");
+        }
+    }
+
 
 
     // Autostrade per una regione (step "Autostrada" dopo "Regione")
@@ -339,40 +445,25 @@ public class ApiController {
     public ResponseEntity<String> getHighwaysForRegion(@PathVariable("idRegione") int idRegione) {
         try {
             daoAutostrada dao = new daoAutostrada();
-            // Implementa nel DAO qualcosa come:
-            // [ { "id_autostrada": 1, "nome_autostrada": "A4", "nome_regione": "Lombardia" }, ... ]
             String json = dao.getAutostradePerRegioneJson(idRegione);
             return ResponseEntity.ok(json);
         } catch (Exception e) {
-            System.err.println("ERRORE in GET /api/regions/" + idRegione + "/highways:");
-            e.printStackTrace();
+            e.printStackTrace(); // guarda qui lo stack trace
             return ResponseEntity.internalServerError()
                     .body("{\"error\":\"Errore interno\"}");
         }
     }
 
-
     //------------------INSERT------------------//
 
 
-    @GetMapping("/insert/highways/{autostrada}")
+
+    @PutMapping("/highways/{autostrada}")
     public ResponseEntity<String> insertHighways(@PathVariable("autostrada") Autostrada a) {
         try {
             daoAutostrada dao = new daoAutostrada();
             dao.insertAutostrada(a);
             return ResponseEntity.status(HttpStatus.CREATED).body("Autostrada inserita correttamente");
-        } catch (SQLException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Errore nell'inserimento: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/insert/ticket/{biglietto}")
-    public ResponseEntity<String> insertTickets(@PathVariable("biglietto") Biglietto b) {
-        try {
-            daoBiglietto dao = new daoBiglietto();
-            dao.insertBiglietto(b);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Biglietto inserito correttamente");
         } catch (SQLException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Errore nell'inserimento: " + e.getMessage());

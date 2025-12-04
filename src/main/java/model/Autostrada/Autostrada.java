@@ -1,30 +1,55 @@
 package model.Autostrada;
 
-import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Autostrada {
 
-    private final Integer ID;
-    private final String città;
-    private final String regione;
+    private Integer id;
+    @JsonProperty("citta")// ID autostrada
+    private String citta;      // nome città / autostrada
+    private Integer idRegione; // id regione
 
-    public Autostrada(Integer ID, String città, String regione, String casello) {
-        this.ID = ID;
-        this.città = città;
-        this.regione = regione;
+    public Autostrada() {
+        // necessario per Spring (deserializzazione JSON)
+    }
+
+    public Autostrada(Integer id, String citta, Integer idRegione) {
+        this.id = id;
+        this.citta = citta;
+        this.idRegione = idRegione;
     }
 
     public Integer getID() {
-        return ID;
+        return id;
+    }
+
+    public void setID(Integer id) {
+        this.id = id;
     }
 
     public String getCittà() {
-        return città;
+        return citta;
     }
 
-    public String getRegione() {
-        return regione;
+    public void setCittà(String citta) {
+        this.citta = citta;
     }
 
+    // nel DAO prima usavi getRegione(): lo manteniamo
+    public Integer getRegione() {
+        return idRegione;
+    }
+
+    public void setRegione(Integer idRegione) {
+        this.idRegione = idRegione;
+    }
+
+    // getter/setter espliciti per idRegione se vuoi usarli dal controller
+    public Integer getIdRegione() {
+        return idRegione;
+    }
+
+    public void setIdRegione(Integer idRegione) {
+        this.idRegione = idRegione;
+    }
 }
-
