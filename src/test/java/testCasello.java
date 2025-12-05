@@ -9,24 +9,36 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class testCasello {
 
+    private daoCasello dao;
+    private Regione r;
+    private Autostrada a;
+    private Casello c;
+
+    @BeforeEach
+    void setup() {
+        dao = new daoCasello();
+        r = new Regione(1, "Piemonte");
+        a = new Autostrada("Alessandria", r.getId());
+        c = new Casello("AL", 23, false, 130);
+    }
+
     @Order(0)
     @Test
     public void testExc(){
-        daoCasello dao = new daoCasello();
-        Regione r = new Regione(1, "Piemonte");
-        Autostrada a = new Autostrada("Alessandria", r.getId());
-        Casello c = new Casello("AL", 1, false, 130);
         assertThrows(SQLException.class, ()->{dao.insertCasello(c.getIdAutostrada(), null, c.getLimite(), 50.0);});
     }
-/*
+
     @Order(1)
     @Test
     public void testInsert(){
-        daoCasello dao = new daoCasello();
-        Regione r = new Regione(1, "Piemonte");
-        Autostrada a = new Autostrada("Alessandria", r.getId());
-        Casello c = new Casello("AL", 1, false, 130);
-        assertDoesNotThrow(SQLException.class, dao.insertCasello(c.getIdAutostrada(), null, c.getLimite(), 50.0));
+        assertDoesNotThrow(()-> dao.insertCasello(c.getIdAutostrada(), c.getSigla(), c.getLimite(), 50.0));
     }
-    */
+
+    @Order(2)
+    @Test
+    public void testUpdate(){
+        daoCasello dao = new daoCasello();
+
+    }
+
 }

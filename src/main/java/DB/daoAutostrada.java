@@ -100,17 +100,6 @@ public class daoAutostrada {
         }
     }
 
-    // INSERT autostrada (POST /api/highways)
-    public void insertAutostrada(String citta, int idRegione) throws SQLException {
-        String sql = "INSERT INTO AUTOSTRADA (citta, id_regione) VALUES (?, ?)";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, citta);
-            ps.setInt(2, idRegione);
-            ps.executeUpdate();
-        }
-    }
-
     // GET /api/regions/{idRegione}/highways
     public String getAutostradePerRegioneJson(int idRegione) throws SQLException {
         String sql = """
@@ -153,6 +142,16 @@ public class daoAutostrada {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
+    // INSERT autostrada (POST /api/highways)
+    public void insertAutostrada(String citta, int idRegione) throws SQLException {
+        String sql = "INSERT INTO AUTOSTRADA (citta, id_regione) VALUES (?, ?)";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, citta);
+            ps.setInt(2, idRegione);
+            ps.executeUpdate();
+        }
+    }
 
 
 // UPDATE autostrada (PUT /api/highways/{idAutostrada})
