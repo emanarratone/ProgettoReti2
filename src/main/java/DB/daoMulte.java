@@ -36,7 +36,7 @@ public class daoMulte {
                         "LEFT JOIN BIGLIETTO b  ON b.id_biglietto  = m.id_biglietto " +
                         "LEFT JOIN CASELLO c    ON c.id_casello    = b.casello_in " +
                         "LEFT JOIN AUTOSTRADA a ON a.id_autostrada = c.id_autostrada " +
-                        "LEFT JOIN REGIONE r    ON r.nome          = a.regione";
+                        "LEFT JOIN REGIONE r    ON r.id_regione    = a.id_regione";
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL);

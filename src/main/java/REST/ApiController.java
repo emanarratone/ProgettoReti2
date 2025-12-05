@@ -93,7 +93,26 @@ public class ApiController {
         return ResponseEntity.ok(json);
     }
 
+
     // ================= KPI / DASHBOARD (come avevi) =================
+
+    // LISTA TUTTI I CASELLI + AUTOSTRADA (per dashboard)
+    @GetMapping("/tolls")
+    public ResponseEntity<String> listAllTolls() {
+        try {
+            daoAutostrada dao = new daoAutostrada();
+            // Implementa questo metodo nel DAO per restituire JSON tipo:
+            // [ { "nome": "...", "nome_autostrada": "A4", ... }, ... ]
+            String json = dao.getAutostradeJson();
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            System.err.println("ERRORE in GET /api/tolls:");
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore interno\"}");
+        }
+    }
+
 
     @GetMapping("/traffic")
     public ResponseEntity<String> trafficKpi() {
@@ -139,6 +158,7 @@ public class ApiController {
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
         }
     }
+
 
     @GetMapping("/assets")
     public ResponseEntity<String> assets() {
