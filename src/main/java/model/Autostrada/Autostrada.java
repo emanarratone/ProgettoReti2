@@ -13,6 +13,12 @@ public class Autostrada {
         this.idRegione = idRegione;
     }
 
+    public Autostrada(Integer id, String citta, Integer idRegione) {
+        this.id = id;
+        this.citta = citta;
+        this.idRegione = idRegione;
+    }
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

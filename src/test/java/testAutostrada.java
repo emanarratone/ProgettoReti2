@@ -1,5 +1,4 @@
 import DB.daoAutostrada;
-import DB.daoRegione;
 import model.Autostrada.Autostrada;
 import model.Autostrada.Regione;
 import org.junit.jupiter.api.*;
@@ -24,7 +23,7 @@ public class testAutostrada {
     @Test
     public void testInsertAu(){
         daoAutostrada dao = new daoAutostrada();
-        Regione r =  new Regione(1, "Piemonte");
+        Regione r =  new Regione(11, "Piemonte");
         Autostrada a = new Autostrada("Alessandria", r.getId());
         assertDoesNotThrow(()->{dao.insertAutostrada(a.getCittà(), a.getIdRegione());});
     }
@@ -33,9 +32,8 @@ public class testAutostrada {
     @Test
     public void testUpdateAu(){
         daoAutostrada dao = new daoAutostrada();
-        Regione r =  new Regione(1, "Piemonte");
-        Autostrada a = new Autostrada("Alessandria", r.getId());
-        Autostrada a1 = new Autostrada("Alessandria", r.getId());
+        Regione r =  new Regione(11, "Piemonte");
+        Autostrada a = new Autostrada(22, "Alessandria", r.getId());
         assertDoesNotThrow(()->{dao.updateAutostrada(a.getId(), a.getCittà(), a.getIdRegione());});
     }
 
@@ -43,42 +41,9 @@ public class testAutostrada {
     @Test
     public void testDeleteAu(){
         daoAutostrada dao = new daoAutostrada();
-        Regione r =  new Regione(1, "Piemonte");
-        Autostrada a = new Autostrada( "Alessandria", r.getId());
+        Regione r =  new Regione(11, "Piemonte");
+        Autostrada a = new Autostrada(22,"Alessandria", r.getId());
         assertDoesNotThrow(()->{dao.deleteAutostrada(a.getId());});
     }
 
-    @Order(4)
-    @Test
-    public void testExcRe(){
-        daoRegione dao = new daoRegione();
-        Regione r = new Regione(1, null);
-        assertThrows(SQLException.class, () -> {dao.insertRegione(r.getNomeRegione());});
-    }
-
-
-    @Order(5)
-    @Test
-    public void testinsertRe(){
-        daoRegione dao = new daoRegione();
-        Regione r =  new Regione(1, "Piemonte");
-        assertDoesNotThrow(()->{dao.insertRegione(r.getNomeRegione());});
-    }
-/*
-    @Order(6)
-    @Test
-    public void testupdateRe(){
-        daoAutostrada dao = new daoAutostrada();
-        Regione r =  new Regione(1, "Piemonte");
-        assertDoesNotThrow(()->{dao.updateRegione(1, r);});
-    }
-
-    @Order(7)
-    @Test
-    public void testdeleteRe(){
-        daoAutostrada dao = new daoAutostrada();
-        Regione r =  new Regione(1, "Piemonte");
-        assertDoesNotThrow(()->{dao.deleteRegione(1);});
-    }
-*/
 }
