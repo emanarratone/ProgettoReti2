@@ -11,7 +11,7 @@ import static DB.DbConnection.getConnection;
 public class daoCorsia {
 
     // INSERT corsia (POST /tolls/{idCasello}/lanes)
-    public void insertCorsia(int idCasello, String nomeCorsia, String direzione) throws SQLException {
+    public void insertCorsia(int idCasello, String direzione) throws SQLException {
         String sql = """
             INSERT INTO CORSIA (num_corsia, id_casello, verso, tipo_corsia, is_closed)
             VALUES (?, ?, ?, 'MANUALE', FALSE)

@@ -499,16 +499,10 @@ public class ApiController {
     public ResponseEntity<String> createLane(@PathVariable int idCasello,
                                              @RequestBody Map<String, Object> body) {
         try {
-            String nomeCorsia = (String) body.get("nome_corsia");
             String direzione = (String) body.get("direzione");
 
-            if (nomeCorsia == null || nomeCorsia.isBlank()) {
-                return ResponseEntity.badRequest()
-                        .body("{\"error\":\"nome_corsia obbligatorio\"}");
-            }
-
             daoCorsia dao = new daoCorsia();
-            dao.insertCorsia(idCasello, nomeCorsia, direzione);
+            dao.insertCorsia(idCasello, direzione);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
         } catch (Exception e) {
