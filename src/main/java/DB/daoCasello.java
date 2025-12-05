@@ -13,10 +13,10 @@ import static DB.DbConnection.getConnection;
 
 public class daoCasello {
     // INSERT casello + AUTOSTRADA_CONTIENE_CASELLO (POST /highways/{idAutostrada}/tolls)
-    public void insertCasello(int idAutostrada, String nomeCasello, Double km) throws SQLException {
+    public void insertCasello(int idAutostrada, String nomeCasello, Integer limite, Double km) throws SQLException {
         String insertCasello = """
             INSERT INTO CASELLO (sigla, id_autostrada, is_closed, limite)
-            VALUES (?, ?, FALSE, 130)
+            VALUES (?, ?, FALSE, ?)
             RETURNING id_casello
             """;
         String insertLink = """
@@ -31,6 +31,7 @@ public class daoCasello {
             try (PreparedStatement ps = conn.prepareStatement(insertCasello)) {
                 ps.setString(1, nomeCasello);
                 ps.setInt(2, idAutostrada);
+                ps.setInt(3, limite);
                 try (ResultSet rs = ps.executeQuery()) {
                     rs.next();
                     idCasello = rs.getInt(1);

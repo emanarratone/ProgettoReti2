@@ -21,6 +21,14 @@ public class Casello {
         this.limite = limite;
     }
 
+    public Casello(String sigla,
+                   Integer idAutostrada, boolean closed, Integer limite) {
+        this.sigla = sigla;
+        this.idAutostrada = idAutostrada;
+        this.closed = closed;
+        this.limite = limite;
+    }
+
     public Integer getIdCasello() { return idCasello; }
     public void setIdCasello(Integer idCasello) { this.idCasello = idCasello; }
 

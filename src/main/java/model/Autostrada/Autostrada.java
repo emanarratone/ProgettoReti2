@@ -8,6 +8,11 @@ public class Autostrada {
     private String citta;     // nome autostrada/città
     private Integer idRegione;
 
+    public Autostrada(String citta, Integer idRegione) {
+        this.citta = citta;
+        this.idRegione = idRegione;
+    }
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

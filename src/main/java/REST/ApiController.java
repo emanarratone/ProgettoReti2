@@ -430,7 +430,7 @@ public class ApiController {
             }
 
             daoCasello dao = new daoCasello();
-            dao.insertCasello(idAutostrada, nomeCasello, km);
+            dao.insertCasello(idAutostrada, nomeCasello, 130, km);  //default 130km/h di limite
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
         } catch (Exception e) {
