@@ -1,8 +1,5 @@
 package DB;
 
-import model.Autostrada.Corsia;
-import org.springframework.http.ResponseEntity;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,7 +8,7 @@ import java.util.Locale;
 
 import static DB.DbConnection.getConnection;
 
-public class daoCorsie {
+public class daoCorsia {
 
     // INSERT corsia (POST /tolls/{idCasello}/lanes)
     public void insertCorsia(int idCasello, String nomeCorsia, String direzione) throws SQLException {

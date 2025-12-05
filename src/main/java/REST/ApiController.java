@@ -164,7 +164,7 @@ public class ApiController {
     public ResponseEntity<String> assets() {
         try {
             daoCasello caselloDao   = new daoCasello();
-            daoCorsie corsiaDao     = new daoCorsie();
+            daoCorsia corsiaDao     = new daoCorsia();
             daoDispositivi dispDao  = new daoDispositivi();
 
             int caselli     = caselloDao.contaCaselli();
@@ -249,7 +249,7 @@ public class ApiController {
     @GetMapping("/regions")
     public ResponseEntity<String> getRegions() {
         try {
-            daoAutostrada dao = new daoAutostrada();
+            daoRegione dao = new daoRegione();
             String json = dao.getregioneJson();
             return ResponseEntity.ok(json);
         } catch (Exception e) {
@@ -268,7 +268,7 @@ public class ApiController {
                 return ResponseEntity.badRequest()
                         .body("{\"error\":\"nomeRegione obbligatorio\"}");
             }
-            daoAutostrada dao = new daoAutostrada();
+            daoRegione dao = new daoRegione();
             dao.insertRegione(nome);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
@@ -289,7 +289,7 @@ public class ApiController {
                 return ResponseEntity.badRequest()
                         .body("{\"error\":\"nomeRegione obbligatorio\"}");
             }
-            daoAutostrada dao = new daoAutostrada();
+            daoRegione dao = new daoRegione();
             dao.updateRegione(idRegione, nome);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
@@ -303,7 +303,7 @@ public class ApiController {
     @DeleteMapping("/regions/{idRegione}")
     public ResponseEntity<String> deleteRegion(@PathVariable int idRegione) {
         try {
-            daoAutostrada dao = new daoAutostrada();
+            daoRegione dao = new daoRegione();
             dao.deleteRegione(idRegione);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
@@ -484,7 +484,7 @@ public class ApiController {
     @GetMapping("/tolls/{idCasello}/lanes")
     public ResponseEntity<String> getLanesForToll(@PathVariable int idCasello) {
         try {
-            daoCorsie dao = new daoCorsie();
+            daoCorsia dao = new daoCorsia();
             String json = dao.getCorsiePerCaselloJson(idCasello);
             return ResponseEntity.ok(json);
         } catch (Exception e) {
@@ -507,7 +507,7 @@ public class ApiController {
                         .body("{\"error\":\"nome_corsia obbligatorio\"}");
             }
 
-            daoCorsie dao = new daoCorsie();
+            daoCorsia dao = new daoCorsia();
             dao.insertCorsia(idCasello, nomeCorsia, direzione);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
@@ -531,7 +531,7 @@ public class ApiController {
                         .body("{\"error\":\"nome_corsia obbligatorio\"}");
             }
 
-            daoCorsie dao = new daoCorsie();
+            daoCorsia dao = new daoCorsia();
             dao.updateCorsia(idCorsia, nomeCorsia, direzione);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
@@ -545,7 +545,7 @@ public class ApiController {
     @DeleteMapping("/lanes/{idCorsia}")
     public ResponseEntity<String> deleteLane(@PathVariable int idCorsia) {
         try {
-            daoCorsie dao = new daoCorsie();
+            daoCorsia dao = new daoCorsia();
             dao.deleteCorsia(idCorsia);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
