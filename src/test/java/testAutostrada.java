@@ -1,4 +1,5 @@
 import DB.daoAutostrada;
+import DB.daoRegione;
 import model.Autostrada.Autostrada;
 import model.Autostrada.Regione;
 import org.junit.jupiter.api.*;
@@ -35,7 +36,7 @@ public class testAutostrada {
         Regione r =  new Regione(1, "Piemonte");
         Autostrada a = new Autostrada("Alessandria", r.getId());
         Autostrada a1 = new Autostrada("Alessandria", r.getId());
-        assertDoesNotThrow(()->{dao.aggiornaAutostrada(a, a1);});
+        assertDoesNotThrow(()->{dao.updateAutostrada(a.getId(), a.getCittà(), a.getIdRegione());});
     }
 
     @Order(3)
@@ -43,25 +44,25 @@ public class testAutostrada {
     public void testDeleteAu(){
         daoAutostrada dao = new daoAutostrada();
         Regione r =  new Regione(1, "Piemonte");
-        Autostrada a = new Autostrada(1, "Alessandria", r.getID());
-        assertDoesNotThrow(()->{dao.eliminaAutostrada(a);});
+        Autostrada a = new Autostrada( "Alessandria", r.getId());
+        assertDoesNotThrow(()->{dao.deleteAutostrada(a.getId());});
     }
 
     @Order(4)
     @Test
     public void testExcRe(){
-        daoAutostrada dao = new daoAutostrada();
+        daoRegione dao = new daoRegione();
         Regione r = new Regione(1, null);
-        assertThrows(SQLException.class, () -> {dao.insertRegione(r);});
+        assertThrows(SQLException.class, () -> {dao.insertRegione(r.getNomeRegione());});
     }
 
 
     @Order(5)
     @Test
     public void testinsertRe(){
-        daoAutostrada dao = new daoAutostrada();
+        daoRegione dao = new daoRegione();
         Regione r =  new Regione(1, "Piemonte");
-        assertDoesNotThrow(()->{dao.insertRegione(r);});
+        assertDoesNotThrow(()->{dao.insertRegione(r.getNomeRegione());});
     }
 /*
     @Order(6)

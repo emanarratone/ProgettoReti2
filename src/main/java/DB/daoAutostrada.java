@@ -111,32 +111,6 @@ public class daoAutostrada {
         }
     }
 
-
-    // usato da GET /api/regions
-    public String getregioneJson() throws SQLException {
-        String sql = "SELECT id_regione, nome FROM REGIONE ORDER BY nome";
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            boolean first = true;
-            while (rs.next()) {
-                if (!first) sb.append(",");
-                first = false;
-                int id = rs.getInt("id_regione");
-                String nome = rs.getString("nome");
-                sb.append(String.format(Locale.US,
-                        "{\"id_regione\":%d,\"nome\":\"%s\"}",
-                        id, nome.replace("\"", "\\\"")));
-            }
-        }
-        sb.append("]");
-        return sb.toString();
-    }
-
     // GET /api/regions/{idRegione}/highways
     public String getAutostradePerRegioneJson(int idRegione) throws SQLException {
         String sql = """
@@ -179,36 +153,7 @@ public class daoAutostrada {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
-    // INSERT regione (usato da POST /api/regions)
-    public void insertRegione(String nome) throws SQLException {
-        String sql = "INSERT INTO REGIONE (nome) VALUES (?)";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, nome);
-            ps.executeUpdate();
-        }
-    }
 
-    // UPDATE regione (PUT /api/regions/{idRegione})
-    public void updateRegione(int idRegione, String nome) throws SQLException {
-        String sql = "UPDATE REGIONE SET nome = ? WHERE id_regione = ?";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, nome);
-            ps.setInt(2, idRegione);
-            ps.executeUpdate();
-        }
-    }
-
-    // DELETE regione
-    public void deleteRegione(int idRegione) throws SQLException {
-        String sql = "DELETE FROM REGIONE WHERE id_regione = ?";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, idRegione);
-            ps.executeUpdate();
-        }
-    }
 
 // UPDATE autostrada (PUT /api/highways/{idAutostrada})
     public void updateAutostrada(int idAutostrada, String citta, int idRegione) throws SQLException {
