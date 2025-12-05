@@ -4,73 +4,46 @@ import java.util.ArrayList;
 
 public class Casello {
 
-    private final Integer id;
-    private String sigla;
-    private Integer autostrada;
-    private Boolean isClosed;
-    private Integer limite;
+    private Integer idCasello;   // id_casello
+    private String sigla;        // sigla
+    private Integer idAutostrada;// id_autostrada
+    private boolean closed;      // is_closed
+    private Integer limite;      // limite
 
-    public Casello(Integer id, String sigla, Integer autostrada, Integer limite) {
-        this.id = id;
+    public Casello() {}
+
+    public Casello(Integer idCasello, String sigla,
+                   Integer idAutostrada, boolean closed, Integer limite) {
+        this.idCasello = idCasello;
         this.sigla = sigla;
-        this.autostrada = autostrada;
-        this.isClosed = false;  //chiudi casello da sistemare e aggiungere chiudi corsia
-        //this.isClosed = chiudiCasello();
+        this.idAutostrada = idAutostrada;
+        this.closed = closed;
         this.limite = limite;
     }
 
-    public Integer getId() {
-        return id;
-    }
+    public Integer getIdCasello() { return idCasello; }
+    public void setIdCasello(Integer idCasello) { this.idCasello = idCasello; }
 
-    public String getSigla() {
-        return sigla;
-    }
+    public String getSigla() { return sigla; }
+    public void setSigla(String sigla) { this.sigla = sigla; }
 
-    public void setSigla(String sigla) {
-        this.sigla = sigla;
-    }
+    public Integer getIdAutostrada() { return idAutostrada; }
+    public void setAutostrada(Integer idAutostrada) { this.idAutostrada = idAutostrada; }
 
+    public boolean isClosed() { return closed; }
+    public void setClosed(boolean closed) { this.closed = closed; }
 
-    public Boolean getClosed() {
-        return isClosed;
-    }
+    public Integer getLimite() { return limite; }
+    public void setLimite(Integer limite) { this.limite = limite; }
 
-    public void setClosed(Boolean closed) {
-        isClosed = closed;
-    }
-
-    public Integer getLimite() {
-        return limite;
-    }
-
-    public void setLimite(Integer limite) {
-        this.limite = limite;
-    }
-
-    public Integer getAutostrada() {
-        return autostrada;
-    }
-
-    public void setAutostrada(Integer autostrada) {
-        this.autostrada = autostrada;
-    }
-/*
-    public boolean chiudiCasello() { //setCasello
-        for (Corsia corsia : corsie) {
-            if (!corsia.getClosed()) { //per ogni corsia se è aperta ritorna false
-                return false;
-            }
-        }
-        return true;
-    }
-*/
     @Override
     public String toString() {
-        return "Casello " + this.sigla + ":\n" +
-                "Autostrada: " + this.autostrada + "\n" +
-                "Limite: " + this.limite + "\n" +
-                "Stato: " + (this.isClosed ? "chiuso" : "aperto");
+        return "Casello{" +
+                "idCasello=" + idCasello +
+                ", sigla='" + sigla + '\'' +
+                ", idAutostrada=" + idAutostrada +
+                ", closed=" + closed +
+                ", limite=" + limite +
+                '}';
     }
-
 }

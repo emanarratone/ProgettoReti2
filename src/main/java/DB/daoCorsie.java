@@ -7,62 +7,65 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
+
+import static DB.DbConnection.getConnection;
 
 public class daoCorsie {
 
-    public void insertCorsia(Corsia c) throws SQLException {
-        String sql = "INSERT INTO Corsia (id_corsia, id_casello, verso, tipo, isClosed) VALUES (?,?,?,?)";
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, c.getNumCorsia());
-            ps.setInt(2, c.getCasello().getId());
-            ps.setString(3, c.getVerso().toString());
-            ps.setString(4, c.getTipo().toString());
-            ps.setBoolean(5, c.getClosed());
+    // INSERT corsia (POST /tolls/{idCasello}/lanes)
+    public void insertCorsia(int idCasello, String nomeCorsia, String direzione) throws SQLException {
+        String sql = """
+            INSERT INTO CORSIA (num_corsia, id_casello, verso, tipo_corsia, is_closed)
+            VALUES (?, ?, ?, 'MANUALE', FALSE)
+            """;
+        // ricava num_corsia max+1 per quel casello
+        int nextNum = getNextNumCorsia(idCasello);
+
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, nextNum);
+            ps.setInt(2, idCasello);
+            ps.setString(3, direzione != null && !direzione.isBlank() ? direzione : "ENTRATA");
             ps.executeUpdate();
         }
     }
 
-    public ResponseEntity<String> aggiornaCorsia(Corsia c1, Corsia c2) throws SQLException {
-        String sql = "UPDATE Corsia SET id_corsia=?, id_casello=?, verso=?, tipo=?, isClosed=? WHERE id_corsia = ?";
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, c2.getNumCorsia());
-            ps.setInt(2, c2.getCasello().getId());
-            ps.setString(3, c2.getVerso().toString());
-            ps.setString(4, c2.getTipo().toString());
-            ps.setBoolean(5, c2.getClosed());
-            ps.setInt(6, c1.getNumCorsia());
-            ps.executeUpdate();
-            if (ps.executeUpdate() > 0) {
-                return ResponseEntity.ok("{\"message\":\"Corsia aggiornata con successo\"}");
-            } else {
-                return ResponseEntity.status(404).body("{\"error\":\"Corsia non trovata\"}");
+    private int getNextNumCorsia(int idCasello) throws SQLException {
+        String sql = "SELECT COALESCE(MAX(num_corsia),0) + 1 AS next_num FROM CORSIA WHERE id_casello = ?";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idCasello);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt("next_num");
             }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'aggiornamento\"}");
+        }
+    }
+    //update corsia
+    public void updateCorsia(int numCorsia, String nomeCorsia, String direzione) throws SQLException {
+        String sql = "UPDATE CORSIA SET verso = ? WHERE num_corsia = ?";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, direzione != null && !direzione.isBlank() ? direzione : "ENTRATA");
+            ps.setInt(2, numCorsia);
+            ps.executeUpdate();
         }
     }
 
-    public ResponseEntity<String> eliminaCorsia(Corsia c) throws SQLException {
-        String sql = "DELETE FROM Corsia WHERE id_corsia = ?";
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, c.getNumCorsia());
+    // DELETE corsia
+    public void deleteCorsia(int numCorsia) throws SQLException {
+        String sql = "DELETE FROM CORSIA WHERE num_corsia = ?";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, numCorsia);
             ps.executeUpdate();
-            if (ps.executeUpdate() > 0) {
-                return ResponseEntity.ok("{\"message\":\"Corsia eliminata con successo\"}");
-            } else {
-                return ResponseEntity.status(404).body("{\"error\":\"Autostrada non trovata\"}");
-            }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
         }
     }
     
     public  int contaCorsie() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Corsia";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -71,48 +74,47 @@ public class daoCorsie {
         }
     }
 
+    // GET /tolls/{idCasello}/lanes
+    // JSON: [ { "id_corsia":1,"nome_corsia":"Corsia 1","direzione":"ENTRATA" }, ... ]
     public String getCorsiePerCaselloJson(int idCasello) throws SQLException {
-        String sql =
-                "SELECT num_corsia, verso, tipo_corsia " +
-                        "FROM CORSIA " +
-                        "WHERE id_casello = ? " +
-                        "ORDER BY num_corsia";
+        String sql = """
+            SELECT num_corsia,
+                   verso,
+                   tipo_corsia,
+                   is_closed
+            FROM CORSIA
+            WHERE id_casello = ?
+            ORDER BY num_corsia
+            """;
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
 
-        try (Connection con = DbConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idCasello);
-
             try (ResultSet rs = ps.executeQuery()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("[");
                 boolean first = true;
-
                 while (rs.next()) {
                     if (!first) sb.append(",");
                     first = false;
+                    int num = rs.getInt("num_corsia");
+                    String verso = rs.getString("verso");
+                    String tipo = rs.getString("tipo_corsia");
+                    boolean closed = rs.getBoolean("is_closed");
 
-                    int numCorsia = rs.getInt("num_corsia");
-                    String verso  = rs.getString("verso");
-                    String tipo   = rs.getString("tipo_corsia");
-
-                    if (verso == null) verso = "";
-                    if (tipo  == null) tipo  = "";
-
-                    String nomeCorsia = "Corsia " + numCorsia;
-
-                    sb.append("{")
-                            .append("\"id_corsia\":").append(numCorsia).append(",")
-                            .append("\"nome_corsia\":\"").append(nomeCorsia).append("\",")
-                            .append("\"direzione\":\"").append(verso).append("\",")
-                            .append("\"tipo_corsia\":\"").append(tipo).append("\"")
-                            .append("}");
+                    String nomeCorsia = "Corsia " + num;
+                    sb.append(String.format(Locale.US,
+                            "{\"id_corsia\":%d,\"nome_corsia\":\"%s\",\"direzione\":\"%s\",\"tipo\":\"%s\",\"closed\":%b}",
+                            num,
+                            nomeCorsia,
+                            verso,
+                            tipo,
+                            closed));
                 }
-
-                sb.append("]");
-                return sb.toString();
             }
         }
+        sb.append("]");
+        return sb.toString();
     }
 
 

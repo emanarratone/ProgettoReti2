@@ -1,26 +1,15 @@
 package model.Autostrada;
 
+
 public class Regione {
 
-    private String ID;
-    private String nome;
+    private Integer id;        // id_regione
+    private String nomeRegione;
 
-    public Regione(String ID, String nome) {
-        this.ID = ID;
-        this.nome = nome;
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+
+    public String getNomeRegione() { return nomeRegione; }
+    public void setNomeRegione(String nomeRegione) { this.nomeRegione = nomeRegione;
     }
-
-    public String getID() {
-        return ID;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public String getNomeRegione() {return nome;}
 }

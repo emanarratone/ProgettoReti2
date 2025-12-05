@@ -37,7 +37,7 @@ public class daoPagamenti {
             ps.setDouble(3, p.getPrezzo());
             ps.setString(4, (p.getStatus())? "PAGATO" : "NON PAGATO");
             ps.setTimestamp(5, valueOf(p.getTimestamp_out()));
-            ps.setInt(6, p.getCasello_out().getId());
+            ps.setInt(6, p.getCasello_out().getIdCasello());
             int n = ps.executeUpdate();
             if (n > 0) {
                 return ResponseEntity.ok("{\"message\":\"Pagamento aggiornato con successo\"}");

@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
 
 import static DB.DbConnection.getConnection;
 
@@ -99,115 +100,78 @@ public class daoAutostrada {
         }
     }
 
-    public void insertAutostrada(Autostrada a) throws SQLException {
+    // INSERT autostrada (POST /api/highways)
+    public void insertAutostrada(String citta, int idRegione) throws SQLException {
         String sql = "INSERT INTO AUTOSTRADA (citta, id_regione) VALUES (?, ?)";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, a.getCittà());
-            ps.setInt(2, a.getRegione());
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, citta);
+            ps.setInt(2, idRegione);
             ps.executeUpdate();
         }
     }
 
 
-
-    public ResponseEntity<String> aggiornaAutostrada(Autostrada a1, Autostrada a2) throws SQLException {
-        String sql = "UPDATE AUTOSTRADA SET id_autostrada=?, citta=?, regione=? WHERE id_autostrada=?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, a2.getID());
-            ps.setString(2, a2.getCittà());
-            ps.setInt(3, a2.getRegione());
-            ps.setInt(4, a1.getID());
-            ps.executeUpdate();
-            if (ps.executeUpdate() > 0) {
-                return ResponseEntity.ok("{\"message\":\"Autostrada aggiornata con successo\"}");
-            } else {
-                return ResponseEntity.status(404).body("{\"error\":\"Autostrada non trovata\"}");
-            }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'aggiornamento\"}");
-        }
-    }
-
-    public ResponseEntity<String> eliminaAutostrada(Autostrada a) throws SQLException {
-        String sql = "DELETE FROM Autostrada WHERE id_autostrada = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, a.getID());
-            ps.executeUpdate();
-            if (ps.executeUpdate() > 0) {
-                return ResponseEntity.ok("{\"message\":\"Autostrada eliminata con successo\"}");
-            } else {
-                return ResponseEntity.status(404).body("{\"error\":\"Autostrada non trovata\"}");
-            }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
-        }
-    }
-
+    // usato da GET /api/regions
     public String getregioneJson() throws SQLException {
-        String sql = "SELECT id_regione, nome FROM regione ORDER BY nome";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        String sql = "SELECT id_regione, nome FROM REGIONE ORDER BY nome";
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("[");
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
             boolean first = true;
             while (rs.next()) {
-                if (!first) {
-                    sb.append(",");
-                }
+                if (!first) sb.append(",");
                 first = false;
-
                 int id = rs.getInt("id_regione");
                 String nome = rs.getString("nome");
-
-                sb.append("{")
-                        .append("\"id_regione\":").append(id).append(",")
-                        .append("\"nome\":\"").append(escapeJson(nome)).append("\"")
-                        .append("}");
+                sb.append(String.format(Locale.US,
+                        "{\"id_regione\":%d,\"nome\":\"%s\"}",
+                        id, nome.replace("\"", "\\\"")));
             }
-
-            sb.append("]");
-            return sb.toString();
         }
+        sb.append("]");
+        return sb.toString();
     }
+
+    // GET /api/regions/{idRegione}/highways
     public String getAutostradePerRegioneJson(int idRegione) throws SQLException {
         String sql = """
-        SELECT id_autostrada, citta AS nome_autostrada
-        FROM AUTOSTRADA
-        WHERE id_regione = ?
-        ORDER BY id_autostrada
-    """;
-
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
+            SELECT a.id_autostrada,
+                   a.citta,
+                   r.nome AS nome_regione
+            FROM AUTOSTRADA a
+            JOIN REGIONE r ON a.id_regione = r.id_regione
+            WHERE a.id_regione = ?
+            ORDER BY a.citta
+            """;
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idRegione);
             try (ResultSet rs = ps.executeQuery()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("[");
                 boolean first = true;
                 while (rs.next()) {
                     if (!first) sb.append(",");
                     first = false;
                     int id = rs.getInt("id_autostrada");
-                    String nome = rs.getString("nome_autostrada");
-                    sb.append("{")
-                            .append("\"id_autostrada\":").append(id).append(",")
-                            .append("\"nome_autostrada\":\"").append(nome).append("\"")
-                            .append("}");
+                    String citta = rs.getString("citta");
+                    String nomeRegione = rs.getString("nome_regione");
+                    sb.append(String.format(Locale.US,
+                            "{\"id_autostrada\":%d,\"citta\":\"%s\",\"nome_regione\":\"%s\"}",
+                            id,
+                            citta.replace("\"", "\\\""),
+                            nomeRegione.replace("\"", "\\\"")));
                 }
-                sb.append("]");
-                return sb.toString();
             }
         }
+        sb.append("]");
+        return sb.toString();
     }
-
-
 
     // utility semplice per escape delle stringhe JSON
     private String escapeJson(String s) {
@@ -215,54 +179,55 @@ public class daoAutostrada {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
-    public void insertRegione(Regione r) throws SQLException {
-        String sql = "INSERT INTO regione (nome) VALUES (?)";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, r.getNomeRegione());
+    // INSERT regione (usato da POST /api/regions)
+    public void insertRegione(String nome) throws SQLException {
+        String sql = "INSERT INTO REGIONE (nome) VALUES (?)";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, nome);
             ps.executeUpdate();
         }
     }
 
-    public void updateRegione(int idRegione, Regione r) throws SQLException {
-        String sql = "UPDATE regione SET nome = ? WHERE id_regione = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, r.getNomeRegione());
+    // UPDATE regione (PUT /api/regions/{idRegione})
+    public void updateRegione(int idRegione, String nome) throws SQLException {
+        String sql = "UPDATE REGIONE SET nome = ? WHERE id_regione = ?";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, nome);
             ps.setInt(2, idRegione);
-            int updated = ps.executeUpdate();
-            if (updated == 0) {
-                throw new SQLException("Nessuna regione aggiornata, id=" + idRegione);
-            }
+            ps.executeUpdate();
         }
     }
 
+    // DELETE regione
     public void deleteRegione(int idRegione) throws SQLException {
-        String sql = "DELETE FROM regione WHERE id_regione = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        String sql = "DELETE FROM REGIONE WHERE id_regione = ?";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idRegione);
             ps.executeUpdate();
         }
     }
 
-    // UPDATE
-    public void updateAutostrada(int idAutostrada, Autostrada a) throws SQLException {
+// UPDATE autostrada (PUT /api/highways/{idAutostrada})
+    public void updateAutostrada(int idAutostrada, String citta, int idRegione) throws SQLException {
         String sql = "UPDATE AUTOSTRADA SET citta = ?, id_regione = ? WHERE id_autostrada = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, a.getCittà());
-            ps.setInt(2, a.getRegione());
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, citta);
+            ps.setInt(2, idRegione);
             ps.setInt(3, idAutostrada);
             ps.executeUpdate();
         }
     }
 
-    // DELETE
+
+    // DELETE autostrada
     public void deleteAutostrada(int idAutostrada) throws SQLException {
         String sql = "DELETE FROM AUTOSTRADA WHERE id_autostrada = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, idAutostrada);
             ps.executeUpdate();
         }

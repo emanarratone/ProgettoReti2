@@ -45,9 +45,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const crudModalTitle = document.getElementById('crudModalTitle');
   const fieldName      = document.getElementById('fieldName');
   const fieldNameLabel = document.getElementById('fieldNameLabel');
-  const fieldExtraGroup = document.getElementById('fieldExtraGroup');
-  const fieldExtraLabel = document.getElementById('fieldExtraLabel');
-  const fieldExtra      = document.getElementById('fieldExtra');
+
+  // Gruppi specifici
+  const groupCasello     = document.getElementById('groupCasello');
+  const groupCorsia      = document.getElementById('groupCorsia');
+  const groupDispositivo = document.getElementById('groupDispositivo');
 
   let currentLevel  = 'regions';   // regions | highways | tolls | lanes | devices
   let selectedItem  = null;        // { id, ... }
@@ -621,99 +623,134 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function configureModalFields() {
-    fieldExtraGroup.classList.add('d-none');
-    fieldExtra.value = '';
+    // Nascondi tutti i gruppi specifici
+    groupCasello.classList.add('d-none');
+    groupCorsia.classList.add('d-none');
+    groupDispositivo.classList.add('d-none');
+    fieldName.closest('.mb-3').classList.remove('d-none');
+
+    // Reset base
+    fieldName.value = '';
 
     switch (currentLevel) {
       case 'regions':
         fieldNameLabel.textContent = 'Nome regione';
         break;
+
       case 'highways':
         fieldNameLabel.textContent = 'Nome autostrada';
         break;
+
       case 'tolls':
         fieldNameLabel.textContent = 'Nome casello';
-        fieldExtraGroup.classList.remove('d-none');
-        fieldExtraLabel.textContent = 'Km (opzionale)';
+        groupCasello.classList.remove('d-none');
+        document.getElementById('caselloLimite').value = 130;
+        document.getElementById('caselloChiuso').checked = false;
         break;
+
       case 'lanes':
         fieldNameLabel.textContent = 'Nome corsia';
-        fieldExtraGroup.classList.remove('d-none');
-        fieldExtraLabel.textContent = 'Direzione (opzionale)';
+        groupCorsia.classList.remove('d-none');
+        document.getElementById('corsiaVerso').value = '';
+        document.getElementById('corsiaTipo').value = '';
+        document.getElementById('corsiaChiuso').checked = false;
         break;
+
       case 'devices':
-        fieldNameLabel.textContent = 'Tipo dispositivo';
-        fieldExtraGroup.classList.remove('d-none');
-        fieldExtraLabel.textContent = 'Posizione (opzionale)';
-        break;
+           fieldNameLabel.textContent = '';
+           fieldName.value = '';
+           fieldName.required = false;                         // <—
+           fieldName.closest('.mb-3').classList.add('d-none'); // lo nascondi
+           groupDispositivo.classList.remove('d-none');
+           document.getElementById('dispTipo').value = '';
+           document.getElementById('dispStato').value = '';
+           break;
+
     }
 
     if (currentAction === 'edit' && selectedItem) {
+      // Campo principale
       fieldName.value = selectedItem.name || selectedItem.type || '';
+
+      // Extra per edit, se presenti nell’oggetto
       if (currentLevel === 'tolls') {
-        fieldExtra.value = selectedItem.km || '';
+        if (selectedItem.limite != null) {
+          document.getElementById('caselloLimite').value = selectedItem.limite;
+        }
+        if (selectedItem.chiuso != null) {
+          document.getElementById('caselloChiuso').checked = !!selectedItem.chiuso;
+        }
       } else if (currentLevel === 'lanes') {
-        fieldExtra.value = selectedItem.direzione || '';
+        if (selectedItem.verso) {
+          document.getElementById('corsiaVerso').value = selectedItem.verso;
+        }
+        if (selectedItem.tipo) {
+          document.getElementById('corsiaTipo').value = selectedItem.tipo;
+        }
+        if (selectedItem.chiuso != null) {
+          document.getElementById('corsiaChiuso').checked = !!selectedItem.chiuso;
+        }
       } else if (currentLevel === 'devices') {
-        fieldExtra.value = selectedItem.posizione || '';
+        if (selectedItem.tipo) {
+          document.getElementById('dispTipo').value = selectedItem.tipo;
+        }
+        if (selectedItem.stato) {
+          document.getElementById('dispStato').value = selectedItem.stato;
+        }
       }
-    } else {
-      fieldName.value = '';
-      fieldExtra.value = '';
     }
   }
 
-  btnAdd.addEventListener('click', () => {
-    currentAction = 'create';
-    crudModalTitle.textContent = getModalTitle();
-    configureModalFields();
-    crudModal.show();
-  });
-
-  crudForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-    if (!fieldName.value.trim()) return;
-    if (currentAction === 'create') {
-      doCreate();
-    } else if (currentAction === 'edit') {
-      doUpdate();
-    }
-  });
-
   function getEndpointAndBodyForCreate() {
-    const name  = fieldName.value.trim();
-    const extra = fieldExtra.value.trim();
+    const name = fieldName.value.trim();
+
     switch (currentLevel) {
       case 'regions':
         return {
           url: '/api/regions',
-          body: {
-            nomeRegione: name
-          }
+          body: { nomeRegione: name }
         };
+
       case 'highways':
         return {
           url: '/api/highways',
           body: {
             citta: name,
-            idRegione: state.region.id   // regione selezionata
+            idRegione: state.region.id
           }
         };
+
       case 'tolls':
         return {
           url: `/api/highways/${encodeURIComponent(state.highway.id)}/tolls`,
-          body: { nome_casello: name, km: extra || null }
+          body: {
+            nome_casello: name,
+            limite: Number(document.getElementById('caselloLimite').value),
+            chiuso: document.getElementById('caselloChiuso').checked
+          }
         };
+
       case 'lanes':
         return {
           url: `/api/tolls/${encodeURIComponent(state.toll.id)}/lanes`,
-          body: { nome_corsia: name, direzione: extra || null }
+          body: {
+            nome_corsia: name,
+            verso: document.getElementById('corsiaVerso').value || null,
+            tipo: document.getElementById('corsiaTipo').value || null,
+            chiuso: document.getElementById('corsiaChiuso').checked
+          }
         };
+
       case 'devices':
         return {
           url: `/api/lanes/${encodeURIComponent(state.lane.id)}/devices`,
-          body: { tipo: name, posizione: extra || null }
+          body: {
+            // niente nome
+            tipo: document.getElementById('dispTipo').value || null,
+            stato: document.getElementById('dispStato').value || null
+          }
         };
+
     }
   }
 
@@ -751,14 +788,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function doCreate() {
     const cfg = getEndpointAndBodyForCreate();
-        if (!cfg) return;
-        console.log('Sending:', cfg.body);  // Add this line
-        fetch(cfg.url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(cfg.body)
-        })
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    if (!cfg) return;
+
+    fetch(cfg.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cfg.body)
+    })
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
       .then(() => {
         crudModal.hide();
         reloadCurrentLevel();
@@ -770,30 +810,40 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function doUpdate() {
-    const url = getEndpointForUpdateOrDelete();
+    const url  = getEndpointForUpdateOrDelete();
     if (!url) return;
-    const name  = fieldName.value.trim();
-    const extra = fieldExtra.value.trim();
+
+    const name = fieldName.value.trim();
     let body = {};
+
     switch (currentLevel) {
       case 'regions':
         body = { nomeRegione: name };
         break;
       case 'highways':
-        body = {
-          citta: name,
-          idRegione: state.region.id
-        };
+        body = { citta: name, idRegione: state.region.id };
         break;
       case 'tolls':
-        body = { nome_casello: name, km: extra || null };
+        body = {
+          nome_casello: name,
+          limite: Number(document.getElementById('caselloLimite').value),
+          chiuso: document.getElementById('caselloChiuso').checked
+        };
         break;
       case 'lanes':
-        body = { nome_corsia: name, direzione: extra || null };
+        body = {
+          nome_corsia: name,
+          verso: document.getElementById('corsiaVerso').value || null,
+          tipo: document.getElementById('corsiaTipo').value || null,
+          chiuso: document.getElementById('corsiaChiuso').checked
+        };
         break;
-      case 'devices':
-        body = { tipo: name, posizione: extra || null };
-        break;
+     case 'devices':
+       body = {
+         tipo: document.getElementById('dispTipo').value || null,
+         stato: document.getElementById('dispStato').value || null
+       };
+       break;
     }
 
     fetch(url, {
@@ -801,7 +851,10 @@ document.addEventListener('DOMContentLoaded', function () {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     })
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
       .then(() => {
         crudModal.hide();
         reloadCurrentLevel();
@@ -816,7 +869,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const url = getEndpointForUpdateOrDelete();
     if (!url) return;
     fetch(url, { method: 'DELETE' })
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json().catch(() => ({})); })
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json().catch(() => ({}));
+      })
       .then(() => {
         reloadCurrentLevel();
       })
@@ -847,6 +903,27 @@ document.addEventListener('DOMContentLoaded', function () {
         btnAdd.textContent = 'Nuovo';
     }
   }
+
+  // Apertura modal in create
+  btnAdd.addEventListener('click', () => {
+    currentAction = 'create';
+    crudModalTitle.textContent = getModalTitle();
+    configureModalFields();
+    crudModal.show();
+  });
+
+  // Submit form
+crudForm.addEventListener('submit', function (e) {
+  e.preventDefault();
+  const needName = currentLevel !== 'devices';
+  if (needName && !fieldName.value.trim()) return;
+  if (currentAction === 'create') {
+    doCreate();
+  } else if (currentAction === 'edit') {
+    doUpdate();
+  }
+});
+
 
   // Avvio
   loadRegions();

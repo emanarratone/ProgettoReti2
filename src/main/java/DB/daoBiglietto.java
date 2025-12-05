@@ -19,7 +19,7 @@ public class daoBiglietto {
             ps.setString(3, biglietto.getAuto().getTarga());
             ps.setString(4, biglietto.getAuto().getTipoVeicolo().toString());
             ps.setTimestamp(5, Timestamp.valueOf(biglietto.getTimestamp_in()));
-            ps.setInt(6, biglietto.getCasello_in().getId());
+            ps.setInt(6, biglietto.getCasello_in().getIdCasello());
 
             ps.executeUpdate();
         }
@@ -34,7 +34,7 @@ public class daoBiglietto {
             ps.setString(3, b2.getAuto().getTarga());
             ps.setString(4, b2.getAuto().getTipoVeicolo().toString());
             ps.setTimestamp(5, Timestamp.valueOf(b2.getTimestamp_in()));
-            ps.setInt(6, b2.getCasello_in().getId());
+            ps.setInt(6, b2.getCasello_in().getIdCasello());
             ps.setInt(7, b1.getID_biglietto());
             ps.executeUpdate();
             if (ps.executeUpdate() > 0) {

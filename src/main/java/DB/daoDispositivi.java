@@ -7,32 +7,45 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
+
+import static DB.DbConnection.getConnection;
 
 public class daoDispositivi {
 
-    public ResponseEntity<String> insertDispositivo(Dispositivi d) throws SQLException{
-        String sqlDisp = "INSERT INTO Dispositivo (id_dispositivo, Stato, corsia, casello, tipo_dispositivo) VALUES (?, ?, ?, ?, ?)";
+    // INSERT dispositivo (POST /lanes/{idCorsia}/devices)
+    public void insertDispositivo(int numCorsia, String tipo, String posizione) throws SQLException {
+        // serve id_casello per la corsia -> semplificazione: prendiamo il primo casello per quella corsia
+        int idCasello = getCaselloForCorsia(numCorsia);
 
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sqlDisp)) {
-
-            ps.setInt(1, d.getID());
-            ps.setString(2, d.getStatus());
-            ps.setInt(3, d.getCorsia().getNumCorsia());
-            ps.setInt(4, d.getCasello().getId());
-            ps.setString(4, getTipoDispositivo(d));
-
-            int righeInserite = ps.executeUpdate();  // Corretto: executeUpdate() per INSERT
-            if (righeInserite > 0) {
-                return ResponseEntity.ok("{\"message\":\"Dispositivo inserito con successo\"}");
-            } else {
-                return ResponseEntity.internalServerError().body("{\"error\":\"Inserimento dispositivo fallito\"}");
-            }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'inserimento\"}");
+        String sql = """
+            INSERT INTO DISPOSITIVO (stato, num_corsia, id_casello, tipo_dispositivo)
+            VALUES ('ATTIVO', ?, ?, ?)
+            """;
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, numCorsia);
+            ps.setInt(2, idCasello);
+            ps.setString(3, tipo);
+            ps.executeUpdate();
         }
+        // se vuoi usare posizione, puoi salvarla in una tabella aggiuntiva o in un campo testuale extra.
     }
 
+    private int getCaselloForCorsia(int numCorsia) throws SQLException {
+        String sql = "SELECT id_casello FROM CORSIA WHERE num_corsia = ? LIMIT 1";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, numCorsia);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id_casello");
+                } else {
+                    throw new SQLException("Nessuna corsia trovata per num_corsia=" + numCorsia);
+                }
+            }
+        }
+    }
 
     public String  getTipoDispositivo(Dispositivi d) {
         if(d instanceof Sbarra) return "SBARRA";
@@ -40,53 +53,30 @@ public class daoDispositivi {
         else return "TOTEM";
     }
 
-    public ResponseEntity<String> updateDispositivo(Dispositivi d1, Dispositivi d2) throws SQLException {
-        String sql = "UPDATE Dispositivo SET id_dispositivo=?, Stato=?, corsia=?, tipo=? WHERE id_dispositivo = ?";
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, d2.getID());
-            ps.setString(2, d2.getStatus());
-            ps.setInt(3, d2.getCorsia().getNumCorsia());
-            ps.setString(4, getTipoDispositivo(d2));
-            ps.setInt(5, d1.getID());
-            int righeAggiornate = ps.executeUpdate();
-            if (righeAggiornate > 0) {
-                return ResponseEntity.ok("{\"message\":\"Aggiornamento avvenuto con successo\"}");
-            } else {
-                return ResponseEntity.status(404).body("{\"error\":\"Dispositivo non trovato\"}");
-            }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
+    // UPDATE dispositivo (PUT /devices/{idDispositivo})
+    public void updateDispositivo(int idDispositivo, String tipo, String posizione) throws SQLException {
+        String sql = "UPDATE DISPOSITIVO SET tipo_dispositivo = ? WHERE id_dispositivo = ?";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, tipo);
+            ps.setInt(2, idDispositivo);
+            ps.executeUpdate();
         }
     }
 
-    public ResponseEntity<String> deleteDispositivo(Dispositivi d) throws SQLException {
-        String sql = "DELETE FROM Dispositivo WHERE id_dispositivo = ?";
-
-        try (Connection conn = DbConnection.getConnection()) {
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-
-                ps.setInt(1, d.getID());
-                int righeEliminate= ps.executeUpdate();
-
-                if (righeEliminate == 0) {
-                    return ResponseEntity.status(404).body("{\"error\":\"Dispositivo non trovato\"}");
-                }
-
-                conn.commit();
-                return ResponseEntity.ok("{\"message\":\"Dispositivo eliminato con successo\"}");
-            } catch (SQLException ex) {
-                return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
-            }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore di connessione al database\"}");
+    // DELETE dispositivo (DELETE /devices/{idDispositivo})
+    public void deleteDispositivo(int idDispositivo) throws SQLException {
+        String sql = "DELETE FROM DISPOSITIVO WHERE id_dispositivo = ?";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, idDispositivo);
+            ps.executeUpdate();
         }
     }
-
 
     public  int contaDispositivi() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Dispositivo";
-        try (Connection conn = DbConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -95,47 +85,44 @@ public class daoDispositivi {
         }
     }
 
-    public String getDispositiviPerCorsiaJson(int idCorsia) throws SQLException {
-        String sql =
-                "SELECT d.id_dispositivo, d.stato, d.tipo_dispositivo " +
-                        "FROM DISPOSITIVO d " +
-                        "JOIN CORSIA c ON d.num_corsia = c.num_corsia " +
-                        "              AND d.id_casello = c.id_casello " +
-                        "WHERE c.num_corsia = ? " +
-                        "ORDER BY d.id_dispositivo";
+    // GET /lanes/{idCorsia}/devices
+    // qui semplifichiamo: assumiamo che idCorsia == num_corsia e recuperiamo tutte le righe con quel num_corsia
+    public String getDispositiviPerCorsiaJson(int numCorsia) throws SQLException {
+        String sql = """
+            SELECT d.id_dispositivo,
+                   d.stato,
+                   d.tipo_dispositivo,
+                   d.num_corsia,
+                   d.id_casello
+            FROM DISPOSITIVO d
+            WHERE d.num_corsia = ?
+            ORDER BY d.id_dispositivo
+            """;
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
 
-        try (Connection con = DbConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, idCorsia);
-
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, numCorsia);
             try (ResultSet rs = ps.executeQuery()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("[");
                 boolean first = true;
-
                 while (rs.next()) {
                     if (!first) sb.append(",");
                     first = false;
-
-                    int id       = rs.getInt("id_dispositivo");
+                    int id = rs.getInt("id_dispositivo");
                     String stato = rs.getString("stato");
-                    String tipo  = rs.getString("tipo_dispositivo");
+                    String tipo = rs.getString("tipo_dispositivo");
 
-                    if (stato == null) stato = "";
-                    if (tipo  == null) tipo  = "";
-
-                    sb.append("{")
-                            .append("\"id_dispositivo\":").append(id).append(",")
-                            .append("\"tipo\":\"").append(tipo).append("\",")
-                            .append("\"posizione\":\"").append(stato).append("\"")
-                            .append("}");
+                    sb.append(String.format(Locale.US,
+                            "{\"id_dispositivo\":%d,\"tipo\":\"%s\",\"stato\":\"%s\"}",
+                            id,
+                            tipo.replace("\"", "\\\""),
+                            stato.replace("\"", "\\\"")));
                 }
-
-                sb.append("]");
-                return sb.toString();
             }
         }
+        sb.append("]");
+        return sb.toString();
     }
 
 }
