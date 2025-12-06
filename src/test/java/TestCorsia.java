@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
+import java.sql.SQLException;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -23,36 +25,36 @@ public class TestCorsia {
         dao = new daoCorsia();
         r = new Regione(1, "Piemonte");
         a = new Autostrada("Alessandria", r.getId());
-        c = new Casello("AL", 23, false, 130);
+        c = new Casello(4, "AL", a.getId(), false, 130);
+        co = new Corsia(c.getIdCasello(),1, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
     }
 
     @Order(0)
     @Test
-    public void testExcAu(){
-        co = new Corsia(c,null, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
-        assertThrows(NullPointerException.class, () -> {dao.insertCorsia(co.getCasello().getIdCasello(),co.getVerso().toString());});
+    public void testExc(){
+        co = new Corsia(c.getIdCasello(),2, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
+        assertThrows(SQLException.class, () -> {dao.insertCorsia(co.getCasello(), null);});
     }
 
     @Order(1)
     @Test
-    public void testInsertCo(){
-        co = new Corsia(c,1, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
-        assertThrows(NullPointerException.class, () -> {dao.insertCorsia(co.getCasello().getIdCasello(),co.getVerso().toString());});
+    public void testInsert(){
+        assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(), co.getVerso().toString());});
     }
 
     @Order(2)
     @Test
-    public void testUpdateAu(){
-        co = new Corsia(c,1, Corsia.Verso.USCITA, Corsia.Tipo.TELEPASS);
-        assertThrows(NullPointerException.class, () -> {dao.insertCorsia(co.getCasello().getIdCasello(),co.getVerso().toString());});
+    public void testUpdate(){
+        assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(),co.getVerso().toString());});
     }
-
+/*
     @Order(3)
     @Test
-    public void testDeleteAu(){
-        co = new Corsia(c,1, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
+    public void testDelete(){
         assertDoesNotThrow(()->{dao.deleteCorsia(co.getNumCorsia());});
     }
+
+ */
 
 
 }

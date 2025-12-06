@@ -1,7 +1,5 @@
 import DB.daoAutostrada;
-import DB.daoCasello;
 import model.Autostrada.Autostrada;
-import model.Autostrada.Casello;
 import model.Autostrada.Regione;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.*;

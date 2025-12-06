@@ -14,9 +14,9 @@ import static DB.DbConnection.getConnection;
 public class daoDispositivi {
 
     // INSERT dispositivo (POST /lanes/{idCorsia}/devices)
-    public void insertDispositivo(int numCorsia, String tipo, String posizione) throws SQLException {
-        // serve id_casello per la corsia -> semplificazione: prendiamo il primo casello per quella corsia
-        int idCasello = getCaselloForCorsia(numCorsia);
+    public void insertDispositivo(Integer numCorsia, String tipo, Integer idCasello) throws SQLException {
+
+        //int idCasello = getCaselloForCorsia(numCorsia);
 
         String sql = """
             INSERT INTO DISPOSITIVO (stato, num_corsia, id_casello, tipo_dispositivo)
@@ -29,9 +29,8 @@ public class daoDispositivi {
             ps.setString(3, tipo);
             ps.executeUpdate();
         }
-        // se vuoi usare posizione, puoi salvarla in una tabella aggiuntiva o in un campo testuale extra.
     }
-
+/*      NO SENSE, ogni casello ha corsia 1
     private int getCaselloForCorsia(int numCorsia) throws SQLException {
         String sql = "SELECT id_casello FROM CORSIA WHERE num_corsia = ? LIMIT 1";
         try (Connection c = getConnection();
@@ -46,13 +45,13 @@ public class daoDispositivi {
             }
         }
     }
-
+*/
     public String  getTipoDispositivo(Dispositivi d) {
         if(d instanceof Sbarra) return "SBARRA";
         else if(d instanceof Telecamera) return "TELECAMERA";
         else return "TOTEM";
     }
-
+/*
     // UPDATE dispositivo (PUT /devices/{idDispositivo})
     public void updateDispositivo(int idDispositivo, String tipo, String posizione) throws SQLException {
         String sql = "UPDATE DISPOSITIVO SET tipo_dispositivo = ? WHERE id_dispositivo = ?";
@@ -63,6 +62,7 @@ public class daoDispositivi {
             ps.executeUpdate();
         }
     }
+ */
 
     // DELETE dispositivo (DELETE /devices/{idDispositivo})
     public void deleteDispositivo(int idDispositivo) throws SQLException {

@@ -6,9 +6,14 @@ import model.Autostrada.Corsia.Verso;
 
 public class Telecamera extends Dispositivi {
 
-    public Telecamera(Integer ID, Boolean status, Corsia corsia, Casello casello) {
+    public Telecamera(Integer ID, Boolean status, Integer corsia, Integer casello) {
         super(ID,status, corsia, casello);
     }
+
+    public Telecamera(Boolean status, Integer corsia, Integer casello) {
+        super(status, corsia, casello);
+    }
+
 
     public void getTarga(){
         // ???? GESTISCE TELEPASS? COME PRENDO LA TARGA? DOVREBBE ESSERE ATTIVATA DA UN SENSORE O RIMANE ATTIVA SEMPRE?

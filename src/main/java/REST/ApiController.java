@@ -540,7 +540,7 @@ public class ApiController {
     public ResponseEntity<String> deleteLane(@PathVariable int idCorsia) {
         try {
             daoCorsia dao = new daoCorsia();
-            dao.deleteCorsia(idCorsia);
+            //dao.deleteCorsia(idCorsia);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
             System.err.println("ERRORE in DELETE /api/lanes/" + idCorsia + ":");
@@ -566,12 +566,13 @@ public class ApiController {
     }
 
     // POST /api/lanes/{idCorsia}/devices { tipo, posizione }
-    @PostMapping("/lanes/{idCorsia}/devices")
-    public ResponseEntity<String> createDevice(@PathVariable int idCorsia,
+    @PostMapping("/lanes/{idCasello}-{numCorsia}/devices")
+    public ResponseEntity<String> createDevice(@PathVariable int idCasello,
+                                               @PathVariable int numCorsia,
                                                @RequestBody Map<String, Object> body) {
         try {
             String tipo = (String) body.get("tipo");
-            String posizione = (String) body.get("posizione");
+            //String posizione = (String) body.get("posizione");    cos'è posizione e perché è dentro insert dispositivo se non viene usato
 
             if (tipo == null || tipo.isBlank()) {
                 return ResponseEntity.badRequest()
@@ -579,16 +580,16 @@ public class ApiController {
             }
 
             daoDispositivi dao = new daoDispositivi();
-            dao.insertDispositivo(idCorsia, tipo, posizione);
+            dao.insertDispositivo(numCorsia, tipo, idCasello);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
         } catch (Exception e) {
-            System.err.println("ERRORE in POST /api/lanes/" + idCorsia + "/devices:");
+            System.err.println("ERRORE in POST /api/lanes/" + numCorsia + "/devices:");
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore creazione dispositivo\"}");
         }
     }
-
+/*  PARLIAMONE!!!!!!!!!!!!!!
     // PUT /api/devices/{idDispositivo}
     @PutMapping("/devices/{idDispositivo}")
     public ResponseEntity<String> updateDevice(@PathVariable int idDispositivo,
@@ -612,6 +613,8 @@ public class ApiController {
         }
     }
 
+
+ */
     // DELETE /api/devices/{idDispositivo}
     @DeleteMapping("/devices/{idDispositivo}")
     public ResponseEntity<String> deleteDevice(@PathVariable int idDispositivo) {

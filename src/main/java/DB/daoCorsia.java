@@ -23,7 +23,7 @@ public class daoCorsia {
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, nextNum);
             ps.setInt(2, idCasello);
-            ps.setString(3, direzione != null && !direzione.isBlank() ? direzione : "ENTRATA");
+            ps.setString(3, direzione);
             ps.executeUpdate();
         }
     }
@@ -49,7 +49,7 @@ public class daoCorsia {
             ps.executeUpdate();
         }
     }
-
+/*  NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
     // DELETE corsia
     public void deleteCorsia(int numCorsia) throws SQLException {
         String sql = "DELETE FROM CORSIA WHERE num_corsia = ?";
@@ -59,7 +59,8 @@ public class daoCorsia {
             ps.executeUpdate();
         }
     }
-    
+
+ */
     public  int contaCorsie() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Corsia";
         try (Connection conn = getConnection();
