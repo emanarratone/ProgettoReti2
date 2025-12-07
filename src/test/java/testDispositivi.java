@@ -7,6 +7,8 @@ import model.Autostrada.Corsia;
 import model.Autostrada.Regione;
 import model.Dispositivi.Dispositivi;
 import model.Dispositivi.Sbarra;
+import model.Dispositivi.Telecamera;
+import model.Dispositivi.Totem;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.*;
 
@@ -26,11 +28,11 @@ public class testDispositivi {
     @BeforeEach
     void setup() {
         dao = new daoDispositivi();
-        r =  new Regione(11, "Piemonte");
-        a = new Autostrada(23,"Alessandria", r.getId());
+        r =  new Regione(3, "Piemonte");
+        a = new Autostrada(4,"Alessandria", r.getId());
         c = new Casello(4,"AL", 23, false, 130);
         co = new Corsia(c.getIdCasello(), 2, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
-        d = new Sbarra(true, co.getNumCorsia(), co.getCasello());   //il casello va SEMPRE OBBLIGATORIAMENTE preso dalla corsia e non direttamente dal casello o potremmo avere problemi
+        d = new Totem(true, co.getNumCorsia(), co.getCasello());   //il casello va SEMPRE OBBLIGATORIAMENTE preso dalla corsia e non direttamente dal casello o potremmo avere problemi
     }
 
     @Order(0)
@@ -42,7 +44,7 @@ public class testDispositivi {
     @Order(1)
     @Test
     public void testInsert(){
-        assertDoesNotThrow(()->{dao.insertDispositivo(co.getNumCorsia(), co.getTipo().toString(), co.getCasello());});
+        assertDoesNotThrow(()->{dao.insertDispositivo(co.getNumCorsia(), dao.getTipoDispositivo(d), co.getCasello());});
     }
 /*
     @Order(2)

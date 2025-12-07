@@ -499,7 +499,7 @@ public class ApiController {
     public ResponseEntity<String> createLane(@PathVariable int idCasello,
                                              @RequestBody Map<String, Object> body) {
         try {
-            String direzione = (String) body.get("direzione");
+            String direzione = (String) body.get("direzione");  //??? crea conflitti nella creazione di una corsia
 
             daoCorsia dao = new daoCorsia();
             dao.insertCorsia(idCasello, direzione);

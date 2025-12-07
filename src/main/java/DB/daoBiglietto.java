@@ -1,5 +1,6 @@
 package DB;
 
+import model.Autostrada.Auto;
 import model.Autostrada.Autostrada;
 import model.Autostrada.Biglietto;
 import org.springframework.http.ResponseEntity;
@@ -8,42 +9,36 @@ import java.sql.*;
 
 public class daoBiglietto {
 
-    public void insertBiglietto(Biglietto biglietto) throws SQLException {
-        String sql = "INSERT INTO BIGLIETTO (id_biglietto, matricola, targa_auto, classe_veicolo, timestamp_in, id_casello_in) VALUES (?, ?, ?, ?, ?, ?)";
+    public void insertBiglietto(Biglietto biglietto) throws SQLException {  //quale standard stiamo usando??? oggetti o singoli parametri? uno o l'altro non ha senso
+        String sql = "INSERT INTO BIGLIETTO (matricola, targa, timestamp_in, casello_in) VALUES (?, ?, ?, ?)";
 
         try (Connection con = DbConnection.getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setInt(1, biglietto.getID_biglietto());
-            ps.setInt(2, biglietto.getID_Totem());
-            ps.setString(3, biglietto.getAuto().getTarga());
-            ps.setString(4, biglietto.getAuto().getTipoVeicolo().toString());
-            ps.setTimestamp(5, Timestamp.valueOf(biglietto.getTimestamp_in()));
-            ps.setInt(6, biglietto.getCasello_in().getIdCasello());
+            ps.setInt(1, biglietto.getID_Totem());
+            ps.setString(2, biglietto.getAuto());
+            ps.setTimestamp(3, Timestamp.valueOf(biglietto.getTimestamp_in()));
+            ps.setInt(4, biglietto.getCasello_in());
 
             ps.executeUpdate();
         }
     }
 
     public ResponseEntity<String> aggiornaBiglietto(Biglietto b1, Biglietto b2) throws SQLException {
-        String sql = "UPDATE AUTOSTRADA SET id_biglietto, matricola, targa_auto, classe_veicolo, timestamp_in, id_casello_in WHERE id_biglietto=?";
+        String sql = "UPDATE BIGLIETTO SET matricola=?, targa=?, timestamp_in=?, casello_in=? WHERE id_biglietto=?";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, b2.getID_biglietto());
-            ps.setInt(2, b2.getID_Totem());
-            ps.setString(3, b2.getAuto().getTarga());
-            ps.setString(4, b2.getAuto().getTipoVeicolo().toString());
-            ps.setTimestamp(5, Timestamp.valueOf(b2.getTimestamp_in()));
-            ps.setInt(6, b2.getCasello_in().getIdCasello());
-            ps.setInt(7, b1.getID_biglietto());
+            ps.setInt(1, b2.getID_Totem());
+            ps.setString(2, b2.getAuto());
+            ps.setTimestamp(3, Timestamp.valueOf(b2.getTimestamp_in()));
+            ps.setInt(4, b2.getCasello_in());
+            ps.setInt(5, b1.getID_biglietto());
             ps.executeUpdate();
             if (ps.executeUpdate() > 0) {
                 return ResponseEntity.ok("{\"message\":\"Biglietto aggiornato con successo\"}");
             } else {
                 return ResponseEntity.status(404).body("{\"error\":\"Biglietto non trovato\"}");
             }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'aggiornamento\"}");
         }
     }
 
@@ -58,8 +53,6 @@ public class daoBiglietto {
             } else {
                 return ResponseEntity.status(404).body("{\"error\":\"Biglietto non trovato\"}");
             }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
         }
     }
 

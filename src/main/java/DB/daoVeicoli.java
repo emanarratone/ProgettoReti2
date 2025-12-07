@@ -17,15 +17,13 @@ public class daoVeicoli {
             ps.setString(1, a.getTarga());
             ps.setString(2, a.getTipoVeicolo().toString());
 
-            int righeInserite = ps.executeUpdate(); // INSERT usa executeUpdate()[web:3][web:17]
+            int righeInserite = ps.executeUpdate();
 
             if (righeInserite > 0) {
                 return ResponseEntity.ok("{\"message\":\"Veicolo inserito con successo\"}");
             } else {
                 return ResponseEntity.internalServerError().body("{\"error\":\"Inserimento veicolo fallito\"}");
             }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'inserimento\"}");
         }
     }
 
@@ -87,7 +85,7 @@ public class daoVeicoli {
     }
 
 
-    public ResponseEntity<String> deleteVeicolo(String targa) {
+    public ResponseEntity<String> deleteVeicolo(String targa) { // perché non fa throws SQL exception?
         String sql = "DELETE FROM Auto WHERE Targa = ?";
 
         try (Connection conn = DbConnection.getConnection()) {

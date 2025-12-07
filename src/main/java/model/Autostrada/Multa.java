@@ -4,17 +4,25 @@ import java.time.LocalDateTime;
 
 public class Multa {
 
-    private final Integer id;
+    private Integer id;
     private String targa;
     private Double importo;
     private LocalDateTime data;
     private Boolean pagato;
-    private Biglietto biglietto;
+    private Integer biglietto;
 
-    public Multa(Integer id, Biglietto biglietto, Double importo, LocalDateTime data, String targa) {
+    public Multa(Integer id, Integer biglietto, Double importo, LocalDateTime data, String targa) {
         this.importo = importo;
         this.biglietto = biglietto;
         this.id = id;
+        this.data = data;
+        this.targa = targa;
+        this.pagato = false;
+    }
+
+    public Multa(Integer biglietto, Double importo, LocalDateTime data, String targa) {
+        this.importo = importo;
+        this.biglietto = biglietto;
         this.data = data;
         this.targa = targa;
         this.pagato = false;
@@ -28,11 +36,11 @@ public class Multa {
         return pagato;
     }
 
-    public Biglietto getBiglietto() {
+    public Integer getBiglietto() {
         return biglietto;
     }
 
-    public void setBiglietto(Biglietto biglietto) {
+    public void setBiglietto(Integer biglietto) {
         this.biglietto = biglietto;
     }
 

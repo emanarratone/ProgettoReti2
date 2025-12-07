@@ -19,7 +19,7 @@ public class Pagamento {
         this.Status = status;
         this.timestamp_out = timestamp_out;
         this.casello_out = casello_out;
-        checkMulta(biglietto.getCasello_in().getLimite());
+        //checkMulta(biglietto.getCasello_in().getLimite());
     }
 
     public Integer getID_transazione() {
@@ -62,13 +62,16 @@ public class Pagamento {
         this.timestamp_out= timestamp_out;
     }
 
+    /*      QUESTO METODO È DA ELIMINARE (?)
     public void checkMulta(Integer limite){
         long durata = Duration.between(timestamp_out, biglietto.getTimestamp_in()).toMinutes();
         if(durata<limite){
-            Multa multa = new Multa(11, biglietto, 10.0, LocalDateTime.now(), biglietto.getAuto().getTarga());
+            Multa multa = new Multa(11, biglietto.getID_biglietto(), 10.0, LocalDateTime.now(), biglietto.getAuto());
             //biglietto.getAuto().getMulte().add(multa);  ????
         }
     }
+
+     */
 
     public Casello getCasello_out() {
         return casello_out;

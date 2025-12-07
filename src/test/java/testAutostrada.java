@@ -17,7 +17,7 @@ public class testAutostrada {
     @BeforeEach
     void setup() {
         dao = new daoAutostrada();
-        r =  new Regione(11, "Piemonte");
+        r =  new Regione(3, "Piemonte");
         a = new Autostrada(22,"Alessandria", r.getId());
     }
 

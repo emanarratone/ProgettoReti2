@@ -17,9 +17,9 @@ public class testCasello {
     @BeforeEach
     void setup() {
         dao = new daoCasello();
-        r = new Regione(1, "Piemonte");
-        a = new Autostrada("Alessandria", r.getId());
-        c = new Casello("AL", 23, false, 130);
+        r = new Regione(3, "Piemonte");
+        a = new Autostrada(4,"Alessandria", r.getId());
+        c = new Casello("AL", a.getId(), false, 130);
     }
 
     @Order(0)
@@ -37,8 +37,13 @@ public class testCasello {
     @Order(2)
     @Test
     public void testUpdate(){
-        daoCasello dao = new daoCasello();
+        assertDoesNotThrow(()-> dao.updateCasello(3, c.getSigla(), 22.0)); //servono gli id corretti o non va
+    }
 
+    @Order(3)
+    @Test
+    public void testDelete(){
+        assertDoesNotThrow(()-> dao.deleteCasello(3));
     }
 
 }

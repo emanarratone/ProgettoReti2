@@ -96,7 +96,7 @@ public class daoMulte {
             ps.setDouble(3, m.getImporto());
             ps.setTimestamp(4, valueOf(m.getData()));
             ps.setBoolean(5, m.getPagato());
-            ps.setInt(6, m.getBiglietto().getID_biglietto());
+            ps.setInt(6, m.getBiglietto());
 
             int righeInserite = ps.executeUpdate();
             if (righeInserite > 0) {
@@ -104,8 +104,6 @@ public class daoMulte {
             } else {
                 return ResponseEntity.internalServerError().body("{\"error\":\"Inserimento multa fallito\"}");
             }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'inserimento\"}");
         }
     }
 
@@ -123,8 +121,6 @@ public class daoMulte {
             } else {
                 return ResponseEntity.status(404).body("{\"error\":\"Multa non trovata\"}");
             }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'aggiornamento\"}");
         }
     }
 
@@ -145,8 +141,6 @@ public class daoMulte {
             } catch (SQLException ex) {
                 return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
             }
-        } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore di connessione al database\"}");
         }
     }
 

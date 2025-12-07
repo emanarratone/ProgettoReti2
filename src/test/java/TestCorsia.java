@@ -23,8 +23,8 @@ public class TestCorsia {
     @BeforeEach
     void setup() {
         dao = new daoCorsia();
-        r = new Regione(1, "Piemonte");
-        a = new Autostrada("Alessandria", r.getId());
+        r = new Regione(3, "Piemonte");
+        a = new Autostrada(4, "Alessandria", r.getId());
         c = new Casello(4, "AL", a.getId(), false, 130);
         co = new Corsia(c.getIdCasello(),1, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
     }
@@ -32,7 +32,6 @@ public class TestCorsia {
     @Order(0)
     @Test
     public void testExc(){
-        co = new Corsia(c.getIdCasello(),2, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
         assertThrows(SQLException.class, () -> {dao.insertCorsia(co.getCasello(), null);});
     }
 
