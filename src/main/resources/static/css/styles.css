@@ -480,6 +480,31 @@ fieldset legend {
   display: block;
 }
 
+/* Mostra nascondi password */
+.password-wrapper {
+  position: relative;
+  display: block;
+}
+
+.password-wrapper input.form-control {
+  padding-right: 2.5rem;   /* Aggiunge spazio interno a destra*/
+}
+
+.password-wrapper .toggle-pwd {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%); /* Centra verticalmente il bottone rispetto alla casella di input */
+  border: none;
+  background: transparent;
+  cursor: pointer;         /* Rende "cliccabile" icona */
+  padding: 0;              /* Rimozione del padding */
+  line-height: 1;          /* Altezza della riga*/
+  font-size: 1rem;         /* Dimensione dell’icona*/
+}
+
+
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 576px) {
   .login-card {

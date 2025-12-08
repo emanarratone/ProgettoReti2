@@ -1,72 +1,132 @@
-    // Gestione LOGIN via fetch
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-      loginForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const formData = new FormData(loginForm);
-        const errorEl = loginForm.querySelector('.error');
-        if (errorEl) errorEl.textContent = '';
+// Gestione della visibilità della password
+document.querySelectorAll('.toggle-pwd').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.getAttribute('data-target');
+    const input = document.getElementById(targetId);
+    if (!input) return;
 
-        fetch('/api/login', {
-          method: 'POST',
-          body: formData,
-          credentials: 'same-origin'
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === 'ok') {
-              window.location.href = '/dashboard.html';
-            } else {
-              if (errorEl) {
-                errorEl.textContent = data.error || 'Login fallito';
-              }
-            }
-          })
-          .catch(err => {
-            console.error('Errore login:', err);
-            if (errorEl) {
-              errorEl.textContent = 'Errore di connessione';
-            }
-          });
-      });
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    btn.setAttribute('aria-label', isPassword ? 'Nascondi password' : 'Mostra password');
+  });
+});
+
+// Validazione dell'username
+function validateUsername(username) {
+  return /^[a-zA-Z][a-zA-Z0-9_.]{2,99}$/.test(username);
+}
+
+// Validazione della password
+function validatePassword(password) {
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{8,}$/.test(password);
+}
+
+// LOGIN
+const loginForm = document.getElementById('login-form');
+if (loginForm) {
+  loginForm.addEventListener('submit', function (e) {
+    e.preventDefault(); // blocca il submit classico
+
+    const errorEl = loginForm.querySelector('.error');
+    if (errorEl) errorEl.textContent = '';
+
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+
+    if (!username || !password) {
+      if (errorEl) errorEl.textContent = 'Inserisci username e password';
+      return;
     }
 
-    // Gestione REGISTRAZIONE via fetch
-    const regForm = document.getElementById('register-form');
-    if (regForm) {
-      regForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const formData = new FormData(regForm);
-        const errorEl = regForm.querySelector('.error');
-        if (errorEl) errorEl.textContent = '';
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', password);
 
-        const pwd = regForm.querySelector('#reg-password')?.value || '';
-        const conf = regForm.querySelector('#reg-confirm')?.value || '';
-        if (pwd !== conf) {
-          if (errorEl) errorEl.textContent = 'Le password non coincidono';
-          return;
+    fetch('/api/login', {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin'
+    })
+      .then(async res => {
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.status === 'ok') {
+          window.location.href = '/dashboard.html';
+        } else {
+          if (errorEl) {
+            errorEl.textContent = data.error || 'Credenziali errate';
+          }
         }
-
-        fetch('/api/register', {
-          method: 'POST',
-          body: formData,
-          credentials: 'same-origin'
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === 'ok') {
-              window.location.href = '/dashboard.html';
-            } else {
-              if (errorEl) {
-                errorEl.textContent = data.error || 'Registrazione fallita';
-              }
-            }
-          })
-          .catch(err => {
-            console.error('Errore registrazione:', err);
-            if (errorEl) {
-              errorEl.textContent = 'Errore di connessione';
-            }
-          });
+      })
+      .catch(err => {
+        console.error('Errore login:', err);
+        if (errorEl) errorEl.textContent = 'Errore di connessione';
       });
+  });
+}
+
+// REGISTRAZIONE via fetch (resta sulla stessa pagina)
+const regForm = document.getElementById('register-form');
+if (regForm) {
+  regForm.addEventListener('submit', function (e) {
+    e.preventDefault(); // blocca il submit classico
+
+    const errorEl = regForm.querySelector('.error');
+    if (errorEl) errorEl.textContent = '';
+
+    const username = document.getElementById('reg-username').value.trim();
+    const pwd      = document.getElementById('reg-password').value.trim();
+    const conf     = document.getElementById('reg-confirm').value.trim();
+    const role     = regForm.querySelector('input[name="role"]:checked')?.value || '';
+
+    if (!username || !pwd || !conf || !role) {
+      if (errorEl) errorEl.textContent = 'Compila tutti i campi';
+      return;
     }
+    if (pwd !== conf) {
+      if (errorEl) errorEl.textContent = 'Le password non coincidono';
+      return;
+    }
+    if (!validateUsername(username)) {
+      if (errorEl) errorEl.textContent = 'Username non valido (niente spazi, min 3 caratteri)';
+      return;
+    }
+    if (!validatePassword(pwd)) {
+      if (errorEl) {
+        errorEl.textContent =
+          'Password non valida (min 8 caratteri, maiuscola, minuscola, numero, niente spazi)';
+      }
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', pwd);
+    formData.append('confirmPassword', conf);
+    formData.append('role', role);
+
+    fetch('/api/register', {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin'
+    })
+      .then(async res => {
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.status === 'ok') {
+          regForm.reset();
+          document.getElementById('mode-login').checked = true; // torna alla scheda "Accedi"
+          const loginError = document.querySelector('#login-form .error');
+          if (loginError) loginError.textContent = 'Registrazione avvenuta, ora effettua il login.';
+        } else {
+          if (errorEl) {
+            errorEl.textContent = data.error || 'Registrazione fallita';
+          }
+        }
+      })
+      .catch(err => {
+        console.error('Errore registrazione:', err);
+        if (errorEl) errorEl.textContent = 'Errore di connessione';
+      });
+  });
+}
