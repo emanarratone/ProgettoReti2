@@ -24,13 +24,13 @@ public class testRegione {
     @Test
     public void testExcRe(){
         Regione r = new Regione(1, null);
-        assertThrows(SQLException.class, () -> {dao.insertRegione(r.getNomeRegione());});
+        assertThrows(SQLException.class, () -> {dao.insertRegione(r);});
     }
 
     @Order(2)
     @Test
     public void testinsertRe(){
-        assertDoesNotThrow(()->{dao.insertRegione(r.getNomeRegione());});
+        assertDoesNotThrow(()->{dao.insertRegione(r);});
     }
 
     @Order(3)

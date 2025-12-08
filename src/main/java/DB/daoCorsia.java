@@ -11,7 +11,7 @@ import static DB.DbConnection.getConnection;
 public class daoCorsia {
 
     // INSERT corsia (POST /tolls/{idCasello}/lanes)
-    public void insertCorsia(int idCasello, String direzione) throws SQLException {
+    public void insertCorsia(Integer idCasello, String direzione) throws SQLException {
         String sql = """
             INSERT INTO CORSIA (num_corsia, id_casello, verso, tipo_corsia, is_closed)
             VALUES (?, ?, ?, 'MANUALE', FALSE)
@@ -28,7 +28,7 @@ public class daoCorsia {
         }
     }
 
-    private int getNextNumCorsia(int idCasello) throws SQLException {
+    private int getNextNumCorsia(Integer idCasello) throws SQLException {
         String sql = "SELECT COALESCE(MAX(num_corsia),0) + 1 AS next_num FROM CORSIA WHERE id_casello = ?";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -40,7 +40,7 @@ public class daoCorsia {
         }
     }
     //update corsia
-    public void updateCorsia(int numCorsia, String nomeCorsia, String direzione) throws SQLException {
+    public void updateCorsia(Integer numCorsia, String nomeCorsia, String direzione) throws SQLException {
         String sql = "UPDATE CORSIA SET verso = ? WHERE num_corsia = ?";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -49,18 +49,18 @@ public class daoCorsia {
             ps.executeUpdate();
         }
     }
-/*  NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+
     // DELETE corsia
-    public void deleteCorsia(int numCorsia) throws SQLException {
-        String sql = "DELETE FROM CORSIA WHERE num_corsia = ?";
+    public void deleteCorsia(Integer numCorsia, Integer idCasello) throws SQLException {
+        String sql = "DELETE FROM CORSIA WHERE num_corsia = ? AND id_casello = ?";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, numCorsia);
+            ps.setInt(2, idCasello);
             ps.executeUpdate();
         }
     }
 
- */
     public  int contaCorsie() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Corsia";
         try (Connection conn = getConnection();

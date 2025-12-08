@@ -2,6 +2,7 @@ package REST;
 
 import DB.*;
 
+import model.Autostrada.Regione;
 import model.Autostrada.Traffico;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.http.HttpStatus;
@@ -270,8 +271,9 @@ public class ApiController {
                 return ResponseEntity.badRequest()
                         .body("{\"error\":\"nomeRegione obbligatorio\"}");
             }
+            Regione r = new Regione(nome);
             daoRegione dao = new daoRegione();
-            dao.insertRegione(nome);
+            dao.insertRegione(r);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
         } catch (Exception e) {
@@ -291,8 +293,9 @@ public class ApiController {
                 return ResponseEntity.badRequest()
                         .body("{\"error\":\"nomeRegione obbligatorio\"}");
             }
+            Regione r = new Regione(nome);
             daoRegione dao = new daoRegione();
-            dao.updateRegione(idRegione, nome);
+            dao.updateRegione(idRegione, r);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
             e.printStackTrace();

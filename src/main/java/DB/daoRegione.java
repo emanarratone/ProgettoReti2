@@ -1,5 +1,7 @@
 package DB;
 
+import model.Autostrada.Regione;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,22 +12,22 @@ import static DB.DbConnection.getConnection;
 
 public class daoRegione {
     // INSERT regione (usato da POST /api/regions)
-    public void insertRegione(String nome) throws SQLException {
+    public void insertRegione(Regione r) throws SQLException {
         String sql = "INSERT INTO REGIONE (nome) VALUES (?)";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, nome);
+            ps.setString(1, r.getNomeRegione());
             ps.executeUpdate();
         }
     }
 
     // UPDATE regione (PUT /api/regions/{idRegione})
-    public void updateRegione(int idRegione, String nome) throws SQLException {
+    public void updateRegione(Integer id, Regione r) throws SQLException {
         String sql = "UPDATE REGIONE SET nome = ? WHERE id_regione = ?";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, nome);
-            ps.setInt(2, idRegione);
+            ps.setString(1, r.getNomeRegione());
+            ps.setInt(2, id);
             ps.executeUpdate();
         }
     }

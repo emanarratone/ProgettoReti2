@@ -46,14 +46,11 @@ public class TestCorsia {
     public void testUpdate(){
         assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(),co.getVerso().toString());});
     }
-/*
+
     @Order(3)
     @Test
     public void testDelete(){
-        assertDoesNotThrow(()->{dao.deleteCorsia(co.getNumCorsia());});
+        assertDoesNotThrow(()->{dao.deleteCorsia(co.getNumCorsia(), co.getCasello());});
     }
-
- */
-
 
 }

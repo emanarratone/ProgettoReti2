@@ -46,13 +46,13 @@ public class testDispositivi {
     public void testInsert(){
         assertDoesNotThrow(()->{dao.insertDispositivo(co.getNumCorsia(), dao.getTipoDispositivo(d), co.getCasello());});
     }
-/*
+
     @Order(2)
     @Test
     public void testUpdate(){
-        assertDoesNotThrow(()->{dao.updateDispositivo(d.getID(), );});
+       // assertDoesNotThrow(()->{dao.updateDispositivo(d.getID(), );});
     }
- */
+
     @Order(3)
     @Test
     public void testDelete(){

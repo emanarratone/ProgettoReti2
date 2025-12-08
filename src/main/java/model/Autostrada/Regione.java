@@ -11,6 +11,10 @@ public class Regione {
         this.nomeRegione = nomeRegione;
     }
 
+    public Regione(String nomeRegione) {
+        this.nomeRegione = nomeRegione;
+    }
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

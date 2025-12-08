@@ -51,18 +51,17 @@ public class daoDispositivi {
         else if(d instanceof Telecamera) return "TELECAMERA";
         else return "TOTEM";
     }
-/*
+
     // UPDATE dispositivo (PUT /devices/{idDispositivo})
-    public void updateDispositivo(int idDispositivo, String tipo, String posizione) throws SQLException {
-        String sql = "UPDATE DISPOSITIVO SET tipo_dispositivo = ? WHERE id_dispositivo = ?";
+    public void updateDispositivo(Dispositivi d1, Dispositivi d2) throws SQLException {
+        String sql = "UPDATE DISPOSITIVO SET stato = ? WHERE id_dispositivo = ?";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, tipo);
-            ps.setInt(2, idDispositivo);
+            ps.setString(1, d1.getStatus());
+            ps.setInt(2, d2.getID());
             ps.executeUpdate();
         }
     }
- */
 
     // DELETE dispositivo (DELETE /devices/{idDispositivo})
     public void deleteDispositivo(int idDispositivo) throws SQLException {

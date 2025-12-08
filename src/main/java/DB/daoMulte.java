@@ -16,7 +16,7 @@ public class daoMulte {
                 "WHERE data >= NOW() - INTERVAL '24 hours' ";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+             ResultSet rs = ps.executeQuery()) {        //non abbiamo il campo data in multe, bisogna fare una get del biglietto della multa e prendere il dato da li
 
             rs.next();
             return rs.getInt(1);
@@ -40,7 +40,7 @@ public class daoMulte {
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL);
-             ResultSet rs = ps.executeQuery()) {
+             ResultSet rs = ps.executeQuery()) {        //non abbiamo il campo data in multe, bisogna fare una get del biglietto della multa e prendere il dato da li
 
             StringBuilder sb = new StringBuilder();
             sb.append("[");
