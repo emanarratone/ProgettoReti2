@@ -16,8 +16,6 @@ public class daoDispositivi {
     // INSERT dispositivo (POST /lanes/{idCorsia}/devices)
     public void insertDispositivo(Integer numCorsia, String tipo, Integer idCasello) throws SQLException {
 
-        //int idCasello = getCaselloForCorsia(numCorsia);
-
         String sql = """
             INSERT INTO DISPOSITIVO (stato, num_corsia, id_casello, tipo_dispositivo)
             VALUES ('ATTIVO', ?, ?, ?)
@@ -30,22 +28,7 @@ public class daoDispositivi {
             ps.executeUpdate();
         }
     }
-/*      NO SENSE, ogni casello ha corsia 1
-    private int getCaselloForCorsia(int numCorsia) throws SQLException {
-        String sql = "SELECT id_casello FROM CORSIA WHERE num_corsia = ? LIMIT 1";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, numCorsia);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("id_casello");
-                } else {
-                    throw new SQLException("Nessuna corsia trovata per num_corsia=" + numCorsia);
-                }
-            }
-        }
-    }
-*/
+
     public String  getTipoDispositivo(Dispositivi d) {
         if(d instanceof Sbarra) return "SBARRA";
         else if(d instanceof Telecamera) return "TELECAMERA";

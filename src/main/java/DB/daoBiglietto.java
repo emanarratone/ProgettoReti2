@@ -9,7 +9,7 @@ import java.sql.*;
 
 public class daoBiglietto {
 
-    public void insertBiglietto(Biglietto biglietto) throws SQLException {  //quale standard stiamo usando??? oggetti o singoli parametri? uno o l'altro non ha senso
+    public ResponseEntity<String> insertBiglietto(Biglietto biglietto) throws SQLException {
         String sql = "INSERT INTO BIGLIETTO (matricola, targa, timestamp_in, casello_in) VALUES (?, ?, ?, ?)";
 
         try (Connection con = DbConnection.getConnection();
@@ -21,6 +21,11 @@ public class daoBiglietto {
             ps.setInt(4, biglietto.getCasello_in());
 
             ps.executeUpdate();
+            if (ps.executeUpdate() > 0) {
+                return ResponseEntity.ok("{\"message\":\"Biglietto aggiornato con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Biglietto non trovato\"}");
+            }
         }
     }
 

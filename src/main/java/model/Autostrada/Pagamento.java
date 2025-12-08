@@ -6,14 +6,23 @@ import java.time.Duration;
 public class Pagamento {
 
     private Integer ID_transazione;
-    private Biglietto biglietto;
-    private Casello casello_out;
+    private Integer biglietto;
+    private Integer casello_out;
     private Double prezzo;
     private Boolean Status; //pagato = false
     private LocalDateTime timestamp_out;
 
-    public Pagamento(Integer ID_transazione, Biglietto biglietto, Double prezzo, Boolean status, LocalDateTime timestamp_out, Casello casello_out) {
+    public Pagamento(Integer ID_transazione, Integer biglietto, Double prezzo, Boolean status, LocalDateTime timestamp_out, Integer casello_out) {
         this.ID_transazione = ID_transazione;
+        this.biglietto = biglietto;
+        this.prezzo = prezzo;
+        this.Status = status;
+        this.timestamp_out = timestamp_out;
+        this.casello_out = casello_out;
+        //checkMulta(biglietto.getCasello_in().getLimite());
+    }
+
+    public Pagamento(Integer biglietto, Double prezzo, Boolean status, LocalDateTime timestamp_out, Integer casello_out) {
         this.biglietto = biglietto;
         this.prezzo = prezzo;
         this.Status = status;
@@ -30,11 +39,11 @@ public class Pagamento {
         this.ID_transazione = ID_transazione;
     }
 
-    public Biglietto getBiglietto() {
+    public Integer getBiglietto() {
         return biglietto;
     }
 
-    public void setBiglietto(Biglietto biglietto) {
+    public void setBiglietto(Integer biglietto) {
         this.biglietto = biglietto;
     }
 
@@ -73,11 +82,11 @@ public class Pagamento {
 
      */
 
-    public Casello getCasello_out() {
+    public Integer getCasello_out() {
         return casello_out;
     }
 
-    public void setCasello_out(Casello casello_out) {
+    public void setCasello_out(Integer casello_out) {
         this.casello_out = casello_out;
     }
 }
