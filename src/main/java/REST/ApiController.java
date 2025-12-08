@@ -24,7 +24,7 @@ public class ApiController {
                                         @RequestParam String password,
                                         HttpSession session) {
         try {
-            if (username == null || password == null) {
+            if (username == null || username.isBlank() || password == null || password.isBlank()) {
                 return ResponseEntity.badRequest().body("{\"error\":\"Dati mancanti\"}");
             }
 
@@ -51,7 +51,9 @@ public class ApiController {
                                            @RequestParam String role,
                                            HttpSession session) {
         try {
-            if (username == null || password == null || confirm == null) {
+            if (username == null || username.isBlank()
+                    || password == null || password.isBlank()
+                    || confirm == null || confirm.isBlank()) {
                 return ResponseEntity.badRequest().body("{\"error\":\"Dati mancanti\"}");
             }
             if (!password.equals(confirm)) {
