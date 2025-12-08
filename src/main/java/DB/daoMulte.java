@@ -11,9 +11,10 @@ import static java.sql.Timestamp.valueOf;
 public class daoMulte {
 
     public int contaMulteUltime24h() throws SQLException {
-        String sql = "SELECT COUNT(*) " +
-                "FROM Multa " +
-                "WHERE data >= NOW() - INTERVAL '24 hours' ";
+        String sql = "SELECT COUNT(*)\n" +
+                "FROM multa\n" +
+                "JOIN pagamento\n" +
+                "ON multa.id_biglietto = pagamento.id_biglietto;\n";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {        //non abbiamo il campo data in multe, bisogna fare una get del biglietto della multa e prendere il dato da li
@@ -29,7 +30,6 @@ public class daoMulte {
                         "    m.id_multa, " +
                         "    m.targa, " +
                         "    m.importo, " +
-                        "    m.data, " +
                         "    m.pagato, " +
                         "    r.nome AS nome_regione " +
                         "FROM MULTA m " +
