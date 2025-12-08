@@ -370,83 +370,91 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // CASELLI per autostrada
-  function loadTollsForHighway(highwayId) {
-    if (!highwayId) return;
-    setActiveLevel('tolls');
-    levelTitle.textContent = 'CASELLI DI ' + state.highway.name;
-    setStatus('Caricamento caselli...');
-    itemsList.innerHTML = '';
+ function loadTollsForHighway(highwayId) {
+   if (!highwayId) return;
+   setActiveLevel('tolls');
+   levelTitle.textContent = 'CASELLI DI ' + state.highway.name;
+   setStatus('Caricamento caselli...');
+   itemsList.innerHTML = '';
 
-    fetch('/api/highways/' + encodeURIComponent(highwayId) + '/tolls')
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (!Array.isArray(data) || data.length === 0) {
-          setStatus('Nessun casello trovato per questa autostrada.');
-          return;
-        }
-        setStatus('Seleziona un casello per vedere le corsie.');
-        data.forEach(t => {
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+   fetch('/api/highways/' + encodeURIComponent(highwayId) + '/tolls')
+     .then(res => {
+       if (!res.ok) throw new Error('HTTP ' + res.status);
+       return res.json();
+     })
+     .then(data => {
+       if (!Array.isArray(data) || data.length === 0) {
+         setStatus('Nessun casello trovato per questa autostrada.');
+         return;
+       }
+       setStatus('Seleziona un casello per vedere le corsie.');
+       data.forEach(t => {
+         const li = document.createElement('li');
+         li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-          const name = t.nome_casello || t.name || ('Casello ' + t.id);
-          const obj  = { id: t.id_casello || t.id, name, km: t.km };
+         const name = t.nome_casello || t.name || ('Casello ' + t.id);
+         const obj  = {
+           id:     t.id_casello || t.id,
+           name,
+           limite: t.limite,
+           chiuso: t.chiuso
+         };
 
-          li.innerHTML = `
-            <div>
-              <strong>${name}</strong>
-              <div class="small-muted">${t.km ? ('Km ' + t.km) : ''}</div>
-            </div>
-            <div class="btn-group btn-group-sm">
-              <button type="button" class="btn btn-outline-primary btn-edit-row">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button type="button" class="btn btn-outline-danger btn-delete-row">
-                <i class="bi bi-x"></i>
-              </button>
-            </div>
-          `;
+         li.innerHTML = `
+           <div>
+             <strong>${name}</strong>
+             <div class="small-muted">
+               ${t.limite != null ? ('Limite di velocità ' + t.limite + ' km/h') : ''}
+             </div>
+           </div>
+           <div class="btn-group btn-group-sm">
+             <button type="button" class="btn btn-outline-primary btn-edit-row">
+               <i class="bi bi-pencil"></i>
+             </button>
+             <button type="button" class="btn btn-outline-danger btn-delete-row">
+               <i class="bi bi-x"></i>
+             </button>
+           </div>
+         `;
 
-          makeSelectableLi(li, obj);
+         makeSelectableLi(li, obj);
 
-          // navigazione
-          li.addEventListener('click', () => {
-            state.toll = { id: obj.id, name };
-            state.lane = null;
-            updatePathSummary();
-            loadLanesForToll(state.toll.id);
-          });
+         // navigazione
+         li.addEventListener('click', () => {
+           state.toll = { id: obj.id, name, limite: obj.limite, chiuso: obj.chiuso };
+           state.lane = null;
+           updatePathSummary();
+           loadLanesForToll(state.toll.id);
+         });
 
-          // matita
-          li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            selectedItem = obj;
-            currentAction = 'edit';
-            crudModalTitle.textContent = getModalTitle();
-            configureModalFields();
-            crudModal.show();
-          });
+         // matita
+         li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+           ev.stopPropagation();
+           selectedItem  = obj;
+           currentAction = 'edit';
+           crudModalTitle.textContent = getModalTitle();
+           configureModalFields();
+           crudModal.show();
+         });
 
-          // X
-          li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            selectedItem = obj;
-            if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
-              doDelete();
-            }
-          });
+         // X
+         li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+           ev.stopPropagation();
+           selectedItem = obj;
+           if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+             doDelete();
+           }
+         });
 
-          itemsList.appendChild(li);
-        });
-      })
-      .catch(err => {
-        console.error('Errore caricamento caselli:', err);
-        setStatus('Errore nel caricamento dei caselli.');
-      });
-  }
+         itemsList.appendChild(li);
+       });
+     })
+     .catch(err => {
+       console.error('Errore caricamento caselli:', err);
+       setStatus('Errore nel caricamento dei caselli.');
+     });
+ }
+
 
   // CORSIE per casello
   function loadLanesForToll(tollId) {
@@ -493,10 +501,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // navigazione
           li.addEventListener('click', () => {
-            state.lane = { id: obj.id, name };
+            state.toll = { id: obj.id, name: obj.name, limite: obj.limite, chiuso: obj.chiuso };
+            state.lane = null;
             updatePathSummary();
-            loadDevicesForLane(state.lane.id);
+            loadLanesForToll(state.toll.id);
           });
+
 
           // matita
           li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
@@ -629,9 +639,9 @@ document.addEventListener('DOMContentLoaded', function () {
     groupDispositivo.classList.add('d-none');
     fieldName.closest('.mb-3').classList.remove('d-none');
 
-    // Reset base
-    fieldName.value = '';
-
+  if (currentAction === 'create') {
+      fieldName.value = '';
+    }
     switch (currentLevel) {
       case 'regions':
         fieldNameLabel.textContent = 'Nome regione';
@@ -641,12 +651,14 @@ document.addEventListener('DOMContentLoaded', function () {
         fieldNameLabel.textContent = 'Nome autostrada';
         break;
 
-      case 'tolls':
-        fieldNameLabel.textContent = 'Nome casello';
-        groupCasello.classList.remove('d-none');
-        document.getElementById('caselloLimite').value = 130;
-        document.getElementById('caselloChiuso').checked = false;
-        break;
+       case 'tolls':
+            fieldNameLabel.textContent = 'Nome casello';
+            groupCasello.classList.remove('d-none');
+            if (currentAction === 'create') {
+              document.getElementById('caselloLimite').value = 130;
+              document.getElementById('caselloChiuso').checked = false;
+            }
+            break;
 
       case 'lanes':
         fieldNameLabel.textContent = 'Nome corsia';
@@ -673,12 +685,16 @@ document.addEventListener('DOMContentLoaded', function () {
       fieldName.value = selectedItem.name || selectedItem.type || '';
 
       // Extra per edit, se presenti nell’oggetto
-      if (currentLevel === 'tolls') {
-        if (selectedItem.limite != null) {
-          document.getElementById('caselloLimite').value = selectedItem.limite;
-        }
-        if (selectedItem.chiuso != null) {
-          document.getElementById('caselloChiuso').checked = !!selectedItem.chiuso;
+      if (currentAction === 'edit' && selectedItem) {
+        fieldName.value = selectedItem.name || selectedItem.type || '';
+
+        if (currentLevel === 'tolls') {
+          if (selectedItem.limite != null) {
+            document.getElementById('caselloLimite').value = selectedItem.limite;
+          }
+          if (selectedItem.chiuso != null) {
+            document.getElementById('caselloChiuso').checked = !!selectedItem.chiuso;
+          }
         }
       } else if (currentLevel === 'lanes') {
         if (selectedItem.verso) {
