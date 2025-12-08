@@ -36,7 +36,7 @@ public class testRegione {
     @Order(3)
     @Test
     public void testupdateRe(){
-        assertDoesNotThrow(()->{dao.updateRegione(1, r.getNomeRegione());});
+        assertDoesNotThrow(()->{dao.updateRegione(1, r);});
     }
 
     @Order(4)

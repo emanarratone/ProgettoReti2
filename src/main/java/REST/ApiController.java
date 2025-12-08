@@ -594,22 +594,21 @@ public class ApiController {
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore creazione dispositivo\"}");
         }
     }
-/*  PARLIAMONE!!!!!!!!!!!!!!
+
     // PUT /api/devices/{idDispositivo}
     @PutMapping("/devices/{idDispositivo}")
     public ResponseEntity<String> updateDevice(@PathVariable int idDispositivo,
                                                @RequestBody Map<String, Object> body) {
         try {
-            String tipo = (String) body.get("tipo");
-            String posizione = (String) body.get("posizione");
+            String stato = (String) body.get("stato");
 
-            if (tipo == null || tipo.isBlank()) {
+            if (stato == null || stato.isBlank()) {
                 return ResponseEntity.badRequest()
-                        .body("{\"error\":\"tipo obbligatorio\"}");
+                        .body("{\"error\":\"stato obbligatorio\"}");
             }
 
             daoDispositivi dao = new daoDispositivi();
-            dao.updateDispositivo(idDispositivo, tipo, posizione);
+            dao.updateDispositivo(idDispositivo, stato);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
             System.err.println("ERRORE in PUT /api/devices/" + idDispositivo + ":");
@@ -618,8 +617,6 @@ public class ApiController {
         }
     }
 
-
- */
     // DELETE /api/devices/{idDispositivo}
     @DeleteMapping("/devices/{idDispositivo}")
     public ResponseEntity<String> deleteDevice(@PathVariable int idDispositivo) {

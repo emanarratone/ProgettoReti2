@@ -53,12 +53,12 @@ public class daoDispositivi {
     }
 
     // UPDATE dispositivo (PUT /devices/{idDispositivo})
-    public void updateDispositivo(Dispositivi d1, Dispositivi d2) throws SQLException {
+    public void updateDispositivo(Integer id, String status) throws SQLException {
         String sql = "UPDATE DISPOSITIVO SET stato = ? WHERE id_dispositivo = ?";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, d1.getStatus());
-            ps.setInt(2, d2.getID());
+            ps.setString(1, status);
+            ps.setInt(2, id);
             ps.executeUpdate();
         }
     }
