@@ -426,8 +426,7 @@ public class ApiController {
                                              @RequestBody Map<String, Object> body) {
         try {
             String nomeCasello = (String) body.get("nome_casello");
-            Number kmNum = (Number) body.get("km");
-            Double km = kmNum != null ? kmNum.doubleValue() : null;
+            Integer limite = (Integer) body.get("limite");
 
             if (nomeCasello == null || nomeCasello.isBlank()) {
                 return ResponseEntity.badRequest()
@@ -435,7 +434,7 @@ public class ApiController {
             }
 
             daoCasello dao = new daoCasello();
-            dao.insertCasello(idAutostrada, nomeCasello, 130, km);  //default 130km/h di limite
+            dao.insertCasello(idAutostrada, nomeCasello, limite);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
         } catch (Exception e) {
@@ -451,8 +450,8 @@ public class ApiController {
                                              @RequestBody Map<String, Object> body) {
         try {
             String nomeCasello = (String) body.get("nome_casello");
-            Number kmNum = (Number) body.get("km");
-            Double km = kmNum != null ? kmNum.doubleValue() : null;
+            Integer limite = (Integer) body.get("limite");
+            Boolean chiuso = (Boolean) body.get("chiuso"); // <—
 
             if (nomeCasello == null || nomeCasello.isBlank()) {
                 return ResponseEntity.badRequest()
@@ -460,7 +459,7 @@ public class ApiController {
             }
 
             daoCasello dao = new daoCasello();
-            dao.updateCasello(idCasello, nomeCasello, km);
+            dao.updateCasello(idCasello, nomeCasello, limite, chiuso != null && chiuso);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
             System.err.println("ERRORE in PUT /api/tolls/" + idCasello + ":");
@@ -490,12 +489,11 @@ public class ApiController {
     public ResponseEntity<String> getLanesForToll(@PathVariable int idCasello) {
         try {
             daoCorsia dao = new daoCorsia();
-            String json = dao.getCorsiePerCaselloJson(idCasello);
+            String json = dao.getCorsiePerCasello(idCasello);
             return ResponseEntity.ok(json);
         } catch (Exception e) {
-            System.err.println("ERRORE in GET /api/tolls/" + idCasello + "/lanes:");
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore interno\"}");
         }
     }
 
