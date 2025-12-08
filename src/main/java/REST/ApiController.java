@@ -489,12 +489,11 @@ public class ApiController {
     public ResponseEntity<String> getLanesForToll(@PathVariable int idCasello) {
         try {
             daoCorsia dao = new daoCorsia();
-            String json = dao.getCorsiePerCaselloJson(idCasello);
+            String json = dao.getCorsiePerCasello(idCasello);
             return ResponseEntity.ok(json);
         } catch (Exception e) {
-            System.err.println("ERRORE in GET /api/tolls/" + idCasello + "/lanes:");
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore interno\"}");
         }
     }
 

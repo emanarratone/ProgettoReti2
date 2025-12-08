@@ -74,46 +74,51 @@ public class daoCorsia {
 
     // GET /tolls/{idCasello}/lanes
     // JSON: [ { "id_corsia":1,"nome_corsia":"Corsia 1","direzione":"ENTRATA" }, ... ]
-    public String getCorsiePerCaselloJson(int idCasello) throws SQLException {
+    public String getCorsiePerCasello(int idCasello) throws SQLException {
         String sql = """
-            SELECT num_corsia,
-                   verso,
-                   tipo_corsia,
-                   is_closed
-            FROM CORSIA
-            WHERE id_casello = ?
-            ORDER BY num_corsia
-            """;
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
+        SELECT num_corsia, id_casello, verso, tipo_corsia, is_closed
+        FROM CORSIA
+        WHERE id_casello = ?
+        ORDER BY num_corsia
+    """;
 
+        StringBuilder sb = new StringBuilder("[");
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setInt(1, idCasello);
             try (ResultSet rs = ps.executeQuery()) {
                 boolean first = true;
                 while (rs.next()) {
                     if (!first) sb.append(",");
                     first = false;
-                    int num = rs.getInt("num_corsia");
-                    String verso = rs.getString("verso");
-                    String tipo = rs.getString("tipo_corsia");
-                    boolean closed = rs.getBoolean("is_closed");
 
-                    String nomeCorsia = "Corsia " + num;
-                    sb.append(String.format(Locale.US,
-                            "{\"id_corsia\":%d,\"nome_corsia\":\"%s\",\"direzione\":\"%s\",\"tipo\":\"%s\",\"closed\":%b}",
-                            num,
-                            nomeCorsia,
-                            verso,
-                            tipo,
-                            closed));
+                    int numCorsia   = rs.getInt("num_corsia");
+                    int idCas       = rs.getInt("id_casello");
+                    String verso    = rs.getString("verso");
+                    String tipo     = rs.getString("tipo_corsia");
+                    boolean chiuso  = rs.getBoolean("is_closed");
+
+                    sb.append(String.format(
+                            Locale.US,
+                            "{\"num_corsia\":%d," +
+                                    "\"id_casello\":%d," +
+                                    "\"verso\":\"%s\"," +
+                                    "\"tipo_corsia\":\"%s\"," +
+                                    "\"chiuso\":%s}",
+                            numCorsia,
+                            idCas,
+                            verso.replace("\"", "\\\""),
+                            tipo.replace("\"", "\\\""),
+                            chiuso ? "true" : "false"
+                    ));
                 }
             }
         }
         sb.append("]");
         return sb.toString();
     }
+
 
 
 

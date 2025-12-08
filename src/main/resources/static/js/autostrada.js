@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
       resetBelow('toll');
       loadLanesForToll(state.toll.id);
     } else if (level === 'devices' && state.lane) {
-      loadDevicesForLane(state.lane.id);
+      loadDevicesForLane(state.lane.num_corsia, state.lane.id_casello);
     }
     updatePathSummary();
   });
@@ -370,91 +370,90 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // CASELLI per autostrada
- function loadTollsForHighway(highwayId) {
-   if (!highwayId) return;
-   setActiveLevel('tolls');
-   levelTitle.textContent = 'CASELLI DI ' + state.highway.name;
-   setStatus('Caricamento caselli...');
-   itemsList.innerHTML = '';
+  function loadTollsForHighway(highwayId) {
+    if (!highwayId) return;
+    setActiveLevel('tolls');
+    levelTitle.textContent = 'CASELLI DI ' + state.highway.name;
+    setStatus('Caricamento caselli...');
+    itemsList.innerHTML = '';
 
-   fetch('/api/highways/' + encodeURIComponent(highwayId) + '/tolls')
-     .then(res => {
-       if (!res.ok) throw new Error('HTTP ' + res.status);
-       return res.json();
-     })
-     .then(data => {
-       if (!Array.isArray(data) || data.length === 0) {
-         setStatus('Nessun casello trovato per questa autostrada.');
-         return;
-       }
-       setStatus('Seleziona un casello per vedere le corsie.');
-       data.forEach(t => {
-         const li = document.createElement('li');
-         li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    fetch('/api/highways/' + encodeURIComponent(highwayId) + '/tolls')
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          setStatus('Nessun casello trovato per questa autostrada.');
+          return;
+        }
+        setStatus('Seleziona un casello per vedere le corsie.');
+        data.forEach(t => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-         const name = t.nome_casello || t.name || ('Casello ' + t.id);
-         const obj  = {
-           id:     t.id_casello || t.id,
-           name,
-           limite: t.limite,
-           chiuso: t.chiuso
-         };
+          const name = t.nome_casello || t.nome || t.name || ('Casello ' + t.id);
+          const obj  = {
+            id: t.id_casello || t.id,
+            name,
+            limite: t.limite,
+            chiuso: t.chiuso
+          };
 
-         li.innerHTML = `
-           <div>
-             <strong>${name}</strong>
-             <div class="small-muted">
-               ${t.limite != null ? ('Limite di velocità ' + t.limite + ' km/h') : ''}
-             </div>
-           </div>
-           <div class="btn-group btn-group-sm">
-             <button type="button" class="btn btn-outline-primary btn-edit-row">
-               <i class="bi bi-pencil"></i>
-             </button>
-             <button type="button" class="btn btn-outline-danger btn-delete-row">
-               <i class="bi bi-x"></i>
-             </button>
-           </div>
-         `;
+          li.innerHTML = `
+            <div>
+              <strong>${name}</strong>
+              <div class="small-muted">
+                Limite: ${t.limite || 130} km/h${t.chiuso ? ' (chiuso)' : ''}
+              </div>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-primary btn-edit-row">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-delete-row">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          `;
 
-         makeSelectableLi(li, obj);
+          makeSelectableLi(li, obj);
 
-         // navigazione
-         li.addEventListener('click', () => {
-           state.toll = { id: obj.id, name, limite: obj.limite, chiuso: obj.chiuso };
-           state.lane = null;
-           updatePathSummary();
-           loadLanesForToll(state.toll.id);
-         });
+          // navigazione
+          li.addEventListener('click', () => {
+            state.toll = { id: obj.id, name };
+            state.lane = null;
+            updatePathSummary();
+            loadLanesForToll(state.toll.id);
+          });
 
-         // matita
-         li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
-           ev.stopPropagation();
-           selectedItem  = obj;
-           currentAction = 'edit';
-           crudModalTitle.textContent = getModalTitle();
-           configureModalFields();
-           crudModal.show();
-         });
+          // matita
+          li.querySelector('.btn-edit-row').addEventListener('click', ev => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            currentAction = 'edit';
+            crudModalTitle.textContent = getModalTitle();
+            configureModalFields();
+            crudModal.show();
+          });
 
-         // X
-         li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
-           ev.stopPropagation();
-           selectedItem = obj;
-           if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
-             doDelete();
-           }
-         });
+          // X
+          li.querySelector('.btn-delete-row').addEventListener('click', ev => {
+            ev.stopPropagation();
+            selectedItem = obj;
+            if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+              doDelete();
+            }
+          });
 
-         itemsList.appendChild(li);
-       });
-     })
-     .catch(err => {
-       console.error('Errore caricamento caselli:', err);
-       setStatus('Errore nel caricamento dei caselli.');
-     });
- }
-
+          itemsList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Errore caricamento caselli:', err);
+        setStatus('Errore nel caricamento dei caselli.');
+      });
+  }
 
   // CORSIE per casello
   function loadLanesForToll(tollId) {
@@ -479,13 +478,22 @@ document.addEventListener('DOMContentLoaded', function () {
           const li = document.createElement('li');
           li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-          const name = l.nome_corsia || l.name || ('Corsia ' + l.id);
-          const obj  = { id: l.id_corsia || l.id, name, direzione: l.direzione };
+          const name = 'Corsia ' + l.num_corsia;
+          const obj  = {
+            num_corsia: l.num_corsia,
+            id_casello: l.id_casello,
+            name,
+            verso: l.verso,
+            tipo: l.tipo_corsia,
+            chiuso: l.chiuso
+          };
 
           li.innerHTML = `
             <div>
               <strong>${name}</strong>
-              <div class="small-muted">${l.direzione || ''}</div>
+              <div class="small-muted">
+                ${l.verso} — ${l.tipo_corsia}${l.chiuso ? ' (chiusa)' : ''}
+              </div>
             </div>
             <div class="btn-group btn-group-sm">
               <button type="button" class="btn btn-outline-primary btn-edit-row">
@@ -501,17 +509,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // navigazione
           li.addEventListener('click', () => {
-            state.toll = { id: obj.id, name: obj.name, limite: obj.limite, chiuso: obj.chiuso };
-            state.lane = null;
+            state.lane = {
+              num_corsia: obj.num_corsia,
+              id_casello: obj.id_casello,
+              name
+            };
             updatePathSummary();
-            loadLanesForToll(state.toll.id);
+            loadDevicesForLane(state.lane.num_corsia, state.lane.id_casello);
           });
 
-
           // matita
-          li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+          li.querySelector('.btn-edit-row').addEventListener('click', ev => {
             ev.stopPropagation();
-            selectedItem = obj;
+            selectedItem  = obj;
             currentAction = 'edit';
             crudModalTitle.textContent = getModalTitle();
             configureModalFields();
@@ -519,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function () {
           });
 
           // X
-          li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+          li.querySelector('.btn-delete-row').addEventListener('click', ev => {
             ev.stopPropagation();
             selectedItem = obj;
             if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
@@ -537,14 +547,14 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // DISPOSITIVI per corsia
-  function loadDevicesForLane(laneId) {
-    if (!laneId) return;
+  function loadDevicesForLane(numCorsia, idCasello) {
+    if (!numCorsia || !idCasello) return;
     setActiveLevel('devices');
     levelTitle.textContent = 'DISPOSITIVI DI ' + state.lane.name;
     setStatus('Caricamento dispositivi...');
     itemsList.innerHTML = '';
 
-    fetch('/api/lanes/' + encodeURIComponent(laneId) + '/devices')
+    fetch('/api/lanes/' + encodeURIComponent(idCasello) + '/' + encodeURIComponent(numCorsia) + '/devices')
       .then(res => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
@@ -561,13 +571,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
           const type = d.tipo || d.type || 'Dispositivo';
           const id   = d.id_dispositivo || d.id;
-          const pos  = d.posizione || '';
-          const obj  = { id, type, posizione: pos };
+          const stato = d.stato || '';
+          const obj  = { id, tipo: type, stato };
 
           li.innerHTML = `
             <div>
               <strong>${type}</strong>
-              <div class="small-muted">ID: ${id} ${pos ? '— ' + pos : ''}</div>
+              <div class="small-muted">ID: ${id} — ${stato}</div>
             </div>
             <div class="btn-group btn-group-sm">
               <button type="button" class="btn btn-outline-primary btn-edit-row">
@@ -637,83 +647,81 @@ document.addEventListener('DOMContentLoaded', function () {
     groupCasello.classList.add('d-none');
     groupCorsia.classList.add('d-none');
     groupDispositivo.classList.add('d-none');
-    fieldName.closest('.mb-3').classList.remove('d-none');
 
-  if (currentAction === 'create') {
-      fieldName.value = '';
-    }
+    // Trova il gruppo del campo nome
+    const nameGroup = fieldName.closest('.mb-3');
+
+    // Di default nascondi tutto
+    nameGroup.classList.add('d-none');
+    fieldName.required = false;
+    fieldName.value = '';
+
     switch (currentLevel) {
       case 'regions':
+        nameGroup.classList.remove('d-none');
         fieldNameLabel.textContent = 'Nome regione';
+        fieldName.required = true;
+        if (currentAction === 'edit' && selectedItem) {
+          fieldName.value = selectedItem.name || '';
+        }
         break;
 
       case 'highways':
+        nameGroup.classList.remove('d-none');
         fieldNameLabel.textContent = 'Nome autostrada';
+        fieldName.required = true;
+        if (currentAction === 'edit' && selectedItem) {
+          fieldName.value = selectedItem.name || '';
+        }
         break;
 
-       case 'tolls':
-            fieldNameLabel.textContent = 'Nome casello';
-            groupCasello.classList.remove('d-none');
-            if (currentAction === 'create') {
-              document.getElementById('caselloLimite').value = 130;
-              document.getElementById('caselloChiuso').checked = false;
-            }
-            break;
+      case 'tolls':
+        nameGroup.classList.remove('d-none');
+        fieldNameLabel.textContent = 'Nome casello';
+        fieldName.required = true;
+        groupCasello.classList.remove('d-none');
+
+        if (currentAction === 'create') {
+          document.getElementById('caselloLimite').value = 130;
+          document.getElementById('caselloChiuso').checked = false;
+        } else if (currentAction === 'edit' && selectedItem) {
+          fieldName.value = selectedItem.name || '';
+          document.getElementById('caselloLimite').value = selectedItem.limite || 130;
+          document.getElementById('caselloChiuso').checked = !!selectedItem.chiuso;
+        }
+        break;
 
       case 'lanes':
-        fieldNameLabel.textContent = 'Nome corsia';
+        // NESSUN CAMPO NOME PER CORSIE
+        nameGroup.classList.add('d-none');
+        fieldName.required = false;
         groupCorsia.classList.remove('d-none');
-        document.getElementById('corsiaVerso').value = '';
-        document.getElementById('corsiaTipo').value = '';
-        document.getElementById('corsiaChiuso').checked = false;
+
+        if (currentAction === 'create') {
+          document.getElementById('corsiaVerso').value = '';
+          document.getElementById('corsiaTipo').value = '';
+          document.getElementById('corsiaChiuso').checked = false;
+        } else if (currentAction === 'edit' && selectedItem) {
+          document.getElementById('corsiaVerso').value = selectedItem.verso || '';
+          document.getElementById('corsiaTipo').value = selectedItem.tipo || '';
+          document.getElementById('corsiaChiuso').checked = !!selectedItem.chiuso;
+        }
         break;
 
       case 'devices':
-           fieldNameLabel.textContent = '';
-           fieldName.value = '';
-           fieldName.required = false;                         // <—
-           fieldName.closest('.mb-3').classList.add('d-none'); // lo nascondi
-           groupDispositivo.classList.remove('d-none');
-           document.getElementById('dispTipo').value = '';
-           document.getElementById('dispStato').value = '';
-           break;
+        // NESSUN CAMPO NOME PER DISPOSITIVI
+        nameGroup.classList.add('d-none');
+        fieldName.required = false;
+        groupDispositivo.classList.remove('d-none');
 
-    }
-
-    if (currentAction === 'edit' && selectedItem) {
-      // Campo principale
-      fieldName.value = selectedItem.name || selectedItem.type || '';
-
-      // Extra per edit, se presenti nell’oggetto
-      if (currentAction === 'edit' && selectedItem) {
-        fieldName.value = selectedItem.name || selectedItem.type || '';
-
-        if (currentLevel === 'tolls') {
-          if (selectedItem.limite != null) {
-            document.getElementById('caselloLimite').value = selectedItem.limite;
-          }
-          if (selectedItem.chiuso != null) {
-            document.getElementById('caselloChiuso').checked = !!selectedItem.chiuso;
-          }
+        if (currentAction === 'create') {
+          document.getElementById('dispTipo').value = '';
+          document.getElementById('dispStato').value = '';
+        } else if (currentAction === 'edit' && selectedItem) {
+          document.getElementById('dispTipo').value = selectedItem.tipo || '';
+          document.getElementById('dispStato').value = selectedItem.stato || '';
         }
-      } else if (currentLevel === 'lanes') {
-        if (selectedItem.verso) {
-          document.getElementById('corsiaVerso').value = selectedItem.verso;
-        }
-        if (selectedItem.tipo) {
-          document.getElementById('corsiaTipo').value = selectedItem.tipo;
-        }
-        if (selectedItem.chiuso != null) {
-          document.getElementById('corsiaChiuso').checked = !!selectedItem.chiuso;
-        }
-      } else if (currentLevel === 'devices') {
-        if (selectedItem.tipo) {
-          document.getElementById('dispTipo').value = selectedItem.tipo;
-        }
-        if (selectedItem.stato) {
-          document.getElementById('dispStato').value = selectedItem.stato;
-        }
-      }
+        break;
     }
   }
 
@@ -750,35 +758,37 @@ document.addEventListener('DOMContentLoaded', function () {
         return {
           url: `/api/tolls/${encodeURIComponent(state.toll.id)}/lanes`,
           body: {
-            nome_corsia: name,
             verso: document.getElementById('corsiaVerso').value || null,
-            tipo: document.getElementById('corsiaTipo').value || null,
+            tipo_corsia: document.getElementById('corsiaTipo').value || null,
             chiuso: document.getElementById('corsiaChiuso').checked
           }
         };
 
       case 'devices':
         return {
-          url: `/api/lanes/${encodeURIComponent(state.lane.id)}/devices`,
+          url: `/api/lanes/${encodeURIComponent(state.lane.id_casello)}/${encodeURIComponent(state.lane.num_corsia)}/devices`,
           body: {
-            // niente nome
             tipo: document.getElementById('dispTipo').value || null,
             stato: document.getElementById('dispStato').value || null
           }
         };
-
     }
   }
 
   function getEndpointForUpdateOrDelete() {
-    const id = selectedItem && selectedItem.id;
-    if (!id) return null;
+    if (!selectedItem) return null;
+
     switch (currentLevel) {
-      case 'regions':  return `/api/regions/${encodeURIComponent(id)}`;
-      case 'highways': return `/api/highways/${encodeURIComponent(id)}`;
-      case 'tolls':    return `/api/tolls/${encodeURIComponent(id)}`;
-      case 'lanes':    return `/api/lanes/${encodeURIComponent(id)}`;
-      case 'devices':  return `/api/devices/${encodeURIComponent(id)}`;
+      case 'regions':
+        return `/api/regions/${encodeURIComponent(selectedItem.id)}`;
+      case 'highways':
+        return `/api/highways/${encodeURIComponent(selectedItem.id)}`;
+      case 'tolls':
+        return `/api/tolls/${encodeURIComponent(selectedItem.id)}`;
+      case 'lanes':
+        return `/api/lanes/${encodeURIComponent(selectedItem.id_casello)}/${encodeURIComponent(selectedItem.num_corsia)}`;
+      case 'devices':
+        return `/api/devices/${encodeURIComponent(selectedItem.id)}`;
     }
   }
 
@@ -797,7 +807,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (state.toll)    loadLanesForToll(state.toll.id);
         break;
       case 'devices':
-        if (state.lane)    loadDevicesForLane(state.lane.id);
+        if (state.lane)    loadDevicesForLane(state.lane.num_corsia, state.lane.id_casello);
         break;
     }
   }
@@ -848,18 +858,17 @@ document.addEventListener('DOMContentLoaded', function () {
         break;
       case 'lanes':
         body = {
-          nome_corsia: name,
           verso: document.getElementById('corsiaVerso').value || null,
-          tipo: document.getElementById('corsiaTipo').value || null,
+          tipo_corsia: document.getElementById('corsiaTipo').value || null,
           chiuso: document.getElementById('corsiaChiuso').checked
         };
         break;
-     case 'devices':
-       body = {
-         tipo: document.getElementById('dispTipo').value || null,
-         stato: document.getElementById('dispStato').value || null
-       };
-       break;
+      case 'devices':
+        body = {
+          tipo: document.getElementById('dispTipo').value || null,
+          stato: document.getElementById('dispStato').value || null
+        };
+        break;
     }
 
     fetch(url, {
@@ -929,17 +938,21 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Submit form
-crudForm.addEventListener('submit', function (e) {
-  e.preventDefault();
-  const needName = currentLevel !== 'devices';
-  if (needName && !fieldName.value.trim()) return;
-  if (currentAction === 'create') {
-    doCreate();
-  } else if (currentAction === 'edit') {
-    doUpdate();
-  }
-});
+  crudForm.addEventListener('submit', function (e) {
+    e.preventDefault();
 
+    const needName = (currentLevel === 'regions' ||
+                      currentLevel === 'highways' ||
+                      currentLevel === 'tolls');
+
+    if (needName && !fieldName.value.trim()) return;
+
+    if (currentAction === 'create') {
+      doCreate();
+    } else if (currentAction === 'edit') {
+      doUpdate();
+    }
+  });
 
   // Avvio
   loadRegions();
