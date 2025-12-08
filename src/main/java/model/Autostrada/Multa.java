@@ -7,23 +7,20 @@ public class Multa {
     private Integer id;
     private String targa;
     private Double importo;
-    private LocalDateTime data;
     private Boolean pagato;
     private Integer biglietto;
 
-    public Multa(Integer id, Integer biglietto, Double importo, LocalDateTime data, String targa) {
+    public Multa(Integer id, Integer biglietto, Double importo, String targa) {
         this.importo = importo;
         this.biglietto = biglietto;
         this.id = id;
-        this.data = data;
         this.targa = targa;
         this.pagato = false;
     }
 
-    public Multa(Integer biglietto, Double importo, LocalDateTime data, String targa) {
+    public Multa(Integer biglietto, Double importo, String targa) {
         this.importo = importo;
         this.biglietto = biglietto;
-        this.data = data;
         this.targa = targa;
         this.pagato = false;
     }
@@ -50,14 +47,6 @@ public class Multa {
 
     public Double getImporto() {
         return importo;
-    }
-
-    public LocalDateTime getData() {
-        return data;
-    }
-
-    public void setData(LocalDateTime data) {
-        this.data = data;
     }
 
     public void setImporto(Double importo) {

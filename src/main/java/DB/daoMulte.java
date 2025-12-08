@@ -17,7 +17,7 @@ public class daoMulte {
                 "ON multa.id_biglietto = pagamento.id_biglietto;\n";
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {        //non abbiamo il campo data in multe, bisogna fare una get del biglietto della multa e prendere il dato da li
+             ResultSet rs = ps.executeQuery()) {
 
             rs.next();
             return rs.getInt(1);
@@ -40,7 +40,7 @@ public class daoMulte {
 
         try (Connection con = DbConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(SQL);
-             ResultSet rs = ps.executeQuery()) {        //non abbiamo il campo data in multe, bisogna fare una get del biglietto della multa e prendere il dato da li
+             ResultSet rs = ps.executeQuery()) {
 
             StringBuilder sb = new StringBuilder();
             sb.append("[");
@@ -87,16 +87,14 @@ public class daoMulte {
     }
 
     public ResponseEntity<String> insertMulta(Multa m) throws SQLException {
-        String s = "INSERT INTO MULTA (id_multa, targa, importo, data, pagato, id_biglietto) VALUES (?,?,?,?,?,?)";
+        String s = "INSERT INTO MULTA (targa, importo, pagato, id_biglietto) VALUES (?,?,?,?)";
 
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(s)) {
-            ps.setInt(1, m.getId());
-            ps.setString(2, m.getTarga());
-            ps.setDouble(3, m.getImporto());
-            ps.setTimestamp(4, valueOf(m.getData()));
-            ps.setBoolean(5, m.getPagato());
-            ps.setInt(6, m.getBiglietto());
+            ps.setString(1, m.getTarga());
+            ps.setDouble(2, m.getImporto());
+            ps.setBoolean(3, m.getPagato());
+            ps.setInt(4, m.getBiglietto());
 
             int righeInserite = ps.executeUpdate();
             if (righeInserite > 0) {
