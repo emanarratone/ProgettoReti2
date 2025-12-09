@@ -40,12 +40,14 @@ public class daoCorsia {
         }
     }
     //update corsia
-    public void updateCorsia(Integer numCorsia, String nomeCorsia, String direzione) throws SQLException {
-        String sql = "UPDATE CORSIA SET verso = ? WHERE num_corsia = ?";
+    public void updateCorsia(Integer numCorsia, Integer idCasello, String direzione, String tipo) throws SQLException {
+        String sql = "UPDATE CORSIA SET verso = ?, tipo_corsia = ? WHERE num_corsia = ? AND id_casello = ?";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, direzione != null && !direzione.isBlank() ? direzione : "ENTRATA");
-            ps.setInt(2, numCorsia);
+            ps.setString(1, direzione);
+            ps.setString(2, tipo);
+            ps.setInt(3, numCorsia);
+            ps.setInt(4, idCasello);
             ps.executeUpdate();
         }
     }

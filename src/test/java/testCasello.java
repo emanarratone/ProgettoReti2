@@ -25,19 +25,19 @@ public class testCasello {
     @Order(0)
     @Test
     public void testExc(){
-        assertThrows(SQLException.class, ()->{dao.insertCasello(c.getIdAutostrada(), null, c.getLimite(), 50.0);});
+        assertThrows(SQLException.class, ()->{dao.insertCasello(c.getIdAutostrada(), null, c.getLimite());});
     }
 
     @Order(1)
     @Test
     public void testInsert(){
-        assertDoesNotThrow(()-> dao.insertCasello(c.getIdAutostrada(), c.getSigla(), c.getLimite(), 50.0));
+        assertDoesNotThrow(()-> dao.insertCasello(c.getIdAutostrada(), c.getSigla(), c.getLimite()));
     }
 
     @Order(2)
     @Test
     public void testUpdate(){
-        assertDoesNotThrow(()-> dao.updateCasello(3, c.getSigla(), 22.0)); //servono gli id corretti o non va
+        assertDoesNotThrow(()-> dao.updateCasello(3, c.getSigla(), 22, false)); //servono gli id corretti o non va
     }
 
     @Order(3)

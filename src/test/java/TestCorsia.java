@@ -44,7 +44,8 @@ public class TestCorsia {
     @Order(2)
     @Test
     public void testUpdate(){
-        assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(),co.getVerso().toString());});
+        Corsia c1 = new Corsia(c.getIdCasello(),2, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
+        assertDoesNotThrow(() -> {dao.updateCorsia(c1.getNumCorsia(), c1.getCasello(), c1.getVerso().toString(), c1.getTipo().toString());});
     }
 
     @Order(3)

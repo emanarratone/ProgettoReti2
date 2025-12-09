@@ -516,23 +516,25 @@ public class ApiController {
     }
 
     // PUT /api/lanes/{idCorsia}
-    @PutMapping("/lanes/{idCorsia}")
-    public ResponseEntity<String> updateLane(@PathVariable int idCorsia,
+    @PutMapping("/lanes/{numCorsia}")
+    public ResponseEntity<String> updateLane(@PathVariable Integer numCorsia,
                                              @RequestBody Map<String, Object> body) {
         try {
-            String nomeCorsia = (String) body.get("nome_corsia");
+            Integer idCasello = (Integer) body.get("id_casello");
             String direzione = (String) body.get("direzione");
+            String tipo = (String) body.get("tipo");
 
-            if (nomeCorsia == null || nomeCorsia.isBlank()) {
+
+            if (numCorsia == null || numCorsia == 0) {
                 return ResponseEntity.badRequest()
                         .body("{\"error\":\"nome_corsia obbligatorio\"}");
             }
 
             daoCorsia dao = new daoCorsia();
-            dao.updateCorsia(idCorsia, nomeCorsia, direzione);
+            dao.updateCorsia(numCorsia, idCasello, direzione, tipo);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
-            System.err.println("ERRORE in PUT /api/lanes/" + idCorsia + ":");
+            System.err.println("ERRORE in PUT /api/lanes/" + numCorsia + ":");
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore aggiornamento corsia\"}");
         }
