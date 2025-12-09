@@ -11,19 +11,21 @@ import static DB.DbConnection.getConnection;
 public class daoCorsia {
 
     // INSERT corsia (POST /tolls/{idCasello}/lanes)
-    public void insertCorsia(Integer idCasello, String direzione) throws SQLException {
+    public void insertCorsia(Integer idCasello, String verso, String tipo_corsia, Boolean is_closed) throws SQLException {
         String sql = """
             INSERT INTO CORSIA (num_corsia, id_casello, verso, tipo_corsia, is_closed)
-            VALUES (?, ?, ?, 'MANUALE', FALSE)
+            VALUES (?, ?, ?, ?, ?)
             """;
         // ricava num_corsia max+1 per quel casello
-        int nextNum = getNextNumCorsia(idCasello);
+        int numCorsia = getNextNumCorsia(idCasello);
 
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, nextNum);
+            ps.setInt(1, numCorsia);
             ps.setInt(2, idCasello);
-            ps.setString(3, direzione);
+            ps.setString(3, verso);
+            ps.setString(4, tipo_corsia);
+            ps.setBoolean(5, is_closed);
             ps.executeUpdate();
         }
     }
@@ -40,20 +42,34 @@ public class daoCorsia {
         }
     }
     //update corsia
-    public void updateCorsia(Integer numCorsia, Integer idCasello, String direzione, String tipo) throws SQLException {
-        String sql = "UPDATE CORSIA SET verso = ?, tipo_corsia = ? WHERE num_corsia = ? AND id_casello = ?";
+    public void updateCorsia(Integer numCorsia,
+                             Integer idCasello,
+                             String verso,
+                             String tipo,
+                             boolean chiuso) throws SQLException {
+        String sql = """
+            UPDATE CORSIA
+               SET verso = ?,
+                   tipo_corsia = ?,
+                   is_closed = ?
+             WHERE num_corsia = ? AND id_casello = ?
+            """;
+
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, direzione);
+            ps.setString(1, verso);
             ps.setString(2, tipo);
-            ps.setInt(3, numCorsia);
-            ps.setInt(4, idCasello);
+            ps.setBoolean(3, chiuso);
+            ps.setInt(4, numCorsia);
+            ps.setInt(5, idCasello);
             ps.executeUpdate();
         }
     }
 
+
     // DELETE corsia
-    public void deleteCorsia(Integer numCorsia, Integer idCasello) throws SQLException {
+    public void deleteCorsia(Integer numCorsia,
+                             Integer idCasello) throws SQLException {
         String sql = "DELETE FROM CORSIA WHERE num_corsia = ? AND id_casello = ?";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -120,8 +136,5 @@ public class daoCorsia {
         sb.append("]");
         return sb.toString();
     }
-
-
-
 
 }

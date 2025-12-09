@@ -3,10 +3,13 @@ package model.Autostrada;
 
 public class Corsia {
 
-    private final Integer casello;
-    private final Integer numCorsia;
+    private  Integer casello;
+    private  Integer numCorsia;
     private Verso verso;
     private Tipo tipo;
+
+    public Corsia() {}
+
     public enum Tipo {MANUALE, TELEPASS}
     public enum Verso { ENTRATA, USCITA }
     private Boolean isClosed;

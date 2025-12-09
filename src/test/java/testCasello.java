@@ -37,7 +37,7 @@ public class testCasello {
     @Order(2)
     @Test
     public void testUpdate(){
-        assertDoesNotThrow(()-> dao.updateCasello(3, c.getSigla(), 22, false)); //servono gli id corretti o non va
+        assertDoesNotThrow(()-> dao.updateCasello(3, c.getSigla(), c.getLimite(),c.isClosed()));
     }
 
     @Order(3)
