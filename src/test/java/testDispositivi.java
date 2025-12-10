@@ -50,7 +50,7 @@ public class testDispositivi {
     @Order(2)
     @Test
     public void testUpdate(){
-       // assertDoesNotThrow(()->{dao.updateDispositivo(d.getID(), );});
+       assertDoesNotThrow(()->{dao.updateDispositivo(2, d.getStatus());});
     }
 
     @Order(3)
