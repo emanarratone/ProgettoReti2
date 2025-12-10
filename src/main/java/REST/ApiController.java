@@ -19,7 +19,7 @@ public class ApiController {
 
     // ================= LOGIN / SESSIONE =================
 
-    @PostMapping("/login")
+    @PostMapping("/login")//commento
     public ResponseEntity<String> login(@RequestParam String username,
                                         @RequestParam String password,
                                         HttpSession session) {
