@@ -70,28 +70,32 @@ public class daoDispositivi {
 
     // GET /lanes/{idCorsia}/devices
     // qui semplifichiamo: assumiamo che idCorsia == num_corsia e recuperiamo tutte le righe con quel num_corsia
-    public String getDispositiviPerCorsiaJson(int numCorsia) throws SQLException {
+    public String getDispositiviPerCorsiaJson(int numCorsia, int id_casello) throws SQLException {
         String sql = """
-            SELECT d.id_dispositivo,
-                   d.stato,
-                   d.tipo_dispositivo,
-                   d.num_corsia,
-                   d.id_casello
-            FROM DISPOSITIVO d
-            WHERE d.num_corsia = ?
-            ORDER BY d.id_dispositivo
-            """;
+        SELECT d.id_dispositivo,
+               d.stato,
+               d.tipo_dispositivo,
+               d.num_corsia,
+               d.id_casello
+        FROM DISPOSITIVO d
+        WHERE d.num_corsia = ? AND d.id_casello = ?
+        """;
+
         StringBuilder sb = new StringBuilder();
         sb.append("[");
 
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setInt(1, numCorsia);
+            ps.setInt(2, id_casello);
+
             try (ResultSet rs = ps.executeQuery()) {
                 boolean first = true;
                 while (rs.next()) {
                     if (!first) sb.append(",");
                     first = false;
+
                     int id = rs.getInt("id_dispositivo");
                     String stato = rs.getString("stato");
                     String tipo = rs.getString("tipo_dispositivo");
@@ -107,5 +111,6 @@ public class daoDispositivi {
         sb.append("]");
         return sb.toString();
     }
+
 
 }

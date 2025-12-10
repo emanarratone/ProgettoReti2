@@ -53,7 +53,6 @@ public class daoMulte {
                 int id              = rs.getInt("id_multa");
                 String targa        = rs.getString("targa");
                 double imp          = rs.getDouble("importo");
-                java.sql.Date data  = rs.getDate("data");
                 boolean pagato      = rs.getBoolean("pagato");
                 String nomeRegione  = rs.getString("nome_regione");
 
@@ -69,14 +68,12 @@ public class daoMulte {
                                 "\"id_multa\":%d," +
                                 "\"targa\":\"%s\"," +
                                 "\"importo\":%.2f," +
-                                "\"data\":\"%s\"," +
                                 "\"pagato\":%s," +
                                 "\"nome_regione\":\"%s\"" +
                                 "}",
                         id,
                         targa,
                         imp,
-                        data != null ? data.toString() : "",
                         pagato ? "true" : "false",
                         nomeRegione
                 ));

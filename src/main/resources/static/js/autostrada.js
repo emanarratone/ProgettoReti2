@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setStatus('Caricamento dispositivi...');
     itemsList.innerHTML = '';
 
-    fetch('/api/lanes/' + encodeURIComponent(idCasello) + '/' + encodeURIComponent(numCorsia) + '/devices')
+   fetch('/api/lanes/' + encodeURIComponent(idCasello) + '/' + encodeURIComponent(numCorsia) + '/devices')
       .then(res => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();

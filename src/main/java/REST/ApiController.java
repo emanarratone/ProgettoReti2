@@ -566,8 +566,7 @@ public class ApiController {
                                              @PathVariable int numCorsia) {
         try {
             daoDispositivi dao = new daoDispositivi();
-            // se vuoi filtrare anche per casello, aggiungi id_casello nel WHERE
-            String json = dao.getDispositiviPerCorsiaJson(numCorsia);
+            String json = dao.getDispositiviPerCorsiaJson(numCorsia, idCasello);
             return ResponseEntity.ok(json);
         } catch (Exception e) {
             System.err.println("ERRORE in GET /api/lanes/" + idCasello + "/" + numCorsia + "/devices:");
