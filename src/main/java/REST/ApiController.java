@@ -2,8 +2,7 @@ package REST;
 
 import DB.*;
 
-import model.Autostrada.Regione;
-import model.Autostrada.Traffico;
+import model.Autostrada.*;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

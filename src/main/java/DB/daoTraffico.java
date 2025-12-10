@@ -1,6 +1,6 @@
 package DB;
 
-import model.Autostrada.Traffico;
+import model.Autostrada.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
