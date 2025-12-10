@@ -32,13 +32,13 @@ public class TestCorsia {
     @Order(0)
     @Test
     public void testExc(){
-        assertThrows(SQLException.class, () -> {dao.insertCorsia(co.getCasello(), null);});
+        assertThrows(SQLException.class, () -> {dao.insertCorsia(co.getCasello(), null, null);});
     }
 
     @Order(1)
     @Test
     public void testInsert(){
-        assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(), co.getVerso().toString());});
+        assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(), co.getVerso().toString(), co.getTipo().toString());});
     }
 
     @Order(2)
