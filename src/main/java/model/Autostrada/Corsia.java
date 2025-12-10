@@ -3,10 +3,13 @@ package model.Autostrada;
 
 public class Corsia {
 
-    private final Integer casello;
-    private final Integer numCorsia;
+    private  Integer casello;
+    private  Integer numCorsia;
     private Verso verso;
     private Tipo tipo;
+
+    public Corsia() {}
+
     public enum Tipo {MANUALE, TELEPASS}
     public enum Verso { ENTRATA, USCITA }
     private Boolean isClosed;
@@ -17,6 +20,14 @@ public class Corsia {
         this.verso = verso;
         this.tipo = tipo;
         this.isClosed = false;
+    }
+
+    public Corsia(Integer casello,Integer numCorsia, Verso verso, Tipo tipo, boolean isClosed) {
+        this.casello = casello;
+        this.numCorsia = numCorsia;
+        this.verso = verso;
+        this.tipo = tipo;
+        this.isClosed = isClosed;
     }
 
     public Tipo getTipo() {

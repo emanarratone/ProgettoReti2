@@ -32,20 +32,20 @@ public class TestCorsia {
     @Order(0)
     @Test
     public void testExc(){
-        assertThrows(SQLException.class, () -> {dao.insertCorsia(co.getCasello(), null, null);});
+        assertThrows(SQLException.class, () -> {dao.insertCorsia(co.getCasello(), null, null, null);});
     }
 
     @Order(1)
     @Test
     public void testInsert(){
-        assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(), co.getVerso().toString(), co.getTipo().toString());});
+        assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(), co.getVerso().toString(), co.getTipo().toString(), co.getClosed());});
     }
 
     @Order(2)
     @Test
     public void testUpdate(){
         Corsia c1 = new Corsia(c.getIdCasello(),2, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
-        assertDoesNotThrow(() -> {dao.updateCorsia(c1.getNumCorsia(), c1.getCasello(), c1.getVerso().toString(), c1.getTipo().toString());});
+        assertDoesNotThrow(() -> {dao.updateCorsia(c1.getNumCorsia(), c1.getCasello(), c1.getVerso().toString(), c1.getTipo().toString(), c1.getClosed());});
     }
 
     @Order(3)

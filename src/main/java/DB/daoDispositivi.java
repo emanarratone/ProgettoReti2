@@ -14,17 +14,18 @@ import static DB.DbConnection.getConnection;
 public class daoDispositivi {
 
     // INSERT dispositivo (POST /lanes/{idCorsia}/devices)
-    public void insertDispositivo(Integer numCorsia, String tipo, Integer idCasello) throws SQLException {
+    public void insertDispositivo(String stato,Integer numCorsia, String tipo, Integer idCasello) throws SQLException {
 
         String sql = """
             INSERT INTO DISPOSITIVO (stato, num_corsia, id_casello, tipo_dispositivo)
-            VALUES ('ATTIVO', ?, ?, ?)
+            VALUES (?, ?, ?, ?)
             """;
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, numCorsia);
-            ps.setInt(2, idCasello);
-            ps.setString(3, tipo);
+            ps.setString(1, stato);
+            ps.setInt(2, numCorsia);
+            ps.setInt(3, idCasello);
+            ps.setString(4, tipo);
             ps.executeUpdate();
         }
     }

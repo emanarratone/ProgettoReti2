@@ -501,10 +501,11 @@ public class ApiController {
     public ResponseEntity<String> createLane(@PathVariable int idCasello,
                                              @RequestBody Map<String, Object> body) {
         try {
-            String direzione = (String) body.get("direzione");  //??? crea conflitti nella creazione di una corsia
-
+            String verso = (String) body.get("verso");
+            String tipo_corsia = (String) body.get("tipo_corsia");
+            Boolean is_closed = (Boolean) body.get("chiuso");
             daoCorsia dao = new daoCorsia();
-            dao.insertCorsia(idCasello, direzione);
+            dao.insertCorsia(idCasello, verso,tipo_corsia,is_closed);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
         } catch (Exception e) {
@@ -514,69 +515,77 @@ public class ApiController {
         }
     }
 
-    // PUT /api/lanes/{idCorsia}
-    @PutMapping("/lanes/{numCorsia}")
-    public ResponseEntity<String> updateLane(@PathVariable Integer numCorsia,
+    // PUT /api/lanes/{idCasello}/{numCorsia}
+    @PutMapping("/lanes/{idCasello}/{numCorsia}")
+    public ResponseEntity<String> updateLane(@PathVariable Integer idCasello,
+                                             @PathVariable Integer numCorsia,
                                              @RequestBody Map<String, Object> body) {
         try {
-            Integer idCasello = (Integer) body.get("id_casello");
-            String direzione = (String) body.get("direzione");
-            String tipo = (String) body.get("tipo");
+            String verso = (String) body.get("verso");
+            String tipo  = (String) body.get("tipo_corsia");
+            Boolean chiuso = (Boolean) body.get("chiuso");
 
-
-            if (numCorsia == null || numCorsia == 0) {
+            if (verso == null || verso.isBlank() ||
+                    tipo == null  || tipo.isBlank()) {
                 return ResponseEntity.badRequest()
-                        .body("{\"error\":\"nome_corsia obbligatorio\"}");
+                        .body("{\"error\":\"verso e tipo_corsia obbligatori\"}");
             }
 
             daoCorsia dao = new daoCorsia();
-            dao.updateCorsia(numCorsia, idCasello, direzione, tipo);
+            dao.updateCorsia(numCorsia, idCasello, verso, tipo, chiuso != null && chiuso);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
-            System.err.println("ERRORE in PUT /api/lanes/" + numCorsia + ":");
+            System.err.println("ERRORE in PUT /api/lanes/" + idCasello + "/" + numCorsia + ":");
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore aggiornamento corsia\"}");
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore aggiornamento corsia\"}");
         }
     }
 
-    // DELETE /api/lanes/{idCorsia}
-    @DeleteMapping("/lanes/{idCorsia}")
-    public ResponseEntity<String> deleteLane(@PathVariable int idCorsia) {
+    // DELETE /api/lanes/{idCasello}/{numCorsia}
+    @DeleteMapping("/lanes/{idCasello}/{numCorsia}")
+    public ResponseEntity<String> deleteLane(@PathVariable Integer idCasello,
+                                             @PathVariable Integer numCorsia) {
         try {
             daoCorsia dao = new daoCorsia();
-            //dao.deleteCorsia(idCorsia);
+            dao.deleteCorsia(numCorsia, idCasello);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
-            System.err.println("ERRORE in DELETE /api/lanes/" + idCorsia + ":");
+            System.err.println("ERRORE in DELETE /api/lanes/" + idCasello + "/" + numCorsia + ":");
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore eliminazione corsia\"}");
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore eliminazione corsia\"}");
         }
     }
 
     // ---- DISPOSITIVI ----
 
-    // GET /api/lanes/{idCorsia}/devices
-    @GetMapping("/lanes/{idCorsia}/devices")
-    public ResponseEntity<String> getDevicesForLane(@PathVariable int idCorsia) {
+    // GET /api/lanes/{idCasello}/{numCorsia}/devices
+    @GetMapping("/lanes/{idCasello}/{numCorsia}/devices")
+    public ResponseEntity<String> getDevices(@PathVariable int idCasello,
+                                             @PathVariable int numCorsia) {
         try {
             daoDispositivi dao = new daoDispositivi();
-            String json = dao.getDispositiviPerCorsiaJson(idCorsia);
+            // se vuoi filtrare anche per casello, aggiungi id_casello nel WHERE
+            String json = dao.getDispositiviPerCorsiaJson(numCorsia);
             return ResponseEntity.ok(json);
         } catch (Exception e) {
-            System.err.println("ERRORE in GET /api/lanes/" + idCorsia + "/devices:");
+            System.err.println("ERRORE in GET /api/lanes/" + idCasello + "/" + numCorsia + "/devices:");
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno\"}");
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore caricamento dispositivi\"}");
         }
     }
 
-    // POST /api/lanes/{idCorsia}/devices { tipo, posizione }
-    @PostMapping("/lanes/{idCasello}-{numCorsia}/devices")
+
+    // POST /api/lanes/{idCasello}/{numCorsia}/devices
+    @PostMapping("/lanes/{idCasello}/{numCorsia}/devices")
     public ResponseEntity<String> createDevice(@PathVariable int idCasello,
                                                @PathVariable int numCorsia,
                                                @RequestBody Map<String, Object> body) {
         try {
             String tipo = (String) body.get("tipo");
-            //String posizione = (String) body.get("posizione");    cos'è posizione e perché è dentro insert dispositivo se non viene usato
+            String stato = (String) body.get("stato"); // se vuoi usarlo
 
             if (tipo == null || tipo.isBlank()) {
                 return ResponseEntity.badRequest()
@@ -584,15 +593,17 @@ public class ApiController {
             }
 
             daoDispositivi dao = new daoDispositivi();
-            dao.insertDispositivo(numCorsia, tipo, idCasello);
+            dao.insertDispositivo(stato,numCorsia, tipo, idCasello);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
         } catch (Exception e) {
-            System.err.println("ERRORE in POST /api/lanes/" + numCorsia + "/devices:");
+            System.err.println("ERRORE in POST /api/lanes/" + idCasello + "/" + numCorsia + "/devices:");
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("{\"error\":\"Errore creazione dispositivo\"}");
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore creazione dispositivo\"}");
         }
     }
+
 
     // PUT /api/devices/{idDispositivo}
     @PutMapping("/devices/{idDispositivo}")
