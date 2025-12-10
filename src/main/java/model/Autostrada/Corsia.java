@@ -22,6 +22,14 @@ public class Corsia {
         this.isClosed = false;
     }
 
+    public Corsia(Integer casello,Integer numCorsia, Verso verso, Tipo tipo, boolean isClosed) {
+        this.casello = casello;
+        this.numCorsia = numCorsia;
+        this.verso = verso;
+        this.tipo = tipo;
+        this.isClosed = isClosed;
+    }
+
     public Tipo getTipo() {
         return tipo;
     }

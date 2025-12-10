@@ -1,13 +1,9 @@
-import DB.daoAutostrada;
-import DB.daoCasello;
 import DB.daoDispositivi;
 import model.Autostrada.Autostrada;
 import model.Autostrada.Casello;
 import model.Autostrada.Corsia;
 import model.Autostrada.Regione;
 import model.Dispositivi.Dispositivi;
-import model.Dispositivi.Sbarra;
-import model.Dispositivi.Telecamera;
 import model.Dispositivi.Totem;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.*;

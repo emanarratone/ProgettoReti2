@@ -9,8 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 
-import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 public class TestCorsia {
 
     private daoCorsia dao;
@@ -31,19 +32,20 @@ public class TestCorsia {
     @Order(0)
     @Test
     public void testExc(){
-        //assertThrows(SQLException.class, () -> {dao.insertCorsia(co.getCasello(), null);});
+        assertThrows(SQLException.class, () -> {dao.insertCorsia(co.getCasello(), null, null, null);});
     }
 
     @Order(1)
     @Test
     public void testInsert(){
-        //assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(), co.getVerso().toString());});
+        assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(), co.getVerso().toString(), co.getTipo().toString(), co.getClosed());});
     }
 
     @Order(2)
     @Test
     public void testUpdate(){
-        //assertDoesNotThrow(() -> {dao.insertCorsia(co.getCasello(),co.getVerso().toString());});
+        Corsia c1 = new Corsia(c.getIdCasello(),2, Corsia.Verso.ENTRATA, Corsia.Tipo.MANUALE);
+        assertDoesNotThrow(() -> {dao.updateCorsia(c1.getNumCorsia(), c1.getCasello(), c1.getVerso().toString(), c1.getTipo().toString(), c1.getClosed());});
     }
 
     @Order(3)
