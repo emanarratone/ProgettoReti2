@@ -337,11 +337,11 @@ public class ApiController {
     @PostMapping("/highways")
     public ResponseEntity<String> createHighway(@RequestBody Map<String, Object> body) {
         try {
-            String citta = (String) body.get("citta");
+            String sigla = (String) body.get("citta");
             Number idRegioneNum = (Number) body.get("idRegione");
             Integer idRegione = idRegioneNum != null ? idRegioneNum.intValue() : null;
 
-            if (citta == null || citta.isBlank()) {
+            if (sigla == null || sigla.isBlank()) {
                 return ResponseEntity.badRequest()
                         .body("{\"error\":\"Nome autostrada mancante\"}");
             }
@@ -351,7 +351,7 @@ public class ApiController {
             }
 
             daoAutostrada dao = new daoAutostrada();
-            dao.insertAutostrada(citta, idRegione);
+            dao.insertAutostrada(sigla, idRegione);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("{\"status\":\"ok\"}");
         } catch (Exception e) {
@@ -366,11 +366,11 @@ public class ApiController {
     public ResponseEntity<String> updateHighway(@PathVariable int idAutostrada,
                                                 @RequestBody Map<String, Object> body) {
         try {
-            String citta = (String) body.get("citta");
+            String sigla = (String) body.get("citta");
             Number idRegioneNum = (Number) body.get("idRegione");
             Integer idRegione = idRegioneNum != null ? idRegioneNum.intValue() : null;
 
-            if (citta == null || citta.isBlank()) {
+            if (sigla == null || sigla.isBlank()) {
                 return ResponseEntity.badRequest()
                         .body("{\"error\":\"Nome autostrada mancante\"}");
             }
@@ -380,7 +380,7 @@ public class ApiController {
             }
 
             daoAutostrada dao = new daoAutostrada();
-            dao.updateAutostrada(idAutostrada, citta, idRegione);
+            dao.updateAutostrada(idAutostrada, sigla, idRegione);
             return ResponseEntity.ok("{\"status\":\"ok\"}");
         } catch (Exception e) {
             e.printStackTrace();

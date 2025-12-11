@@ -16,12 +16,12 @@ import static DB.DbConnection.getConnection;
 public class daoAutostrada {
     public String getregioneAutostradeCaselli() throws SQLException {
                 String SQL =
-                "SELECT nome, nome_autostrada, nome_casello, id_regione\n" +
+                "SELECT nome, sigla, nome_casello, id_regione\n" +
                         "FROM (\n" +
                         "  SELECT\n" +
                         "    r.id_regione,\n" +
                         "    r.nome  AS nome,\n" +
-                        "    a.citta AS nome_autostrada,\n" +
+                        "    a.sigla AS sigla,\n" +
                         "    c.sigla AS nome_casello,\n" +
                         "    row_number() OVER (\n" +
                                 "      PARTITION BY r.id_regione\n" +
@@ -67,10 +67,10 @@ public class daoAutostrada {
 
     public String getAutostradeJson() throws SQLException {
         String sql =
-                "SELECT a.id_autostrada, a.citta AS nome_autostrada, r.nome AS nome " +
+                "SELECT a.id_autostrada, a.sigla AS nome_autostrada, r.nome AS nome " +
                         "FROM AUTOSTRADA a " +
                         "LEFT JOIN REGIONE r ON a.id_regione = r.id_regione " +
-                        "ORDER BY r.nome, a.citta";
+                        "ORDER BY r.nome, a.sigla";
 
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -85,7 +85,7 @@ public class daoAutostrada {
                 first = false;
 
                 int id         = rs.getInt("id_autostrada");
-                String nome    = rs.getString("nome_autostrada"); // alias di citta
+                String nome    = rs.getString("nome_autostrada");
                 String regione = rs.getString("nome");
 
                 sb.append("{")
@@ -104,12 +104,12 @@ public class daoAutostrada {
     public String getAutostradePerRegioneJson(int idRegione) throws SQLException {
         String sql = """
             SELECT a.id_autostrada,
-                   a.citta,
+                   a.sigla,
                    r.nome AS nome_regione
             FROM AUTOSTRADA a
             JOIN REGIONE r ON a.id_regione = r.id_regione
             WHERE a.id_regione = ?
-            ORDER BY a.citta
+            ORDER BY a.sigla
             """;
         StringBuilder sb = new StringBuilder();
         sb.append("[");
@@ -122,12 +122,12 @@ public class daoAutostrada {
                     if (!first) sb.append(",");
                     first = false;
                     int id = rs.getInt("id_autostrada");
-                    String citta = rs.getString("citta");
+                    String sigla = rs.getString("sigla");
                     String nomeRegione = rs.getString("nome_regione");
                     sb.append(String.format(Locale.US,
-                            "{\"id_autostrada\":%d,\"citta\":\"%s\",\"nome_regione\":\"%s\"}",
+                            "{\"id_autostrada\":%d,\"sigla\":\"%s\",\"nome_regione\":\"%s\"}",
                             id,
-                            citta.replace("\"", "\\\""),
+                            sigla.replace("\"", "\\\""),
                             nomeRegione.replace("\"", "\\\"")));
                 }
             }
@@ -143,11 +143,11 @@ public class daoAutostrada {
     }
 
     // INSERT autostrada (POST /api/highways)
-    public void insertAutostrada(String citta, int idRegione) throws SQLException {
-        String sql = "INSERT INTO AUTOSTRADA (citta, id_regione) VALUES (?, ?)";
+    public void insertAutostrada(String sigla, int idRegione) throws SQLException {
+        String sql = "INSERT INTO AUTOSTRADA (sigla, id_regione) VALUES (?, ?)";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, citta);
+            ps.setString(1, sigla);
             ps.setInt(2, idRegione);
             ps.executeUpdate();
         }
@@ -155,11 +155,11 @@ public class daoAutostrada {
 
 
 // UPDATE autostrada (PUT /api/highways/{idAutostrada})
-    public void updateAutostrada(int idAutostrada, String citta, int idRegione) throws SQLException {
-        String sql = "UPDATE AUTOSTRADA SET citta = ?, id_regione = ? WHERE id_autostrada = ?";
+    public void updateAutostrada(int idAutostrada, String sigla, int idRegione) throws SQLException {
+        String sql = "UPDATE AUTOSTRADA SET sigla = ?, id_regione = ? WHERE id_autostrada = ?";
         try (Connection c = getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, citta);
+            ps.setString(1, sigla);
             ps.setInt(2, idRegione);
             ps.setInt(3, idAutostrada);
             ps.executeUpdate();
