@@ -1,3 +1,41 @@
+   const groupAutostrada     = document.getElementById('groupAutostrada');
+    const highwayRegionInput  = document.getElementById('highwayRegionInput');
+    const regionSuggestionsEl = document.getElementById('regionSuggestions');
+    const highwayRegionIdsEl  = document.getElementById('highwayRegionIds');
+    const selectedRegionsEl   = document.getElementById('selectedRegions');
+
+ // Debug: verifica che tutti gli elementi esistano
+  console.log('Elementi trovati:', {
+    groupAutostrada: !!groupAutostrada,
+    highwayRegionInput: !!highwayRegionInput,
+    regionSuggestionsEl: !!regionSuggestionsEl,
+    highwayRegionIdsEl: !!highwayRegionIdsEl,
+    selectedRegionsEl: !!selectedRegionsEl
+  });
+  const itemsList   = document.getElementById('itemsList');
+  const statusEl    = document.getElementById('status');
+  const levelTitle  = document.getElementById('levelTitle');
+  const pathSummary = document.getElementById('pathSummary');
+  const levelList   = document.getElementById('levelList');
+
+  const btnAdd    = document.getElementById('btnAdd');
+
+  const crudModalEl    = document.getElementById('crudModal');
+  const crudModal      = new bootstrap.Modal(crudModalEl);
+  const crudForm       = document.getElementById('crudForm');
+  const crudModalTitle = document.getElementById('crudModalTitle');
+  const fieldName      = document.getElementById('fieldName');
+  const fieldNameLabel = document.getElementById('fieldNameLabel');
+
+  // Gruppi specifici
+  const groupCasello     = document.getElementById('groupCasello');
+  const groupCorsia      = document.getElementById('groupCorsia');
+  const groupDispositivo = document.getElementById('groupDispositivo');
+
+  let currentLevel  = 'regions';   // regions | highways | tolls | lanes | devices
+  let selectedItem  = null;        // { id, ... }
+  let currentAction = null;        // create | edit
+
 document.addEventListener('DOMContentLoaded', function () {
   // Logout coerente con dashboard
   const logoutBtn = document.getElementById('logoutBtn');
@@ -30,35 +68,6 @@ document.addEventListener('DOMContentLoaded', function () {
     toll: null,
     lane: null
   };
-
-  const itemsList   = document.getElementById('itemsList');
-  const statusEl    = document.getElementById('status');
-  const levelTitle  = document.getElementById('levelTitle');
-  const pathSummary = document.getElementById('pathSummary');
-  const levelList   = document.getElementById('levelList');
-
-  const btnAdd    = document.getElementById('btnAdd');
-
-  const crudModalEl    = document.getElementById('crudModal');
-  const crudModal      = new bootstrap.Modal(crudModalEl);
-  const crudForm       = document.getElementById('crudForm');
-  const crudModalTitle = document.getElementById('crudModalTitle');
-  const fieldName      = document.getElementById('fieldName');
-  const fieldNameLabel = document.getElementById('fieldNameLabel');
-
-  // Gruppi specifici
-  const groupCasello     = document.getElementById('groupCasello');
-  const groupCorsia      = document.getElementById('groupCorsia');
-  const groupDispositivo = document.getElementById('groupDispositivo');
-
-  let currentLevel  = 'regions';   // regions | highways | tolls | lanes | devices
-  let selectedItem  = null;        // { id, ... }
-  let currentAction = null;        // create | edit
-
-  const groupAutostrada     = document.getElementById('groupAutostrada');
-  const highwayRegionInput  = document.getElementById('highwayRegionInput');
-  const regionSuggestionsEl = document.getElementById('regionSuggestions');
-  const highwayRegionIdsEl  = document.getElementById('highwayRegionIds');
 
 
   function setStatus(msg) {
@@ -319,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const li = document.createElement('li');
           li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-          const name = h.nome_autostrada || h.citta || h.name || ('Autostrada ' + h.id);
+          const name = h.sigla || h.citta || h.name || ('Autostrada ' + h.id);
           const obj  = { id: h.id_autostrada || h.id, name };
 
           li.innerHTML = `
@@ -625,6 +634,50 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   }
 
+function renderSelectedRegions() {
+  selectedRegionsEl.innerHTML = '';
+  const current = highwayRegionIdsEl.value
+    ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
+    : [];
+
+  current.forEach(id => {
+    const tag = document.createElement('span');
+    tag.className = 'badge bg-primary d-flex align-items-center gap-1';
+
+    const spanText = document.createElement('span');
+    spanText.textContent = cachedRegions[id] || ('Regione ' + id);
+    tag.appendChild(spanText);
+
+    const btnX = document.createElement('button');
+    btnX.type = 'button';
+    btnX.className = 'btn-close btn-close-white btn-sm ms-1';
+    btnX.addEventListener('click', () => {
+      const updated = current.filter(x => x !== id);
+      highwayRegionIdsEl.value = updated.join(',');
+      renderSelectedRegions();
+    });
+
+    tag.appendChild(btnX);
+    selectedRegionsEl.appendChild(tag);
+  });
+}
+
+function addRegionToSelected(id, name) {
+  const current = highwayRegionIdsEl.value
+    ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
+    : [];
+
+  if (!current.includes(id)) {
+    current.push(id);
+    highwayRegionIdsEl.value = current.join(',');
+    cachedRegions[id] = name;
+  }
+
+  highwayRegionInput.value = '';
+  regionSuggestionsEl.innerHTML = '';
+  renderSelectedRegions();
+}
+
   // --- CRUD: dialog separato ---
 
   function getModalTitle() {
@@ -680,17 +733,20 @@ document.addEventListener('DOMContentLoaded', function () {
         groupAutostrada.classList.remove('d-none');
         highwayRegionInput.value = '';
         regionSuggestionsEl.innerHTML = '';
-        highwayRegionIdsEl.value = '';   // nessuna regione selezionata di default
 
-        if (currentAction === 'edit' && selectedItem) {
-          fieldName.value = selectedItem.name || '';
-          // se da backend passi selectedItem.regions = [{id, nome}, ...]
-          if (Array.isArray(selectedItem.regions)) {
-            highwayRegionIdsEl.value = selectedItem.regions.map(r => r.id).join(',');
+        if (currentAction === 'create') {
+          // preimposta la regione da cui stai navigando
+          if (state.region) {
+            highwayRegionIdsEl.value = String(state.region.id);
+            cachedRegions[state.region.id] = state.region.name;
+          } else {
+            highwayRegionIdsEl.value = '';
           }
+          renderSelectedRegions();
+        } else if (currentAction === 'edit' && selectedItem) {
+          // per ora nessuna gestione regioni in edit
         }
         break;
-
 
       case 'tolls':
         nameGroup.classList.remove('d-none');
@@ -744,56 +800,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let regionSearchTimeout = null;
 
-  highwayRegionInput.addEventListener('input', () => {
-    const query = highwayRegionInput.value.trim();
-    regionSuggestionsEl.innerHTML = '';
-
-    if (regionSearchTimeout) clearTimeout(regionSearchTimeout);
-
-    if (query.length < 2) return; // evita chiamate inutili
-
-    regionSearchTimeout = setTimeout(() => {
-      fetch('/api/regions/search?q=' + encodeURIComponent(query))
-        .then(res => {
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return res.json();
-        })
-        .then(data => {
-          regionSuggestionsEl.innerHTML = '';
-          if (!Array.isArray(data) || data.length === 0) return;
-
-          data.forEach(r => {
-            const li = document.createElement('button');
-            li.type = 'button';
-            li.className = 'list-group-item list-group-item-action';
-            const name = r.nomeRegione || r.nome || r.name;
-            li.textContent = name;
-            li.addEventListener('click', () => {
-              addRegionToSelected(r.id, name);
-            });
-            regionSuggestionsEl.appendChild(li);
-          });
-        })
-        .catch(err => {
-          console.error('Errore ricerca regioni:', err);
-        });
-    }, 300); // debounce 300ms
-  });
-
-function addRegionToSelected(id, name) {
-  const current = highwayRegionIdsEl.value
-    ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
-    : [];
-
-  if (!current.includes(id)) {
-    current.push(id);
-    highwayRegionIdsEl.value = current.join(',');
-  }
-
-  // mostra nel campo testo (esempio semplice)
-  highwayRegionInput.value = current.length + ' regioni selezionate';
+highwayRegionInput.addEventListener('input', () => {
+  const query = highwayRegionInput.value.trim();
   regionSuggestionsEl.innerHTML = '';
-}
+
+  if (regionSearchTimeout) clearTimeout(regionSearchTimeout);
+  if (query.length < 2) return;
+
+  regionSearchTimeout = setTimeout(() => {
+    fetch('/api/regions/search?q=' + encodeURIComponent(query))
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        regionSuggestionsEl.innerHTML = '';
+        if (!Array.isArray(data) || data.length === 0) return;
+
+        data.forEach(r => {
+          const li = document.createElement('button');
+          li.type = 'button';
+          li.className = 'list-group-item list-group-item-action';
+          const name = r.nomeRegione || r.nome || r.name;
+          const id   = r.id_regione || r.id;
+          li.textContent = name;
+          li.addEventListener('click', () => {
+            addRegionToSelected(id, name);
+          });
+          regionSuggestionsEl.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error('Errore ricerca regioni:', err);
+      });
+  }, 300);
+});
+
 
   function getEndpointAndBodyForCreate() {
     const name = fieldName.value.trim();
@@ -805,20 +847,29 @@ function addRegionToSelected(id, name) {
           body: { nomeRegione: name }
         };
 
-     case 'highways': {
-       const selectedIds = highwayRegionIdsEl.value
-         ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
-         : [];
+     case 'regions':
+           return {
+             url: '/api/regions',
+             body: { nomeRegione: name }
+           };
 
-       return {
-         url: '/api/highways',
-         body: {
-           citta: name,                 // o sigla/nome autostrada
-           idRegione: state.region.id,  // regione corrente, se ti serve ancora
-           idRegioni: selectedIds       // N regioni per gli insert (sigla, id_regione)
+         case 'highways': {
+           const selectedIds = highwayRegionIdsEl.value
+             ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
+             : [];
+
+           if (selectedIds.length === 0 && state.region) {
+             selectedIds.push(state.region.id);
+           }
+
+           return {
+             url: '/api/highways',
+             body: {
+               sigla: fieldName.value.trim(),
+               idRegioni: selectedIds   // [1,3,5,...]
+             }
+           };
          }
-       };
-     }
 
 
       case 'tolls':
@@ -852,6 +903,9 @@ function addRegionToSelected(id, name) {
     }
   }
 
+
+    // Cache per i nomi delle regioni selezionate
+      const cachedRegions = {};
   function getEndpointForUpdateOrDelete() {
     if (!selectedItem) return null;
 
@@ -868,6 +922,14 @@ function addRegionToSelected(id, name) {
         return `/api/devices/${encodeURIComponent(selectedItem.id)}`;
     }
   }
+
+crudModalEl.addEventListener('hidden.bs.modal', () => {
+  crudForm.reset();
+  highwayRegionIdsEl.value = '';
+  selectedRegionsEl.innerHTML = '';
+  regionSuggestionsEl.innerHTML = '';
+});
+
 
   function reloadCurrentLevel() {
     switch (currentLevel) {

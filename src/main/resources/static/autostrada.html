@@ -156,7 +156,16 @@
                         <div class="mb-3 d-none" id="groupAutostrada">
                             <label for="highwayRegionInput" class="form-label">Regioni attraversate</label>
                             <input type="text" class="form-control" id="highwayRegionInput" placeholder="Digita il nome regione...">
-                            <div id="regionSuggestions" class="list-group mt-1" style="max-height:150px; overflow-y:auto;"></div>
+
+                            <!-- SUGGERIMENTI (LISTA) -->
+                            <div id="regionSuggestions"
+                                 class="list-group mt-1"
+                                 style="max-height:150px; overflow-y:auto;"></div>
+
+                            <!-- ETICHETTE (TAG) SOTTO AI SUGGERIMENTI -->
+                            <div id="selectedRegions"
+                                 class="mt-2 d-flex flex-wrap gap-2"></div>
+
                             <input type="hidden" id="highwayRegionIds">
                         </div>
 

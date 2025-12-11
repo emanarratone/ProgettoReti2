@@ -5,10 +5,8 @@ import model.Autostrada.Casello;
 import model.Autostrada.Regione;
 import org.springframework.http.ResponseEntity;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.List;
 import java.util.Locale;
 
 import static DB.DbConnection.getConnection;
@@ -143,17 +141,20 @@ public class daoAutostrada {
     }
 
     // INSERT autostrada (POST /api/highways)
-    public void insertAutostrada(String sigla, int idRegione) throws SQLException {
+    public void insertAutostrada(String sigla, int idRegione) throws Exception {
         String sql = "INSERT INTO AUTOSTRADA (sigla, id_regione) VALUES (?, ?)";
-        try (Connection c = getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
             ps.setString(1, sigla);
             ps.setInt(2, idRegione);
             ps.executeUpdate();
         }
     }
 
-// UPDATE autostrada (PUT /api/highways/{idAutostrada})
+
+    // UPDATE autostrada (PUT /api/highways/{idAutostrada})
     public void updateAutostrada(int idAutostrada, String sigla, int idRegione) throws SQLException {
         String sql = "UPDATE AUTOSTRADA SET sigla = ?, id_regione = ? WHERE id_autostrada = ?";
         try (Connection c = getConnection();
@@ -174,5 +175,25 @@ public class daoAutostrada {
             ps.executeUpdate();
         }
     }
+
+    public void insertAutostradePerRegioni(String sigla, List<Integer> idRegioni) throws Exception {
+        String sql = "INSERT INTO AUTOSTRADA (sigla, id_regione) VALUES (?, ?)";
+
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            con.setAutoCommit(false);
+
+            for (Integer idReg : idRegioni) {
+                ps.setString(1, sigla);
+                ps.setInt(2, idReg);
+                ps.addBatch();
+            }
+
+            ps.executeBatch();
+            con.commit();
+        }
+    }
+
 
 }

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -333,33 +334,33 @@ public class ApiController {
         }
     }
 
-    // POST /api/highways { "citta": "...", "idRegione": 1 }
-    @PostMapping("/highways")
-    public ResponseEntity<String> createHighway(@RequestBody Map<String, Object> body) {
-        try {
-            String sigla = (String) body.get("citta");
-            Number idRegioneNum = (Number) body.get("idRegione");
-            Integer idRegione = idRegioneNum != null ? idRegioneNum.intValue() : null;
+        // POST /api/highways
+        @PostMapping("/highways")
+        public ResponseEntity<String> createHighway(@RequestBody Map<String, Object> body) {
+            try {
+                String sigla = (String) body.get("sigla");
 
-            if (sigla == null || sigla.isBlank()) {
-                return ResponseEntity.badRequest()
-                        .body("{\"error\":\"Nome autostrada mancante\"}");
-            }
-            if (idRegione == null) {
-                return ResponseEntity.badRequest()
-                        .body("{\"error\":\"Regione mancante\"}");
-            }
+                @SuppressWarnings("unchecked")
+                List<Integer> idRegioni = (List<Integer>) body.get("idRegioni");
 
-            daoAutostrada dao = new daoAutostrada();
-            dao.insertAutostrada(sigla, idRegione);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("{\"status\":\"ok\"}");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body("{\"error\":\"Errore creazione autostrada\"}");
+                if (sigla == null || sigla.isBlank() || idRegioni == null || idRegioni.isEmpty()) {
+                    return ResponseEntity.badRequest()
+                            .body("{\"error\":\"sigla e idRegioni obbligatori\"}");
+                }
+
+                daoAutostrada dao = new daoAutostrada();
+                dao.insertAutostradePerRegioni(sigla, idRegioni);
+
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body("{\"status\":\"ok\"}");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ResponseEntity.internalServerError()
+                        .body("{\"error\":\"Errore creazione autostrade\"}");
+            }
         }
-    }
+
+
 
     // PUT /api/highways/{idAutostrada}
     @PutMapping("/highways/{idAutostrada}")
@@ -653,5 +654,4 @@ public class ApiController {
                     .body("{\"error\":\"Errore ricerca regioni\"}");
         }
     }
-
 }
