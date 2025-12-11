@@ -1,6 +1,8 @@
 package DB;
 
 import model.Autostrada.Regione;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -65,6 +67,32 @@ public class daoRegione {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    // ricerca per autocomplete: WHERE nome LIKE '%query%'
+    public String searchRegioni(String query) throws Exception {
+        String sql = "SELECT id_regione, nome " +
+                "FROM REGIONE " +
+                "WHERE nome LIKE ? " +
+                "ORDER BY nome " +
+                "LIMIT 20";
+
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, "%" + query + "%");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                JSONArray arr = new JSONArray();
+                while (rs.next()) {
+                    JSONObject o = new JSONObject();
+                    o.put("id_regione", rs.getInt("id_regione"));
+                    o.put("nomeRegione", rs.getString("nome")); // nome dal DB
+                    arr.add(o);
+                }
+                return arr.toString();
+            }
+        }
     }
 
 }

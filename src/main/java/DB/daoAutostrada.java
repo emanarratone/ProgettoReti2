@@ -153,7 +153,6 @@ public class daoAutostrada {
         }
     }
 
-
 // UPDATE autostrada (PUT /api/highways/{idAutostrada})
     public void updateAutostrada(int idAutostrada, String citta, int idRegione) throws SQLException {
         String sql = "UPDATE AUTOSTRADA SET citta = ?, id_regione = ? WHERE id_autostrada = ?";
@@ -165,7 +164,6 @@ public class daoAutostrada {
             ps.executeUpdate();
         }
     }
-
 
     // DELETE autostrada
     public void deleteAutostrada(int idAutostrada) throws SQLException {

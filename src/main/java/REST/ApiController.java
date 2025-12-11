@@ -639,4 +639,19 @@ public class ApiController {
             return ResponseEntity.internalServerError().body("{\"error\":\"Errore eliminazione dispositivo\"}");
         }
     }
+
+    // GET /api/regions/search?q=...
+    @GetMapping("/regions/search")
+    public ResponseEntity<String> searchRegions(@RequestParam("q") String query) {
+        try {
+            daoRegione dao = new daoRegione();
+            String json = dao.searchRegioni(query);
+            return ResponseEntity.ok(json);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("{\"error\":\"Errore ricerca regioni\"}");
+        }
+    }
+
 }

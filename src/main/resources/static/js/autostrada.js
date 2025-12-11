@@ -55,6 +55,12 @@ document.addEventListener('DOMContentLoaded', function () {
   let selectedItem  = null;        // { id, ... }
   let currentAction = null;        // create | edit
 
+  const groupAutostrada     = document.getElementById('groupAutostrada');
+  const highwayRegionInput  = document.getElementById('highwayRegionInput');
+  const regionSuggestionsEl = document.getElementById('regionSuggestions');
+  const highwayRegionIdsEl  = document.getElementById('highwayRegionIds');
+
+
   function setStatus(msg) {
     statusEl.textContent = msg || '';
   }
@@ -670,10 +676,21 @@ document.addEventListener('DOMContentLoaded', function () {
         nameGroup.classList.remove('d-none');
         fieldNameLabel.textContent = 'Nome autostrada';
         fieldName.required = true;
+
+        groupAutostrada.classList.remove('d-none');
+        highwayRegionInput.value = '';
+        regionSuggestionsEl.innerHTML = '';
+        highwayRegionIdsEl.value = '';   // nessuna regione selezionata di default
+
         if (currentAction === 'edit' && selectedItem) {
           fieldName.value = selectedItem.name || '';
+          // se da backend passi selectedItem.regions = [{id, nome}, ...]
+          if (Array.isArray(selectedItem.regions)) {
+            highwayRegionIdsEl.value = selectedItem.regions.map(r => r.id).join(',');
+          }
         }
         break;
+
 
       case 'tolls':
         nameGroup.classList.remove('d-none');
@@ -725,6 +742,59 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  let regionSearchTimeout = null;
+
+  highwayRegionInput.addEventListener('input', () => {
+    const query = highwayRegionInput.value.trim();
+    regionSuggestionsEl.innerHTML = '';
+
+    if (regionSearchTimeout) clearTimeout(regionSearchTimeout);
+
+    if (query.length < 2) return; // evita chiamate inutili
+
+    regionSearchTimeout = setTimeout(() => {
+      fetch('/api/regions/search?q=' + encodeURIComponent(query))
+        .then(res => {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(data => {
+          regionSuggestionsEl.innerHTML = '';
+          if (!Array.isArray(data) || data.length === 0) return;
+
+          data.forEach(r => {
+            const li = document.createElement('button');
+            li.type = 'button';
+            li.className = 'list-group-item list-group-item-action';
+            const name = r.nomeRegione || r.nome || r.name;
+            li.textContent = name;
+            li.addEventListener('click', () => {
+              addRegionToSelected(r.id, name);
+            });
+            regionSuggestionsEl.appendChild(li);
+          });
+        })
+        .catch(err => {
+          console.error('Errore ricerca regioni:', err);
+        });
+    }, 300); // debounce 300ms
+  });
+
+function addRegionToSelected(id, name) {
+  const current = highwayRegionIdsEl.value
+    ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
+    : [];
+
+  if (!current.includes(id)) {
+    current.push(id);
+    highwayRegionIdsEl.value = current.join(',');
+  }
+
+  // mostra nel campo testo (esempio semplice)
+  highwayRegionInput.value = current.length + ' regioni selezionate';
+  regionSuggestionsEl.innerHTML = '';
+}
+
   function getEndpointAndBodyForCreate() {
     const name = fieldName.value.trim();
 
@@ -735,14 +805,21 @@ document.addEventListener('DOMContentLoaded', function () {
           body: { nomeRegione: name }
         };
 
-      case 'highways':
-        return {
-          url: '/api/highways',
-          body: {
-            citta: name,
-            idRegione: state.region.id
-          }
-        };
+     case 'highways': {
+       const selectedIds = highwayRegionIdsEl.value
+         ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
+         : [];
+
+       return {
+         url: '/api/highways',
+         body: {
+           citta: name,                 // o sigla/nome autostrada
+           idRegione: state.region.id,  // regione corrente, se ti serve ancora
+           idRegioni: selectedIds       // N regioni per gli insert (sigla, id_regione)
+         }
+       };
+     }
+
 
       case 'tolls':
         return {

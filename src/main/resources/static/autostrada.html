@@ -152,6 +152,14 @@
                             <label for="fieldName" class="form-label" id="fieldNameLabel">Nome</label>
                             <input type="text" class="form-control" id="fieldName" required>
                         </div>
+                        <!-- Gruppo AUTOSTRADA: input con suggerimenti regioni -->
+                        <div class="mb-3 d-none" id="groupAutostrada">
+                            <label for="highwayRegionInput" class="form-label">Regioni attraversate</label>
+                            <input type="text" class="form-control" id="highwayRegionInput" placeholder="Digita il nome regione...">
+                            <div id="regionSuggestions" class="list-group mt-1" style="max-height:150px; overflow-y:auto;"></div>
+                            <input type="hidden" id="highwayRegionIds">
+                        </div>
+
 
                         <!-- Gruppo CASSELLO -->
                         <div class="mb-3 d-none" id="groupCasello">
