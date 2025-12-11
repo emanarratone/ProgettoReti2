@@ -1,30 +1,26 @@
 package model.Autostrada;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class Autostrada {
 
     private Integer id;       // id_autostrada
-    private String citta;     // nome autostrada/città
-    private Integer idRegione;
+    private final String sigla;     // nome autostrada/città
+    private final Integer idRegione;
 
-    public Autostrada(String citta, Integer idRegione) {
-        this.citta = citta;
+    public Autostrada(String sigla, Integer idRegione) {
+        this.sigla = sigla;
         this.idRegione = idRegione;
     }
 
-    public Autostrada(Integer id, String citta, Integer idRegione) {
+    public Autostrada(Integer id, String sigla, Integer idRegione) {
         this.id = id;
-        this.citta = citta;
+        this.sigla = sigla;
         this.idRegione = idRegione;
     }
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
-    public String getCittà() { return citta; }
-    public void setCittà(String citta) { this.citta = citta; }
+    public String getSigla() { return sigla; }
 
     public Integer getIdRegione() { return idRegione; }
-    public void setIdRegione(Integer idRegione) { this.idRegione = idRegione; }
 }

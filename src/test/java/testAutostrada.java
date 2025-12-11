@@ -25,20 +25,20 @@ public class testAutostrada {
     @Test
     public void testExcAu(){
         Autostrada aa = new Autostrada(null, r.getId());
-        assertThrows(SQLException.class, () -> {dao.insertAutostrada(aa.getCittà(), aa.getIdRegione());});
+        assertThrows(SQLException.class, () -> {dao.insertAutostrada(aa.getSigla(), aa.getIdRegione());});
     }
 
     @Order(1)
     @Test
     public void testInsertAu(){
-        assertDoesNotThrow(()->{dao.insertAutostrada(a.getCittà(), a.getIdRegione());});
+        assertDoesNotThrow(()->{dao.insertAutostrada(a.getSigla(), a.getIdRegione());});
     }
 
     @Order(2)
     @Test
     public void testUpdateAu(){
         Autostrada a = new Autostrada(22, "Alessandria", r.getId());
-        assertDoesNotThrow(()->{dao.updateAutostrada(a.getId(), a.getCittà(), a.getIdRegione());});
+        assertDoesNotThrow(()->{dao.updateAutostrada(a.getId(), a.getSigla(), a.getIdRegione());});
     }
 
     @Order(3)
