@@ -34,13 +34,13 @@ public class testDispositivi {
     @Order(0)
     @Test
     public void testExc(){
-        assertThrows(SQLException.class, () -> {dao.insertDispositivo(co.getNumCorsia(), null, co.getCasello());});
+        assertThrows(SQLException.class, () -> {dao.insertDispositivo(co.getClosed().toString(), co.getNumCorsia(), null, co.getCasello());});
     }
 
     @Order(1)
     @Test
     public void testInsert(){
-        assertDoesNotThrow(()->{dao.insertDispositivo(co.getNumCorsia(), dao.getTipoDispositivo(d), co.getCasello());});
+        assertDoesNotThrow(()->{dao.insertDispositivo(co.getClosed().toString(), co.getNumCorsia(), dao.getTipoDispositivo(d), co.getCasello());});
     }
 
     @Order(2)
