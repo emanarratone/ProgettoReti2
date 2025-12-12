@@ -3,81 +3,85 @@ package regione_service.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import regione_service.model.Regione;
-import regione_service.repository.regioneRepository;
+import regione_service.model.DTO.regioneCreateUpdateDto;
+import regione_service.model.DTO.regioneDTO;
+import regione_service.service.regioneService;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/regions")
 public class regioneController {
 
-    // ---- REGIONI ----
-    @GetMapping("/regions")
-    public ResponseEntity<String> getRegions() {
-        try {
-            regioneRepository dao = new regioneRepository();
-            String json = dao.getregioneJson();
-            return ResponseEntity.ok(json);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body("{\"error\":\"" + e.getMessage() + "\"}");
-        }
+    private final regioneService service;
+
+    public regioneController(regioneService service) {
+        this.service = service;
     }
 
-    // POST /api/regions { "nomeRegione": "Lombardia" }
-    @PostMapping("/regions")
-    public ResponseEntity<String> createRegion(@RequestBody Map<String, Object> body) {
+    // GET /regions
+    @GetMapping
+    public ResponseEntity<List<regioneDTO>> getRegions() {
+        List<regioneDTO> list = service.getAll();
+        return ResponseEntity.ok(list);
+    }
+
+    // GET /regions/search?q=...
+    @GetMapping("/search")
+    public ResponseEntity<List<regioneDTO>> searchRegions(@RequestParam("q") String q) {
+        List<regioneDTO> list = service.search(q);
+        return ResponseEntity.ok(list);
+    }
+
+    // POST /regions { "nome": "Lombardia" }
+    @PostMapping
+    public ResponseEntity<?> createRegion(@RequestBody regioneCreateUpdateDto body) {
         try {
-            String nome = (String) body.get("nomeRegione");
-            if (nome == null || nome.isBlank()) {
+            if (body.getNome() == null || body.getNome().isBlank()) {
                 return ResponseEntity.badRequest()
-                        .body("{\"error\":\"nomeRegione obbligatorio\"}");
+                        .body(Map.of("error", "nome obbligatorio"));
             }
-            Regione r = new Regione(nome);
-            regioneRepository dao = new regioneRepository();
-            dao.insertRegione(r);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("{\"status\":\"ok\"}");
+            regioneDTO created = service.create(body);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body("{\"error\":\"Errore creazione regione\"}");
+                    .body(Map.of("error", "Errore creazione regione"));
         }
     }
 
-    // PUT /api/regions/{idRegione}
-    @PutMapping("/regions/{idRegione}")
-    public ResponseEntity<String> updateRegion(@PathVariable int idRegione,
-                                               @RequestBody Map<String, Object> body) {
+    // PUT /regions/{idRegione}
+    @PutMapping("/{idRegione}")
+    public ResponseEntity<?> updateRegion(@PathVariable Integer idRegione,
+                                          @RequestBody regioneCreateUpdateDto body) {
         try {
-            String nome = (String) body.get("nomeRegione");
-            if (nome == null || nome.isBlank()) {
+            if (body.getNome() == null || body.getNome().isBlank()) {
                 return ResponseEntity.badRequest()
-                        .body("{\"error\":\"nomeRegione obbligatorio\"}");
+                        .body(Map.of("error", "nome obbligatorio"));
             }
-            Regione r = new Regione(nome);
-            regioneRepository dao = new regioneRepository();
-            dao.updateRegione(idRegione, r);
-            return ResponseEntity.ok("{\"status\":\"ok\"}");
+            regioneDTO updated = service.update(idRegione, body);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body("{\"error\":\"Errore aggiornamento regione\"}");
+                    .body(Map.of("error", "Errore aggiornamento regione"));
         }
     }
 
-    // DELETE /api/regions/{idRegione}
-    @DeleteMapping("/regions/{idRegione}")
-    public ResponseEntity<String> deleteRegion(@PathVariable int idRegione) {
+    // DELETE /regions/{idRegione}
+    @DeleteMapping("/{idRegione}")
+    public ResponseEntity<?> deleteRegion(@PathVariable Integer idRegione) {
         try {
-            regioneRepository dao = new regioneRepository();
-            dao.deleteRegione(idRegione);
-            return ResponseEntity.ok("{\"status\":\"ok\"}");
+            service.delete(idRegione);
+            return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body("{\"error\":\"Errore cancellazione regione\"}");
+                    .body(Map.of("error", "Errore cancellazione regione"));
         }
     }
 }
