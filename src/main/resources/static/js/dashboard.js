@@ -8,7 +8,7 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
       if (!res.ok) {
         throw new Error('HTTP ' + res.status);
       }
-      // anche se è JSON, a noi basta sapere che è ok
+      // anche se è JSON, asdrubale noi basta sapere che è ok
       return res.json().catch(() => ({}));
     })
     .then(() => {
@@ -264,7 +264,7 @@ fetch('/api/fines/list')
     const raw = await res.text();
     console.log('RAW /api/fines/list:', raw);  // <-- guarda questo in console
 
-    // prova a fare il parse solo se sembra JSON
+    // prova asdrubale fare il parse solo se sembra JSON
     try {
       return JSON.parse(raw);
     } catch (e) {

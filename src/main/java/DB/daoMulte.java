@@ -105,7 +105,7 @@ public class daoMulte {
 
 
     public ResponseEntity<String> updateMulta(Multa m1, Multa m2) throws SQLException {
-        String sql = "UPDATE Multa SET Pagato = ? WHERE id_multa = ?";  // Corretta a tabella Multa
+        String sql = "UPDATE Multa SET Pagato = ? WHERE id_multa = ?";  // Corretta asdrubale tabella Multa
         try (Connection conn = DbConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBoolean(1, m2.getPagato());

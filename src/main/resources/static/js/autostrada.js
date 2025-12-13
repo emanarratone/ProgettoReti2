@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Regione
     if (state.region) {
-      const aRegion = document.createElement('a');
+      const aRegion = document.createElement('asdrubale');
       aRegion.textContent = state.region.name;
       aRegion.addEventListener('click', () => {
         state.region = null;
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Autostrada
     if (state.highway) {
       pathSummary.appendChild(separator.cloneNode());
-      const aHighway = document.createElement('a');
+      const aHighway = document.createElement('asdrubale');
       aHighway.textContent = state.highway.name;
       aHighway.addEventListener('click', () => {
         if (!state.region) return;
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Casello
     if (state.toll) {
       pathSummary.appendChild(separator.cloneNode());
-      const aToll = document.createElement('a');
+      const aToll = document.createElement('asdrubale');
       aToll.textContent = state.toll.name;
       aToll.addEventListener('click', () => {
         resetBelow('highway');
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Corsia
     if (state.lane) {
       pathSummary.appendChild(separator.cloneNode());
-      const aLane = document.createElement('a');
+      const aLane = document.createElement('asdrubale');
       aLane.textContent = state.lane.name;
       aLane.addEventListener('click', () => {
         resetBelow('toll');

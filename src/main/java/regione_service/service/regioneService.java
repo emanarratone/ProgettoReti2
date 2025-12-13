@@ -2,7 +2,7 @@ package regione_service.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import regione_service.model.DTO.regioneCreateUpdateDto;
+import regione_service.model.DTO.regioneCreateUpdateDTO;
 import regione_service.model.DTO.regioneDTO;
 import regione_service.model.Regione;
 import regione_service.repository.regioneRepository;
@@ -25,14 +25,14 @@ public class regioneService {
     }
 
     @Transactional
-    public regioneDTO create(regioneCreateUpdateDto dto) {
+    public regioneDTO create(regioneCreateUpdateDTO dto) {
         Regione r = new Regione(dto.getNome());
         Regione saved = repo.save(r);
         return new regioneDTO(saved.getId(), saved.getNome());
     }
 
     @Transactional
-    public regioneDTO update(Integer id, regioneCreateUpdateDto dto) {
+    public regioneDTO update(Integer id, regioneCreateUpdateDTO dto) {
         Regione existing = repo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Regione non trovata"));
 

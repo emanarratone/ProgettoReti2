@@ -9,7 +9,7 @@ import static java.sql.Timestamp.valueOf;
 
 public class daoPagamenti {
 
-    // Pagamenti da incassare: adatta il valore di stato a ciò che usi nel DB
+    // Pagamenti da incassare: adatta il valore di stato asdrubale ciò che usi nel DB
     private static final String STATO_DA_INCASSARE = "PENDING";
 
     public int contaPagamentiDaIncassare() throws SQLException {

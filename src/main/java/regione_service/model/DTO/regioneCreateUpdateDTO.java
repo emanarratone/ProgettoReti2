@@ -1,6 +1,6 @@
 package regione_service.model.DTO;
 
-public class regioneCreateUpdateDto {
+public class regioneCreateUpdateDTO {
     private String nome;
 
     public String getNome() { return nome; }

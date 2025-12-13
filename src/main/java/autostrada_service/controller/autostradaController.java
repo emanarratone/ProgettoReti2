@@ -1,48 +1,49 @@
-package regione_service.controller;
+package autostrada_service.controller;
 
+
+import autostrada_service.model.DTO.autostradaCreateUpdateDTO;
+import autostrada_service.model.DTO.autostradaDTO;
+import autostrada_service.service.autostradaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import regione_service.model.DTO.regioneCreateUpdateDTO;
-import regione_service.model.DTO.regioneDTO;
-import regione_service.service.regioneService;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/regions")
-public class regioneController {
+@RequestMapping("/highways")
+public class autostradaController {
 
-    private final regioneService service;
+    private final autostradaService service;
 
-    public regioneController(regioneService service) {
+    public autostradaController(autostradaService service){
         this.service = service;
     }
 
-    // GET /regions
+    // GET /highways
     @GetMapping
-    public ResponseEntity<List<regioneDTO>> getRegions() {
-        List<regioneDTO> list = service.getAll();
+    public ResponseEntity<List<autostradaDTO>> gethighways() {
+        List<autostradaDTO> list = service.getAll();
         return ResponseEntity.ok(list);
     }
 
-    // GET /regions/search?q=...
+    // GET /highways/search?q=...
     @GetMapping("/search")
-    public ResponseEntity<List<regioneDTO>> searchRegions(@RequestParam("q") String q) {
-        List<regioneDTO> list = service.search(q);
+    public ResponseEntity<List<autostradaDTO>> searchhighways(@RequestParam("q") String q) {
+        List<autostradaDTO> list = service.search(q);
         return ResponseEntity.ok(list);
     }
 
-    // POST /regions { "nome": "Lombardia" }
+    // POST /highways
     @PostMapping
-    public ResponseEntity<?> createRegion(@RequestBody regioneCreateUpdateDTO body) {
+    public ResponseEntity<?> createRegion(@RequestBody autostradaCreateUpdateDTO body) {
         try {
-            if (body.getNome() == null || body.getNome().isBlank()) {
+            if (body.getSigla() == null || body.getSigla().isBlank() || body.getIdRegione() == null) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "nome obbligatorio"));
             }
-            regioneDTO created = service.create(body);
+            autostradaDTO created = service.create(body);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             e.printStackTrace();
@@ -51,16 +52,16 @@ public class regioneController {
         }
     }
 
-    // PUT /regions/{idRegione}
-    @PutMapping("/{idRegione}")
-    public ResponseEntity<?> updateRegion(@PathVariable Integer idRegione,
-                                          @RequestBody regioneCreateUpdateDTO body) {
+    // PUT /highways/{idAutostrada}
+    @PutMapping("/{idAutostrada}")
+    public ResponseEntity<?> updateRegion(@PathVariable Integer idAutostrada,
+                                          @RequestBody autostradaCreateUpdateDTO body) {
         try {
-            if (body.getNome() == null || body.getNome().isBlank()) {
+            if (body.getSigla() == null || body.getSigla().isBlank() || body.getIdRegione() == null) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "nome obbligatorio"));
             }
-            regioneDTO updated = service.update(idRegione, body);
+            autostradaDTO updated = service.update(idAutostrada, body);
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -73,10 +74,10 @@ public class regioneController {
     }
 
     // DELETE /regions/{idRegione}
-    @DeleteMapping("/{idRegione}")
-    public ResponseEntity<?> deleteRegion(@PathVariable Integer idRegione) {
+    @DeleteMapping("/{idAutostrada}")
+    public ResponseEntity<?> deleteRegion(@PathVariable Integer idAutostrada) {
         try {
-            service.delete(idRegione);
+            service.delete(idAutostrada);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (Exception e) {
             e.printStackTrace();
@@ -84,4 +85,5 @@ public class regioneController {
                     .body(Map.of("error", "Errore cancellazione regione"));
         }
     }
+
 }
