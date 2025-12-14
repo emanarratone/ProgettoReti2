@@ -41,14 +41,14 @@ public class autostradaController {
         try {
             if (body.getSigla() == null || body.getSigla().isBlank() || body.getIdRegione() == null) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "nome obbligatorio"));
+                        .body(Map.of("error", "parametri obbligatori"));
             }
             autostradaDTO created = service.create(body);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore creazione regione"));
+                    .body(Map.of("error", "Errore creazione autostrada"));
         }
     }
 
@@ -69,11 +69,11 @@ public class autostradaController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore aggiornamento regione"));
+                    .body(Map.of("error", "Errore aggiornamento autostrada"));
         }
     }
 
-    // DELETE /regions/{idRegione}
+    // DELETE /regions/{idAutostrada}
     @DeleteMapping("/{idAutostrada}")
     public ResponseEntity<?> deleteRegion(@PathVariable Integer idAutostrada) {
         try {
@@ -82,7 +82,7 @@ public class autostradaController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore cancellazione regione"));
+                    .body(Map.of("error", "Errore cancellazione autostrada"));
         }
     }
 
