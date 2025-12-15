@@ -1,0 +1,12 @@
+package com.example.autostrada;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class AutostradaServiceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(AutostradaServiceApplication.class, args);
+    }
+}
