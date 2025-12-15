@@ -1,8 +1,7 @@
-package casello_service.controller;
+package corsia_service.controller;
 
-
-import casello_service.model.DTO.caselloDTO;
-import casello_service.service.caselloService;
+import corsia_service.model.corsiaDTO;
+import corsia_service.service.corsiaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,38 +10,38 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/toll")
-public class caselloController {
+@RequestMapping("/lane")
+public class corsiaController {
 
-    private final caselloService service;
+    private final corsiaService service;
 
-    public caselloController(caselloService service) {
+    public corsiaController(corsiaService service) {
         this.service = service;
     }
 
-    // GET /toll
+    // GET /lane
     @GetMapping
-    public ResponseEntity<List<caselloDTO>> gettoll() {
-        List<caselloDTO> list = service.getAll();
+    public ResponseEntity<List<corsiaDTO>> getlane() {
+        List<corsiaDTO> list = service.getAll();
         return ResponseEntity.ok(list);
     }
 
-    // GET /toll/search?q=...
+    // GET /lane/search?q=...
     @GetMapping("/search")
-    public ResponseEntity<List<caselloDTO>> searchtoll(@RequestParam("q") String q) {
-        List<caselloDTO> list = service.search(q);
+    public ResponseEntity<List<corsiaDTO>> searchlane(@RequestParam("q") String q) {
+        List<corsiaDTO> list = service.search(q);
         return ResponseEntity.ok(list);
     }
 
     // POST /toll
     @PostMapping
-    public ResponseEntity<?> createtoll(@RequestBody caselloDTO body) {
+    public ResponseEntity<?> createlane(@RequestBody corsiaDTO body) {
         try {
-            if (body.getSigla() == null || body.getIdAutostrada() == null || body.getLimite() ==null) {
+            if (body.getCasello() == null || body.getNumCorsia() == null || body.getVerso() == null || body.getTipo() == null) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "\"parametri obbligatori\""));
             }
-            caselloDTO created = service.create(body);
+            corsiaDTO created = service.create(body);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             e.printStackTrace();
@@ -51,16 +50,16 @@ public class caselloController {
         }
     }
 
-    // PUT /toll/{idCasello}
-    @PutMapping("/{idCasello}")
-    public ResponseEntity<?> updatetoll(@PathVariable Integer idCasello,
-                                          @RequestBody caselloDTO body) {
+    // PUT /lane/{idCasello}
+    @PutMapping("/{idCasello}-")
+    public ResponseEntity<?> updatelane(@PathVariable Integer idCasello,
+                                        @RequestBody corsiaDTO body) {
         try {
-            if (body.getSigla() == null || body.getIdAutostrada() == null || body.getLimite() == null) {
+            if (body.getCasello() == null || body.getNumCorsia() == null || body.getVerso() == null || body.getTipo() == null) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "nome obbligatorio"));
             }
-            caselloDTO updated = service.update(idCasello, body);
+            corsiaDTO updated = service.update(idCasello, body.getNumCorsia(), body);
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -72,9 +71,9 @@ public class caselloController {
         }
     }
 
-    // DELETE /toll/{idCasello}
+    // DELETE /lane/{idCasello}
     @DeleteMapping("/{idCasello}")
-    public ResponseEntity<?> deletetoll(@PathVariable Integer idCasello) {
+    public ResponseEntity<?> deletelane(@PathVariable Integer idCasello) {
         try {
             service.delete(idCasello);
             return ResponseEntity.ok(Map.of("status", "ok"));

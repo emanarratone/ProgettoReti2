@@ -30,13 +30,12 @@ public class caselloService {
         Casello a = new Casello(dto.getSigla(), dto.getIdAutostrada(), dto.isClosed(), dto.getLimite());
         Casello saved = repo.save(a);
         return new caselloDTO(saved.getIdCasello(), saved.getSigla(), saved.getIdAutostrada(), saved.isClosed(), saved.getLimite());
-
     }
 
     @Transactional
     public caselloDTO update(Integer id, caselloDTO dto) {
         Casello existing = repo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Regione non trovata"));
+                .orElseThrow(() -> new IllegalArgumentException("Casello non trovato"));
 
         existing.setSigla(dto.getSigla());
         existing.setLimite(dto.getLimite());
