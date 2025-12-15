@@ -3,14 +3,14 @@ package com.example.utente.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "utente")
+@Table(name = "utenti")
 public class Utente {
 
     @Id
     @Column(name = "username")
     private String username;
     
-    @Column(name = "password")
+    @Column(name = "password_hash")
     private String password;
     
     @Column(name = "is_admin")

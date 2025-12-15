@@ -3,7 +3,7 @@ package com.example.autostrada.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "autostrade")
+@Table(name = "autostrada")
 public class Autostrada {
 
     @Id
