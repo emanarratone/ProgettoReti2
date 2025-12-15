@@ -1,5 +1,5 @@
-import DB.daoBiglietto;
 import DB.daoPagamenti;
+import auto_service.model.Auto;
 import model.Autostrada.*;
 import model.Dispositivi.Dispositivi;
 import model.Dispositivi.Totem;

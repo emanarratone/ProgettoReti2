@@ -1,19 +1,25 @@
-package model.Autostrada;
+package auto_service.model;
 
-import java.util.ArrayList;
+import jakarta.persistence.*;
 import java.util.Random;
 
+@Entity
+@Table(name = "auto")
 public class Auto {
 
+    @Id
+    @Column(name = "targa")
     private String targa;
-    private Veicolo tipoVeicolo;
+
+    @Column(name = "classe_veicolo")
+    private Veicolo classe_veicolo;
     private static final Random RANDOM = new Random();
 
     public enum Veicolo { A, B, C, D, E }
 
     public Auto(String targa) {
         this.targa = targa;
-        this.tipoVeicolo = randomVeicolo();
+        this.classe_veicolo = randomVeicolo();
     }
 
     private Veicolo randomVeicolo() {
@@ -29,12 +35,8 @@ public class Auto {
         this.targa = targa;
     }
 
-    public Veicolo getTipoVeicolo() {
-        return tipoVeicolo;
-    }
-
-    public void setTipoVeicolo(Veicolo tipoVeicolo) {
-        this.tipoVeicolo = tipoVeicolo;
+    public Veicolo getclasse_veicolo() {
+        return classe_veicolo;
     }
 
 }

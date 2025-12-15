@@ -4,12 +4,17 @@ import com.example.frontend.config.WebConfig;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
 public class ApiGatewayController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ApiGatewayController.class);
 
     private final RestTemplate restTemplate;
     private final WebConfig webConfig;
@@ -118,8 +123,13 @@ public class ApiGatewayController {
     // ================== HELPER METHODS ==================
     private ResponseEntity<?> forwardGet(String url) {
         try {
-            return restTemplate.getForEntity(url, Object.class);
+            ResponseEntity<Object> response = restTemplate.getForEntity(url, Object.class);
+            return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+        } catch (HttpStatusCodeException e) {
+            logger.warn("Backend GET returned status {} for {}: {}", e.getStatusCode(), url, e.getResponseBodyAsString());
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         } catch (Exception e) {
+            logger.error("Error forwarding GET to {}: {}", url, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(Map.of("error", "Service unavailable: " + e.getMessage()));
         }
@@ -130,8 +140,13 @@ public class ApiGatewayController {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Object> request = new HttpEntity<>(body, headers);
-            return restTemplate.postForEntity(url, request, Object.class);
+            ResponseEntity<Object> response = restTemplate.postForEntity(url, request, Object.class);
+            return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+        } catch (HttpStatusCodeException e) {
+            logger.warn("Backend POST returned status {} for {}: {}", e.getStatusCode(), url, e.getResponseBodyAsString());
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         } catch (Exception e) {
+            logger.error("Error forwarding POST to {}: {}", url, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(Map.of("error", "Service unavailable: " + e.getMessage()));
         }
@@ -144,7 +159,11 @@ public class ApiGatewayController {
             HttpEntity<Object> request = new HttpEntity<>(body, headers);
             restTemplate.put(url, request);
             return ResponseEntity.ok(Map.of("status", "ok"));
+        } catch (HttpStatusCodeException e) {
+            logger.warn("Backend PUT returned status {} for {}: {}", e.getStatusCode(), url, e.getResponseBodyAsString());
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         } catch (Exception e) {
+            logger.error("Error forwarding PUT to {}: {}", url, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(Map.of("error", "Service unavailable: " + e.getMessage()));
         }
@@ -154,7 +173,11 @@ public class ApiGatewayController {
         try {
             restTemplate.delete(url);
             return ResponseEntity.ok(Map.of("status", "ok"));
+        } catch (HttpStatusCodeException e) {
+            logger.warn("Backend DELETE returned status {} for {}: {}", e.getStatusCode(), url, e.getResponseBodyAsString());
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         } catch (Exception e) {
+            logger.error("Error forwarding DELETE to {}: {}", url, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(Map.of("error", "Service unavailable: " + e.getMessage()));
         }

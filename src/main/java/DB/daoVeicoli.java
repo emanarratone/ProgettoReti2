@@ -1,6 +1,6 @@
 package DB;
 
-import model.Autostrada.Auto;
+import auto_service.model.Auto;
 import org.springframework.http.ResponseEntity;
 
 import java.sql.*;
@@ -15,7 +15,7 @@ public class daoVeicoli {
              PreparedStatement ps = conn.prepareStatement(s)) {
 
             ps.setString(1, a.getTarga());
-            ps.setString(2, a.getTipoVeicolo().toString());
+            ps.setString(2, a.getclasse_veicolo().toString());
 
             int righeInserite = ps.executeUpdate();
 

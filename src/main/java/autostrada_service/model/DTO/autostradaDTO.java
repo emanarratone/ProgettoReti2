@@ -19,5 +19,4 @@ public class autostradaDTO {
 
     public Integer getIdRegione() { return idRegione; }
 
-
 }

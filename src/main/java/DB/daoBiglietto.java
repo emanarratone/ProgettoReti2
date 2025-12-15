@@ -1,7 +1,5 @@
 package DB;
 
-import model.Autostrada.Auto;
-import model.Autostrada.Autostrada;
 import model.Autostrada.Biglietto;
 import org.springframework.http.ResponseEntity;
 

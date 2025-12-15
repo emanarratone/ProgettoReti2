@@ -6,6 +6,17 @@
       <list>
         <option value="$PROJECT_DIR$/pom.xml" />
         <option value="$PROJECT_DIR$/src/main/resources/archetype-resources/pom.xml" />
+        <option value="$PROJECT_DIR$/autostrada-service/pom.xml" />
+        <option value="$PROJECT_DIR$/biglietto-service/pom.xml" />
+        <option value="$PROJECT_DIR$/corsia-service/pom.xml" />
+        <option value="$PROJECT_DIR$/dispositivi-service/pom.xml" />
+        <option value="$PROJECT_DIR$/multa-service/pom.xml" />
+        <option value="$PROJECT_DIR$/pagamento-service/pom.xml" />
+        <option value="$PROJECT_DIR$/regione-service/pom.xml" />
+        <option value="$PROJECT_DIR$/veicolo-service/pom.xml" />
+        <option value="$PROJECT_DIR$/utente-service/pom.xml" />
+        <option value="$PROJECT_DIR$/casello-service/pom.xml" />
+        <option value="$PROJECT_DIR$/frontend-service/pom.xml" />
       </list>
     </option>
   </component>

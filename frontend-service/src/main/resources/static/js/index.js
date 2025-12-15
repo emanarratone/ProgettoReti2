@@ -21,11 +21,11 @@ function validatePassword(password) {
   return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{8,}$/.test(password);
 }
 
-// LOGIN
+// ====================== LOGIN ======================
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
-  loginForm.addEventListener('submit', function (e) {
-    e.preventDefault(); // blocca il submit classico
+  loginForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
 
     const errorEl = loginForm.querySelector('.error');
     if (errorEl) errorEl.textContent = '';
@@ -38,37 +38,35 @@ if (loginForm) {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('password', password);
-
-    fetch('/api/login', {
-      method: 'POST',
-      body: formData,
-      credentials: 'same-origin'
-    })
-      .then(async res => {
-        const data = await res.json().catch(() => ({}));
-
-        if (res.ok && data.status === 'ok') {
-          window.location.href = '/dashboard.html';
-        } else {
-          if (errorEl) {
-            errorEl.textContent = data.error || 'Credenziali errate';
-          }
-        }
-      })
-      .catch(err => {
-        console.error('Errore login:', err);
-        if (errorEl) errorEl.textContent = 'Errore di connessione';
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
       });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success) {
+        // Salva utente se ti serve
+        // sessionStorage.setItem('user', JSON.stringify(data.user));
+        window.location.href = '/dashboard.html';
+      } else {
+        if (errorEl) {
+          errorEl.textContent = data.error || 'Credenziali errate';
+        }
+      }
+    } catch (err) {
+      console.error('Errore login:', err);
+      if (errorEl) errorEl.textContent = 'Errore di connessione';
+    }
   });
 }
 
-// REGISTRAZIONE via fetch (resta sulla stessa pagina)
+// ================== REGISTRAZIONE ==================
 const regForm = document.getElementById('register-form');
 if (regForm) {
-  regForm.addEventListener('submit', function (e) {
+  regForm.addEventListener('submit', async function (e) {
     e.preventDefault(); // blocca il submit classico
 
     const errorEl = regForm.querySelector('.error');
@@ -99,34 +97,40 @@ if (regForm) {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('password', pwd);
-    formData.append('confirmPassword', conf);
-    formData.append('role', role);
+    // mappiamo il ruolo su isAdmin: amministratore = true, impiegato = false
+    const isAdmin = role === 'amministratore';
 
-    fetch('/api/register', {
-      method: 'POST',
-      body: formData,
-      credentials: 'same-origin'
-    })
-      .then(async res => {
-        const data = await res.json().catch(() => ({}));
+    const payload = {
+      username: username,
+      password: pwd,
+      isAdmin: isAdmin
+    };
 
-        if (res.ok && data.status === 'ok') {
-          regForm.reset();
-          document.getElementById('mode-login').checked = true; // torna alla scheda "Accedi"
-          const loginError = document.querySelector('#login-form .error');
-          if (loginError) loginError.textContent = 'Registrazione avvenuta, ora effettua il login.';
-        } else {
-          if (errorEl) {
-            errorEl.textContent = data.error || 'Registrazione fallita';
-          }
-        }
-      })
-      .catch(err => {
-        console.error('Errore registrazione:', err);
-        if (errorEl) errorEl.textContent = 'Errore di connessione';
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && !data.error) {
+        // Registrazione ok: torna alla scheda login
+        regForm.reset();
+        const loginRadio = document.getElementById('mode-login');
+        if (loginRadio) loginRadio.checked = true;
+
+        const loginError = document.querySelector('#login-form .error');
+        if (loginError) loginError.textContent = 'Registrazione avvenuta, ora effettua il login.';
+      } else {
+        if (errorEl) {
+          errorEl.textContent = data.error || 'Registrazione fallita';
+        }
+      }
+    } catch (err) {
+      console.error('Errore registrazione:', err);
+      if (errorEl) errorEl.textContent = 'Errore di connessione';
+    }
   });
 }

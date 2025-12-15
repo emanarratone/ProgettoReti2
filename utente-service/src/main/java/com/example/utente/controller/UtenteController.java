@@ -11,6 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
+@CrossOrigin(origins = "https://localhost:8080")
 public class UtenteController {
 
     private final UtenteService service;
@@ -51,7 +52,7 @@ public class UtenteController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         String username = credentials.get("username");
         String password = credentials.get("password");
-        
+
         return service.login(username, password)
                 .map(u -> ResponseEntity.ok(Map.of("success", true, "user", u)))
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -59,12 +60,12 @@ public class UtenteController {
     }
 
     @PutMapping("/{username}/password")
-    public ResponseEntity<?> updatePassword(@PathVariable String username, 
-                                           @RequestBody Map<String, String> passwords) {
+    public ResponseEntity<?> updatePassword(@PathVariable String username,
+                                            @RequestBody Map<String, String> passwords) {
         try {
             String oldPassword = passwords.get("oldPassword");
             String newPassword = passwords.get("newPassword");
-            
+
             return service.updatePassword(username, oldPassword, newPassword)
                     .map(u -> ResponseEntity.ok(Map.of("success", true, "message", "Password aggiornata")))
                     .orElse(ResponseEntity.status(HttpStatus.BAD_REQUEST)

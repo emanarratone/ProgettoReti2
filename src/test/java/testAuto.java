@@ -1,5 +1,5 @@
 import DB.daoVeicoli;
-import model.Autostrada.Auto;
+import auto_service.model.Auto;
 import org.junit.jupiter.api.*;
 
 import java.sql.SQLException;

@@ -1,8 +1,7 @@
 import DB.daoBiglietto;
-import DB.daoDispositivi;
+import auto_service.model.Auto;
 import model.Autostrada.*;
 import model.Dispositivi.Dispositivi;
-import model.Dispositivi.Sbarra;
 import model.Dispositivi.Totem;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
