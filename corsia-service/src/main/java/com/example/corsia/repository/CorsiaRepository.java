@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface CorsiaRepository extends JpaRepository<Corsia, Integer> {
 
-    List<Corsia> findCorsiaByCaselloOrderByNumCorsiaAsc(String query);
+    List<Corsia> findCorsiaByCaselloOrderByCaselloAsc(Integer idCasello);
 }

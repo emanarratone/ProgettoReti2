@@ -106,8 +106,28 @@ public class ApiGatewayController {
 
     // ================== UTENTE ==================
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Object credentials) {
-        return forwardPost(webConfig.getUtenteUrl() + "/users/login", credentials);
+    public ResponseEntity<?> login(@RequestBody Object credentials, jakarta.servlet.http.HttpSession session) {
+        ResponseEntity<?> response = forwardPost(webConfig.getUtenteUrl() + "/users/login", credentials);
+        
+        // Se login OK, salva in sessione
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> body = (Map<String, Object>) response.getBody();
+                if (body.get("success") != null && (Boolean) body.get("success")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> user = (Map<String, Object>) body.get("user");
+                    if (user != null) {
+                        session.setAttribute("user", user.get("username"));
+                        session.setAttribute("isAdmin", user.get("isAdmin"));
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Errore nel salvataggio sessione: {}", e.getMessage());
+            }
+        }
+        
+        return response;
     }
 
     @PostMapping("/register")
@@ -118,6 +138,27 @@ public class ApiGatewayController {
     @GetMapping("/users/**")
     public ResponseEntity<?> getUsers() {
         return forwardGet(webConfig.getUtenteUrl() + "/users");
+    }
+
+    @GetMapping("/session")
+    public ResponseEntity<?> getSession(jakarta.servlet.http.HttpSession session) {
+        Object user = session.getAttribute("user");
+        Boolean isAdmin = (Boolean) session.getAttribute("isAdmin");
+        
+        if (user != null) {
+            return ResponseEntity.ok(Map.of(
+                "loggedIn", true,
+                "username", user,
+                "isAdmin", isAdmin != null ? isAdmin : false
+            ));
+        }
+        return ResponseEntity.ok(Map.of("loggedIn", false));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(jakarta.servlet.http.HttpSession session) {
+        session.invalidate();
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     // ================== HELPER METHODS ==================

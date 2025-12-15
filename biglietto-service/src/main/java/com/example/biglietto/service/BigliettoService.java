@@ -29,10 +29,6 @@ public class BigliettoService {
         return repository.findByTarga(targa);
     }
 
-    public List<Biglietto> getByCaselloIn(Integer caselloIn) {
-        return repository.findByCaselloIn(caselloIn);
-    }
-
     @Transactional
     public Biglietto create(Biglietto biglietto) {
         return repository.save(biglietto);

@@ -27,7 +27,7 @@ public class CorsiaController {
 
     @GetMapping("/search")
     public ResponseEntity<List<CorsiaDTO>> searchLane(@RequestParam("q") String q) {
-        List<CorsiaDTO> list = service.search(q);
+        List<CorsiaDTO> list = service.search(Integer.getInteger(q));
         return ResponseEntity.ok(list);
     }
 

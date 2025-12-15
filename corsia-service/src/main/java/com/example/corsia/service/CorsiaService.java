@@ -57,8 +57,8 @@ public class CorsiaService {
         repo.deleteById(id);
     }
 
-    public List<CorsiaDTO> search(String query) {
-        return repo.findCorsiaByCaselloOrderByNumCorsiaAsc(query).stream()
+    public List<CorsiaDTO> search(Integer idCasello) {
+        return repo.findCorsiaByCaselloOrderByCaselloAsc(idCasello).stream()
                 .map(c -> new CorsiaDTO(c.getCasello(), c.getNumCorsia(), c.getVerso(), c.getTipo()))
                 .toList();
     }

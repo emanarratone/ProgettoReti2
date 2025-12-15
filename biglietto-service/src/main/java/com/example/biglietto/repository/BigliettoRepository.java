@@ -9,5 +9,4 @@ import java.util.List;
 @Repository
 public interface BigliettoRepository extends JpaRepository<Biglietto, Integer> {
     List<Biglietto> findByTarga(String targa);
-    List<Biglietto> findByCaselloIn(Integer caselloIn);
 }
