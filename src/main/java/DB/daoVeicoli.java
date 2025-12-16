@@ -1,6 +1,5 @@
 package DB;
 
-import auto_service.model.Auto;
 import org.springframework.http.ResponseEntity;
 
 import java.sql.*;
@@ -8,7 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 public class daoVeicoli {
-
+/*
     public ResponseEntity<String> insertVeicoli(Auto a) throws SQLException {
         String s = "INSERT INTO Auto (targa, classe_veicolo) VALUES (?,?)";
         try (Connection conn = DbConnection.getConnection();
@@ -27,6 +26,8 @@ public class daoVeicoli {
         }
     }
 
+
+ */
     public String getUltimiPassaggiPerTargaJson(String targa) throws SQLException {
         String sql =
                 "SELECT " +

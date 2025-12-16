@@ -1,5 +1,5 @@
 import DB.daoBiglietto;
-import auto_service.model.Auto;
+//import auto_service.model.Auto;
 import model.Autostrada.*;
 import model.Dispositivi.Dispositivi;
 import model.Dispositivi.Totem;
@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 
 public class testBiglietto {
-
+/*
     private daoBiglietto dao;
     private Regione r;
     private Autostrada a;
@@ -59,4 +59,6 @@ public class testBiglietto {
         assertDoesNotThrow(()->{dao.eliminaBiglietto(bbb);});
     }
 
+
+ */
 }

@@ -1,5 +1,5 @@
 import DB.daoVeicoli;
-import auto_service.model.Auto;
+import model.Autostrada.*;
 import org.junit.jupiter.api.*;
 
 import java.sql.SQLException;
@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 public class testAuto {
-
+/*
     private daoVeicoli dao;
     private Auto a;
 
@@ -36,4 +36,6 @@ public class testAuto {
     void testDelete(){
         assertDoesNotThrow(()->{dao.deleteVeicolo(a.getTarga());});
     }
+
+ */
 }

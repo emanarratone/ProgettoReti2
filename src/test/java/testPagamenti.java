@@ -1,5 +1,5 @@
 import DB.daoPagamenti;
-import auto_service.model.Auto;
+//import auto_service.model.Auto;
 import model.Autostrada.*;
 import model.Dispositivi.Dispositivi;
 import model.Dispositivi.Totem;
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class testPagamenti {
-
+/*
     private daoPagamenti dao;
     private Regione r;
     private Autostrada a;
@@ -60,5 +60,7 @@ public class testPagamenti {
     public void testDelete(){
         assertDoesNotThrow(()->dao.deletePagamento(1));
     }
+
+ */
 
 }

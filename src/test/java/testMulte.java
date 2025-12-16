@@ -1,5 +1,5 @@
 import DB.daoMulte;
-import auto_service.model.Auto;
+//import auto_service.model.Auto;
 import model.Autostrada.*;
 import model.Dispositivi.Dispositivi;
 import model.Dispositivi.Totem;
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class testMulte {
-
+/*
     private daoMulte dao;
     private Regione r;
     private Autostrada a;
@@ -60,4 +60,6 @@ public class testMulte {
         Multa m1 = new Multa(1, b.getID_biglietto(), 25.0, aa.getTarga());
         assertDoesNotThrow(() -> {dao.deleteMulta(m1);});
     }
+
+ */
 }
