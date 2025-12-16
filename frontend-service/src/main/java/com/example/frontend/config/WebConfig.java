@@ -40,6 +40,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${backend.utente.url}")
     private String utenteUrl;
 
+    @Value("${backend.legacy.url:}")
+    private String legacyUrl;
+
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
@@ -105,5 +108,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     public String getUtenteUrl() {
         return utenteUrl;
+    }
+
+    public String getLegacyUrl() {
+        return legacyUrl;
     }
 }

@@ -110,7 +110,8 @@ fetch('/api/traffic')
           document.getElementById("kpiFines").textContent = "N/D";
           return;
         }
-        document.getElementById("kpiFines").textContent = Number(data.fines).toLocaleString();
+        const finesCount = Number((data && data.fines) || 0);
+        document.getElementById("kpiFines").textContent = Number.isFinite(finesCount) ? finesCount.toLocaleString() : "N/D";
       })
       .catch(err => {
         console.error("Errore fetch KPI multe:", err);
@@ -131,7 +132,8 @@ fetch('/api/traffic')
           document.getElementById("kpiPayments").textContent = "N/D";
           return;
         }
-        document.getElementById("kpiPayments").textContent = Number(data.pending).toLocaleString();
+        const pending = Number((data && data.pending) || 0);
+        document.getElementById("kpiPayments").textContent = Number.isFinite(pending) ? pending.toLocaleString() : "N/D";
       })
       .catch(err => {
         console.error("Errore fetch KPI pagamenti:", err);
