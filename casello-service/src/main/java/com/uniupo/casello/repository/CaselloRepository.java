@@ -10,4 +10,6 @@ import java.util.List;
 public interface CaselloRepository extends JpaRepository<Casello, Integer> {
 
     List<Casello> findCaselloBySiglaOrderBySiglaAsc(String query);
+
+    List<Casello> findByIdAutostradaOrderBySiglaAsc(Integer idAutostrada);
 }

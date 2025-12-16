@@ -24,6 +24,12 @@ public class AutostradaService {
                 .toList();
     }
 
+    public List<AutostradaDTO> getByRegion(Integer idRegione) {
+        return repo.findByIdRegioneOrderBySiglaAsc(idRegione).stream()
+                .map(a -> new AutostradaDTO(a.getId(), a.getSigla(), a.getIdRegione()))
+                .toList();
+    }
+
     @Transactional
     public AutostradaDTO create(AutostradaCreateUpdateDTO dto){
         Autostrada a = new Autostrada(dto.getSigla(), dto.getIdRegione());

@@ -27,7 +27,7 @@ public class Corsia {
 
     public Corsia() {}
 
-    public enum Tipo {MANUALE, TELEPASS}
+    public enum Tipo { NORMALE, TELEPASS, EMERGENZA }
     public enum Verso { ENTRATA, USCITA }
 
     public Corsia(Integer casello, Integer numCorsia, Verso verso, Tipo tipo) {

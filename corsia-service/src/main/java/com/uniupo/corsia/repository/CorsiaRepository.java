@@ -10,4 +10,11 @@ import java.util.List;
 public interface CorsiaRepository extends JpaRepository<Corsia, Integer> {
 
     List<Corsia> findCorsiaByCaselloOrderByCaselloAsc(Integer idCasello);
+
+    List<Corsia> findByCaselloOrderByNumCorsiaAsc(Integer casello);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(MAX(c.numCorsia),0) FROM Corsia c WHERE c.casello = :casello")
+    Integer findMaxNumCorsiaByCasello(@org.springframework.data.repository.query.Param("casello") Integer casello);
+
+    void deleteByCaselloAndNumCorsia(Integer casello, Integer numCorsia);
 }

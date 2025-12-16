@@ -38,6 +38,36 @@ public class DispositiviService {
         return repository.findByCorsia(corsia);
     }
 
+    public List<Dispositivo> getByCaselloAndCorsia(Integer casello, Integer corsia) {
+        return repository.findByCaselloAndCorsia(casello, corsia);
+    }
+
+    @Transactional
+    public Dispositivo createForLane(Integer casello, Integer corsia, String tipo, String stato) {
+        boolean statusBool = "ATTIVO".equalsIgnoreCase(stato) || "true".equalsIgnoreCase(stato);
+        Dispositivo d;
+        if (tipo == null) tipo = "DISPLAY";
+        switch (tipo.toUpperCase()) {
+            case "Sbarra":
+            case "SBARRA":
+            case "SBARRE":
+                d = new Sbarra(statusBool, corsia, casello);
+                break;
+            case "TELECAMERA":
+            case "TELECAM":
+            case "CAM":
+                d = new Telecamera(statusBool, corsia, casello);
+                break;
+            case "TOTEM":
+            case "SENSORE":
+                d = new Totem(statusBool, corsia, casello);
+                break;
+            default:
+                // default to Totem if unknown
+                d = new Totem(statusBool, corsia, casello);
+        }
+        return repository.save(d);
+    }
     public List<Sbarra> getSbarre() {
         return repository.findAll().stream()
                 .filter(d -> d instanceof Sbarra)

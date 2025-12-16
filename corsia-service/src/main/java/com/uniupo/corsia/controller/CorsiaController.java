@@ -27,8 +27,14 @@ public class CorsiaController {
 
     @GetMapping("/search")
     public ResponseEntity<List<CorsiaDTO>> searchLane(@RequestParam("q") String q) {
-        List<CorsiaDTO> list = service.search(Integer.getInteger(q));
-        return ResponseEntity.ok(list);
+        // q should be the idCasello (numeric). Use Integer.parseInt and handle errors.
+        try {
+            Integer idCasello = Integer.parseInt(q);
+            List<CorsiaDTO> list = service.search(idCasello);
+            return ResponseEntity.ok(list);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(java.util.List.of());
+        }
     }
 
     @PostMapping

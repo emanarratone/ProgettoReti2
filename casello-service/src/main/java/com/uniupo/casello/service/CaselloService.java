@@ -57,4 +57,27 @@ public class CaselloService {
                                          c.isClosed(), c.getLimite()))
                 .toList();
     }
+
+    public List<CaselloDTO> getByAutostrada(Integer idAutostrada) {
+        return repo.findByIdAutostradaOrderBySiglaAsc(idAutostrada).stream()
+                .map(c -> new CaselloDTO(c.getIdCasello(), c.getSigla(), c.getIdAutostrada(),
+                                         c.isClosed(), c.getLimite()))
+                .toList();
+    }
+
+    @Transactional
+    public CaselloDTO createForHighway(Integer idAutostrada, String sigla, Integer limite, Boolean chiuso) {
+        Casello a = new Casello(sigla, idAutostrada, chiuso != null && chiuso, limite);
+        Casello saved = repo.save(a);
+        return new CaselloDTO(saved.getIdCasello(), saved.getSigla(), saved.getIdAutostrada(), saved.isClosed(), saved.getLimite());
+    }
+
+    public java.util.Optional<CaselloDTO> getById(Integer id) {
+        return repo.findById(id).map(c -> new CaselloDTO(c.getIdCasello(), c.getSigla(), c.getIdAutostrada(), c.isClosed(), c.getLimite()));
+    }
+
+    @Transactional
+    public CaselloDTO updateFromDTO(Integer id, CaselloDTO dto) {
+        return update(id, dto);
+    }
 }

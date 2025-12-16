@@ -10,4 +10,7 @@ import java.util.List;
 public interface AutostradaRepository extends JpaRepository<Autostrada, Integer> {
 
     List<Autostrada> findAutostradasBySiglaOrderBySiglaAsc(String query);
+
+    // trova autostrade per idRegione
+    List<Autostrada> findByIdRegioneOrderBySiglaAsc(Integer idRegione);
 }

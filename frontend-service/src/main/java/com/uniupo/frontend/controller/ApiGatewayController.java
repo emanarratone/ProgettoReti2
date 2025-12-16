@@ -252,6 +252,86 @@ public class ApiGatewayController {
         return forwardGet(webConfig.getRegioneUrl() + "/regions");
     }
 
+    @GetMapping("/regions/search")
+    public ResponseEntity<?> searchRegions(@RequestParam("q") String q) {
+        return forwardGet(webConfig.getRegioneUrl() + "/regions/search?q=" + q);
+    }
+
+    @PostMapping("/regions")
+    public ResponseEntity<?> createRegion(@RequestBody Object body) {
+        return forwardPost(webConfig.getRegioneUrl() + "/regions", body);
+    }
+
+    @PutMapping("/regions/{id}")
+    public ResponseEntity<?> updateRegion(@PathVariable Integer id, @RequestBody Object body) {
+        return forwardPut(webConfig.getRegioneUrl() + "/regions/" + id, body);
+    }
+
+    @DeleteMapping("/regions/{id}")
+    public ResponseEntity<?> deleteRegion(@PathVariable Integer id) {
+        return forwardDelete(webConfig.getRegioneUrl() + "/regions/" + id);
+    }
+
+    @GetMapping("/regions/{id}/highways")
+    public ResponseEntity<?> getHighwaysForRegion(@PathVariable Integer id) {
+        // forwards to autostrada-service which now exposes /regions/{id}/highways
+        return forwardGet(webConfig.getAutostradaUrl() + "/regions/" + id + "/highways");
+    }
+
+    @GetMapping("/tolls/{id}/lanes")
+    public ResponseEntity<?> getLanesForToll(@PathVariable Integer id) {
+        // forward to corsia-service endpoint we just added
+        return forwardGet(webConfig.getCorsiaUrl() + "/tolls/" + id + "/lanes");
+    }
+
+    // ---- CASELLI (highway -> tolls)
+    @GetMapping("/highways/{id}/tolls")
+    public ResponseEntity<?> getTollsForHighway(@PathVariable Integer id) {
+        return forwardGet(webConfig.getCaselloUrl() + "/highways/" + id + "/tolls");
+    }
+
+    @PostMapping("/highways/{id}/tolls")
+    public ResponseEntity<?> createTollForHighway(@PathVariable Integer id, @RequestBody Object body) {
+        return forwardPost(webConfig.getCaselloUrl() + "/highways/" + id + "/tolls", body);
+    }
+
+    @PutMapping("/tolls/{id}")
+    public ResponseEntity<?> updateToll(@PathVariable Integer id, @RequestBody Object body) {
+        return forwardPut(webConfig.getCaselloUrl() + "/toll/" + id, body);
+    }
+
+    @DeleteMapping("/tolls/{id}")
+    public ResponseEntity<?> deleteToll(@PathVariable Integer id) {
+        return forwardDelete(webConfig.getCaselloUrl() + "/toll/" + id);
+    }
+
+    // ---- CORSIE legacy-style routing
+    @PostMapping("/tolls/{id}/lanes")
+    public ResponseEntity<?> createLaneForToll(@PathVariable Integer id, @RequestBody Object body) {
+        return forwardPost(webConfig.getCorsiaUrl() + "/tolls/" + id + "/lanes", body);
+    }
+
+    @PutMapping("/lanes/{idCasello}/{numCorsia}")
+    public ResponseEntity<?> updateLane(@PathVariable Integer idCasello, @PathVariable Integer numCorsia, @RequestBody Object body) {
+        return forwardPut(webConfig.getCorsiaUrl() + "/lanes/" + idCasello + "/" + numCorsia, body);
+    }
+
+    @DeleteMapping("/lanes/{idCasello}/{numCorsia}")
+    public ResponseEntity<?> deleteLane(@PathVariable Integer idCasello, @PathVariable Integer numCorsia) {
+        return forwardDelete(webConfig.getCorsiaUrl() + "/lanes/" + idCasello + "/" + numCorsia);
+    }
+
+    // ---- DISPOSITIVI per corsia
+    @GetMapping("/lanes/{idCasello}/{numCorsia}/devices")
+    public ResponseEntity<?> getDevicesForLane(@PathVariable Integer idCasello, @PathVariable Integer numCorsia) {
+        return forwardGet(webConfig.getDispositiviUrl() + "/lanes/" + idCasello + "/" + numCorsia + "/devices");
+    }
+
+    @PostMapping("/lanes/{idCasello}/{numCorsia}/devices")
+    public ResponseEntity<?> createDeviceForLane(@PathVariable Integer idCasello, @PathVariable Integer numCorsia, @RequestBody Object body) {
+        return forwardPost(webConfig.getDispositiviUrl() + "/lanes/" + idCasello + "/" + numCorsia + "/devices", body);
+    }
+
     // ================== HELPER METHODS ==================
     private ResponseEntity<?> forwardGet(String url) {
         try {

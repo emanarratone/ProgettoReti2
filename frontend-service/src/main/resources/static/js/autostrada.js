@@ -35,6 +35,7 @@
   let currentLevel  = 'regions';   // regions | highways | tolls | lanes | devices
   let selectedItem  = null;        // { id, ... }
   let currentAction = null;        // create | edit
+  const cachedRegions = {};      // cache per i nomi delle regioni (usato per i tag delle autostrade)
 
 document.addEventListener('DOMContentLoaded', function () {
   // Logout coerente con dashboard
@@ -122,9 +123,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Regione
     if (state.region) {
-      const aRegion = document.createElement('asdrubale');
+      const aRegion = document.createElement('a');
+      aRegion.href = '#';
+      aRegion.className = 'link-primary';
       aRegion.textContent = state.region.name;
-      aRegion.addEventListener('click', () => {
+      aRegion.addEventListener('click', (ev) => {
+        ev.preventDefault();
         state.region = null;
         state.highway = null;
         state.toll = null;
@@ -138,9 +142,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Autostrada
     if (state.highway) {
       pathSummary.appendChild(separator.cloneNode());
-      const aHighway = document.createElement('asdrubale');
+      const aHighway = document.createElement('a');
+      aHighway.href = '#';
+      aHighway.className = 'link-primary';
       aHighway.textContent = state.highway.name;
-      aHighway.addEventListener('click', () => {
+      aHighway.addEventListener('click', (ev) => {
+        ev.preventDefault();
         if (!state.region) return;
         resetBelow('region');
         loadHighwaysForRegion(state.region.id);
@@ -152,9 +159,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Casello
     if (state.toll) {
       pathSummary.appendChild(separator.cloneNode());
-      const aToll = document.createElement('asdrubale');
+      const aToll = document.createElement('a');
+      aToll.href = '#';
+      aToll.className = 'link-primary';
       aToll.textContent = state.toll.name;
-      aToll.addEventListener('click', () => {
+      aToll.addEventListener('click', (ev) => {
+        ev.preventDefault();
         resetBelow('highway');
         loadTollsForHighway(state.highway.id);
         updatePathSummary();
@@ -165,9 +175,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Corsia
     if (state.lane) {
       pathSummary.appendChild(separator.cloneNode());
-      const aLane = document.createElement('asdrubale');
+      const aLane = document.createElement('a');
+      aLane.href = '#';
+      aLane.className = 'link-primary';
       aLane.textContent = state.lane.name;
-      aLane.addEventListener('click', () => {
+      aLane.addEventListener('click', (ev) => {
+        ev.preventDefault();
         resetBelow('toll');
         loadLanesForToll(state.toll.id);
         updatePathSummary();
@@ -844,32 +857,27 @@ highwayRegionInput.addEventListener('input', () => {
       case 'regions':
         return {
           url: '/api/regions',
-          body: { nomeRegione: name }
+          body: { nome: name }
         };
 
-     case 'regions':
-           return {
-             url: '/api/regions',
-             body: { nomeRegione: name }
-           };
+      case 'highways': {
+        const selectedIds = highwayRegionIdsEl.value
+          ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
+          : [];
 
-         case 'highways': {
-           const selectedIds = highwayRegionIdsEl.value
-             ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
-             : [];
+        if (selectedIds.length === 0 && state.region) {
+          selectedIds.push(state.region.id);
+        }
 
-           if (selectedIds.length === 0 && state.region) {
-             selectedIds.push(state.region.id);
-           }
-
-           return {
-             url: '/api/highways',
-             body: {
-               sigla: fieldName.value.trim(),
-               idRegioni: selectedIds   // [1,3,5,...]
-             }
-           };
-         }
+        const idRegione = selectedIds.length > 0 ? selectedIds[0] : null;
+        return {
+          url: '/api/highways',
+          body: {
+            sigla: fieldName.value.trim(),
+            idRegione: idRegione
+          }
+        };
+      }
 
 
       case 'tolls':
@@ -983,10 +991,18 @@ crudModalEl.addEventListener('hidden.bs.modal', () => {
 
     switch (currentLevel) {
       case 'regions':
-        body = { nomeRegione: name };
+        body = { nome: name };
         break;
       case 'highways':
-        body = { citta: name, idRegione: state.region.id };
+        // prefer region in navigation, else try selected regions from modal
+        const idRegione = state.region ? state.region.id
+          : (highwayRegionIdsEl.value ? Number(highwayRegionIdsEl.value.split(',')[0]) : null);
+        if (!idRegione) {
+          alert('Seleziona la regione per l\'autostrada prima di modificare.');
+          return;
+        }
+        // autostrada-service expects 'sigla' and 'idRegione'
+        body = { sigla: name, idRegione: idRegione };
         break;
       case 'tolls':
         body = {
