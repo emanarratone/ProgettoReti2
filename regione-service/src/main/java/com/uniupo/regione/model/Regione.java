@@ -1,4 +1,4 @@
-package com.example.regione.model;
+package com.uniupo.regione.model;
 
 import jakarta.persistence.*;
 

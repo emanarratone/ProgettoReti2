@@ -1,4 +1,4 @@
-package com.example.regione.model.dto;
+package com.uniupo.regione.model.dto;
 
 public class RegioneCreateUpdateDTO {
     private String nome;

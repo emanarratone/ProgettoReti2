@@ -1,6 +1,6 @@
-package com.example.regione.repository;
+package com.uniupo.regione.repository;
 
-import com.example.regione.model.Regione;
+import com.uniupo.regione.model.Regione;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

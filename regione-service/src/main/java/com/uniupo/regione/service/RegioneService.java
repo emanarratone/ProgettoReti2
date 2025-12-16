@@ -1,9 +1,9 @@
-package com.example.regione.service;
+package com.uniupo.regione.service;
 
-import com.example.regione.model.Regione;
-import com.example.regione.model.dto.RegioneCreateUpdateDTO;
-import com.example.regione.model.dto.RegioneDTO;
-import com.example.regione.repository.RegioneRepository;
+import com.uniupo.regione.model.Regione;
+import com.uniupo.regione.model.dto.RegioneCreateUpdateDTO;
+import com.uniupo.regione.model.dto.RegioneDTO;
+import com.uniupo.regione.repository.RegioneRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

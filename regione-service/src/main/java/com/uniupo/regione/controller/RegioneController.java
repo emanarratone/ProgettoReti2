@@ -1,8 +1,8 @@
-package com.example.regione.controller;
+package com.uniupo.regione.controller;
 
-import com.example.regione.model.dto.RegioneCreateUpdateDTO;
-import com.example.regione.model.dto.RegioneDTO;
-import com.example.regione.service.RegioneService;
+import com.uniupo.regione.model.dto.RegioneCreateUpdateDTO;
+import com.uniupo.regione.model.dto.RegioneDTO;
+import com.uniupo.regione.service.RegioneService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
