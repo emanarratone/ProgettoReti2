@@ -6,6 +6,7 @@
     <groupId>org.example</groupId>
     <artifactId>ProgettiReti2</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>ProgettiReti2</name>
 
     <parent>
@@ -14,6 +15,21 @@
         <version>3.3.4</version>
         <relativePath/>
     </parent>
+
+    <modules>
+        <module>mqtt-shared</module>
+        <module>autostrada-service</module>
+        <module>biglietto-service</module>
+        <module>casello-service</module>
+        <module>corsia-service</module>
+        <module>dispositivi-service</module>
+        <module>frontend-service</module>
+        <module>multa-service</module>
+        <module>pagamento-service</module>
+        <module>regione-service</module>
+        <module>utente-service</module>
+        <module>veicolo-service</module>
+    </modules>
 
     <properties>
         <java.version>17</java.version>
