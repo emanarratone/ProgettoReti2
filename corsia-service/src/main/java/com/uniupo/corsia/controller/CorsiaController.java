@@ -1,5 +1,6 @@
 package com.uniupo.corsia.controller;
 
+import com.uniupo.corsia.model.Corsia;
 import com.uniupo.corsia.model.dto.CorsiaDTO;
 import com.uniupo.corsia.service.CorsiaService;
 import org.springframework.http.HttpStatus;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/lane")
 public class CorsiaController {
 
     private final CorsiaService service;
@@ -19,30 +19,28 @@ public class CorsiaController {
         this.service = service;
     }
 
-    @GetMapping
-    public ResponseEntity<List<CorsiaDTO>> getLane() {
-        List<CorsiaDTO> list = service.getAll();
-        return ResponseEntity.ok(list);
+    // -------- CRUD globale /lanes (se ti serve) --------
+
+    @GetMapping("/lanes")
+    public ResponseEntity<List<CorsiaDTO>> getLanes() {
+        return ResponseEntity.ok(service.getAll());
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<CorsiaDTO>> searchLane(@RequestParam("q") String q) {
-        // q should be the idCasello (numeric). Use Integer.parseInt and handle errors.
+    @GetMapping("/lanes/search")
+    public ResponseEntity<?> searchLanes(@RequestParam("q") String q) {
         try {
             Integer idCasello = Integer.parseInt(q);
-            List<CorsiaDTO> list = service.search(idCasello);
-            return ResponseEntity.ok(list);
+            return ResponseEntity.ok(service.search(idCasello));
         } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body(java.util.List.of());
+            return ResponseEntity.badRequest().body(Map.of("error", "q must be casello id (integer)"));
         }
     }
 
-    @PostMapping
+    @PostMapping("/lanes")
     public ResponseEntity<?> createLane(@RequestBody CorsiaDTO body) {
         try {
-            if (body.getCasello() == null || body.getNumCorsia() == null || body.getVerso() == null || body.getTipo() == null) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "parametri obbligatori"));
+            if (body.getCasello() == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "casello obbligatorio"));
             }
             CorsiaDTO created = service.create(body);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -53,15 +51,46 @@ public class CorsiaController {
         }
     }
 
-    @PutMapping("/{idCasello}")
-    public ResponseEntity<?> updateLane(@PathVariable Integer idCasello, @RequestBody CorsiaDTO body) {
+    @PutMapping("/lanes/{idCasello}/{numCorsia}")
+    public ResponseEntity<?> updateLane(@PathVariable Integer idCasello,
+                                        @PathVariable Integer numCorsia,
+                                        @RequestBody Map<String, Object> body) {
         try {
-            if (body.getCasello() == null || body.getNumCorsia() == null || body.getVerso() == null || body.getTipo() == null) {
+            // Leggi i campi dal JSON come li manda il front-end
+            String versoStr = (String) body.getOrDefault("verso", body.get("corsiaVerso"));
+            String tipoStr  = (String) body.getOrDefault("tipo_corsia", body.get("corsiaTipo"));
+            Object chiusoObj = body.getOrDefault("chiuso", body.getOrDefault("corsiaChiuso", false));
+
+            if (versoStr == null || tipoStr == null) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "parametri obbligatori"));
+                        .body(Map.of("error", "parametri obbligatori: verso, tipo_corsia"));
             }
-            CorsiaDTO updated = service.update(idCasello, body.getNumCorsia(), body);
+
+            Corsia.Verso verso;
+            try {
+                verso = Corsia.Verso.valueOf(versoStr);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "verso non valido"));
+            }
+
+            Corsia.Tipo tipo;
+            try {
+                tipo = Corsia.Tipo.valueOf(tipoStr);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "tipo_corsia non valido"));
+            }
+
+            Boolean chiuso;
+            if (chiusoObj instanceof Boolean b) chiuso = b;
+            else if (chiusoObj instanceof String s) chiuso = Boolean.parseBoolean(s);
+            else chiuso = false;
+
+            // Costruisci un DTO minimale da passare al service
+            CorsiaDTO dto = new CorsiaDTO(idCasello, numCorsia, verso, tipo, chiuso);
+
+            CorsiaDTO updated = service.update(idCasello, numCorsia, dto);
             return ResponseEntity.ok(updated);
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", e.getMessage()));
@@ -72,10 +101,12 @@ public class CorsiaController {
         }
     }
 
-    @DeleteMapping("/{idCasello}")
-    public ResponseEntity<?> deleteLane(@PathVariable Integer idCasello) {
+
+    @DeleteMapping("/lanes/{idCasello}/{numCorsia}")
+    public ResponseEntity<?> deleteLane(@PathVariable Integer idCasello,
+                                        @PathVariable Integer numCorsia) {
         try {
-            service.delete(idCasello);
+            service.deleteByCaselloAndNum(idCasello, numCorsia);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (Exception e) {
             e.printStackTrace();
@@ -83,4 +114,27 @@ public class CorsiaController {
                     .body(Map.of("error", "Errore cancellazione corsia"));
         }
     }
+
+    // -------- endpoint usati da gateway: /tolls/{idCasello}/lanes --------
+
+    @GetMapping("/tolls/{idCasello}/lanes")
+    public ResponseEntity<?> getLanesForToll(@PathVariable Integer idCasello) {
+        return ResponseEntity.ok(service.search(idCasello));
+    }
+
+    @PostMapping("/tolls/{idCasello}/lanes")
+    public ResponseEntity<?> createLaneForToll(@PathVariable Integer idCasello,
+                                               @RequestBody Map<String,Object> body) {
+        try {
+            String verso = (String) body.getOrDefault("verso", body.get("corsiaVerso"));
+            String tipo = (String) body.getOrDefault("tipo_corsia", body.get("corsiaTipo"));
+            Boolean chiuso = (Boolean) body.getOrDefault("chiuso", body.getOrDefault("corsiaChiuso", false));
+            var created = service.createForToll(idCasello, verso, tipo, chiuso);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("error", "Errore creazione corsia"));
+        }
+    }
+
 }

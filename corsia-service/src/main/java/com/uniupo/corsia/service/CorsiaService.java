@@ -48,6 +48,7 @@ public class CorsiaService {
         return new CorsiaDTO(saved.getCasello(), saved.getNumCorsia(), saved.getVerso(), saved.getTipo(), saved.getClosed());
     }
 
+
     @Transactional
     public void deleteByCaselloAndNum(Integer casello, Integer numCorsia) {
         repo.deleteByCaselloAndNumCorsia(casello, numCorsia);
@@ -55,20 +56,15 @@ public class CorsiaService {
 
     @Transactional
     public CorsiaDTO update(Integer idCasello, Integer numCorsia, CorsiaDTO dto) {
-        List<Corsia> casello = repo.findById(idCasello).stream().toList();
-        Corsia existing = new Corsia();
-
-        for(Corsia c: casello){
-            if(Objects.equals(c.getNumCorsia(), numCorsia)) existing = c;
-        }
-
-        if(existing.getNumCorsia() == null || existing.getNumCorsia() != numCorsia){
-            throw new IllegalArgumentException("Corsia non trovata");
-        }
+        List<Corsia> lista = repo.findByCaselloOrderByNumCorsiaAsc(idCasello);
+        Corsia existing = lista.stream()
+                .filter(c -> Objects.equals(c.getNumCorsia(), numCorsia))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Corsia non trovata"));
 
         existing.setVerso(dto.getVerso());
         existing.setTipo(dto.getTipo());
-        existing.setClosed(dto.getClosed());
+        existing.setClosed(dto.getClosed() != null && dto.getClosed());
 
         Corsia saved = repo.save(existing);
         return new CorsiaDTO(saved.getCasello(), saved.getNumCorsia(), saved.getVerso(), saved.getTipo(), saved.getClosed());

@@ -420,19 +420,21 @@ document.addEventListener('DOMContentLoaded', function () {
           const li = document.createElement('li');
           li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-          const name = t.nome_casello || t.nome || t.name || ('Casello ' + t.id);
+          const name = t.sigla || t.nome_casello || t.nome || t.name || ('Casello ' + (t.id_casello || t.idCasello || t.id));
+          const idVal = t.id_casello || t.idCasello || t.id;
           const obj  = {
-            id: t.id_casello || t.id,
+            id: idVal,
+            idCasello: idVal,
             name,
-            limite: t.limite,
-            chiuso: t.chiuso
+            limite: t.limite || null,
+            chiuso: t.chiuso || t.closed || false
           };
 
           li.innerHTML = `
             <div>
               <strong>${name}</strong>
               <div class="small-muted">
-                Limite: ${t.limite || 130} km/h${t.chiuso ? ' (chiuso)' : ''}
+                Limite: ${obj.limite || 130} km/h${obj.chiuso ? ' (chiuso)' : ''}
               </div>
             </div>
             <div class="btn-group btn-group-sm">
@@ -503,24 +505,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         setStatus('Seleziona una corsia per vedere i dispositivi.');
         data.forEach(l => {
+          const numCorsia = l.num_corsia || l.numCorsia;
+          const idCasello = l.id_casello || l.casello;   // nel DTO è "casello"
+          const verso     = l.verso;
+          const tipo      = l.tipo_corsia || l.tipo;      // nel DTO è "tipo"
+          const chiuso    = l.chiuso || l.closed || l.isClosed;
+
+          const name = 'Corsia ' + numCorsia;
+          const obj  = {
+            num_corsia: numCorsia,
+            id_casello: idCasello,
+            name,
+            verso,
+            tipo,
+            chiuso
+          };
+
           const li = document.createElement('li');
           li.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-          const name = 'Corsia ' + l.num_corsia;
-          const obj  = {
-            num_corsia: l.num_corsia,
-            id_casello: l.id_casello,
-            name,
-            verso: l.verso,
-            tipo: l.tipo_corsia,
-            chiuso: l.chiuso
-          };
 
           li.innerHTML = `
             <div>
               <strong>${name}</strong>
               <div class="small-muted">
-                ${l.verso} — ${l.tipo_corsia}${l.chiuso ? ' (chiusa)' : ''}
+                ${verso} — ${tipo}${chiuso ? ' (chiusa)' : ''}
               </div>
             </div>
             <div class="btn-group btn-group-sm">
@@ -574,6 +582,8 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   }
 
+
+  // DISPOSITIVI per corsia
   // DISPOSITIVI per corsia
   function loadDevicesForLane(numCorsia, idCasello) {
     if (!numCorsia || !idCasello) return;
@@ -582,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setStatus('Caricamento dispositivi...');
     itemsList.innerHTML = '';
 
-   fetch('/api/lanes/' + encodeURIComponent(idCasello) + '/' + encodeURIComponent(numCorsia) + '/devices')
+    fetch('/api/lanes/' + encodeURIComponent(idCasello) + '/' + encodeURIComponent(numCorsia) + '/devices')
       .then(res => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
@@ -594,13 +604,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         setStatus('Elenco dispositivi.');
         data.forEach(d => {
+          const type  = d.tipo_dispositivo || d.tipo || d.type || 'Dispositivo';
+          const id    = d.id_dispositivo || d.id || d.idDispositivo;
+          const stato = d.stato || d.status || '';
+
+          const obj  = { id, tipo: type, stato };
+
           const li = document.createElement('li');
           li.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-          const type = d.tipo || d.type || 'Dispositivo';
-          const id   = d.id_dispositivo || d.id;
-          const stato = d.stato || '';
-          const obj  = { id, tipo: type, stato };
 
           li.innerHTML = `
             <div>
@@ -619,18 +630,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
           makeSelectableLi(li, obj);
 
-          // matita
-          li.querySelector('.btn-edit-row').addEventListener('click', (ev) => {
+          li.querySelector('.btn-edit-row').addEventListener('click', ev => {
             ev.stopPropagation();
-            selectedItem = obj;
+            selectedItem  = obj;
             currentAction = 'edit';
             crudModalTitle.textContent = getModalTitle();
             configureModalFields();
             crudModal.show();
           });
 
-          // X
-          li.querySelector('.btn-delete-row').addEventListener('click', (ev) => {
+          li.querySelector('.btn-delete-row').addEventListener('click', ev => {
             ev.stopPropagation();
             selectedItem = obj;
             if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
@@ -646,6 +655,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setStatus('Errore nel caricamento dei dispositivi.');
       });
   }
+
 
 function renderSelectedRegions() {
   selectedRegionsEl.innerHTML = '';
@@ -795,16 +805,15 @@ function addRegionToSelected(id, name) {
         break;
 
       case 'devices':
-        // NESSUN CAMPO NOME PER DISPOSITIVI
         nameGroup.classList.add('d-none');
         fieldName.required = false;
         groupDispositivo.classList.remove('d-none');
 
         if (currentAction === 'create') {
-          document.getElementById('dispTipo').value = '';
+          document.getElementById('dispTipo').value  = '';
           document.getElementById('dispStato').value = '';
         } else if (currentAction === 'edit' && selectedItem) {
-          document.getElementById('dispTipo').value = selectedItem.tipo || '';
+          document.getElementById('dispTipo').value  = selectedItem.tipo || '';
           document.getElementById('dispStato').value = selectedItem.stato || '';
         }
         break;
@@ -849,6 +858,14 @@ highwayRegionInput.addEventListener('input', () => {
   }, 300);
 });
 
+
+  function pickId(item, ...fields) {
+    if (!item) return null;
+    for (const f of fields) {
+      if (item[f] !== undefined && item[f] !== null) return item[f];
+    }
+    return null;
+  }
 
   function getEndpointAndBodyForCreate() {
     const name = fieldName.value.trim();
@@ -923,7 +940,8 @@ highwayRegionInput.addEventListener('input', () => {
       case 'highways':
         return `/api/highways/${encodeURIComponent(selectedItem.id)}`;
       case 'tolls':
-        return `/api/tolls/${encodeURIComponent(selectedItem.id)}`;
+        const tollId = selectedItem.id || selectedItem.idCasello || selectedItem.id_casello || selectedItem.id_casello;
+        return `/api/tolls/${encodeURIComponent(tollId)}`;
       case 'lanes':
         return `/api/lanes/${encodeURIComponent(selectedItem.id_casello)}/${encodeURIComponent(selectedItem.num_corsia)}`;
       case 'devices':
@@ -1018,12 +1036,13 @@ crudModalEl.addEventListener('hidden.bs.modal', () => {
           chiuso: document.getElementById('corsiaChiuso').checked
         };
         break;
-      case 'devices':
-        body = {
-          tipo: document.getElementById('dispTipo').value || null,
-          stato: document.getElementById('dispStato').value || null
-        };
-        break;
+     case 'devices':
+       body = {
+         tipo:  document.getElementById('dispTipo').value || null,
+         stato: document.getElementById('dispStato').value || null
+       };
+       break;
+
     }
 
     fetch(url, {

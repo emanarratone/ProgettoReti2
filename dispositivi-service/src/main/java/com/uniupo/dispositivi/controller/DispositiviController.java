@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/devices")
 public class DispositiviController {
 
     private final DispositiviService service;
@@ -19,76 +18,46 @@ public class DispositiviController {
         this.service = service;
     }
 
-    @GetMapping("/health")
+    // ------------------- HEALTH -------------------
+
+    @GetMapping("/devices/health")
     public ResponseEntity<?> health() {
         return ResponseEntity.ok(Map.of("status", "ok", "service", "dispositivi-service"));
     }
 
-    @GetMapping
+    // ------------------- CRUD GLOBAL /devices -------------------
+
+    @GetMapping("/devices")
     public ResponseEntity<List<Dispositivo>> getAll() {
         return ResponseEntity.ok(service.getAll());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/devices/{id}")
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         return service.getById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/sbarre")
-    public ResponseEntity<?> getSbarre() {
-        return ResponseEntity.ok(service.getSbarre());
-    }
-
-    @GetMapping("/telecamere")
-    public ResponseEntity<?> getTelecamere() {
-        return ResponseEntity.ok(service.getTelecamere());
-    }
-
-    @GetMapping("/totem")
-    public ResponseEntity<?> getTotem() {
-        return ResponseEntity.ok(service.getTotem());
-    }
-
-    @GetMapping("/casello/{casello}")
-    public ResponseEntity<List<Dispositivo>> getByCasello(@PathVariable Integer casello) {
-        return ResponseEntity.ok(service.getByCasello(casello));
-    }
-
-    @GetMapping("/corsia/{corsia}")
-    public ResponseEntity<List<Dispositivo>> getByCorsia(@PathVariable Integer corsia) {
-        return ResponseEntity.ok(service.getByCorsia(corsia));
-    }
-
-    @GetMapping("/active")
-    public ResponseEntity<List<Dispositivo>> getActive() {
-        return ResponseEntity.ok(service.getActive());
-    }
-
-    @GetMapping("/inactive")
-    public ResponseEntity<List<Dispositivo>> getInactive() {
-        return ResponseEntity.ok(service.getInactive());
-    }
-
-    @PostMapping
+    @PostMapping("/devices")
     public ResponseEntity<?> create(@RequestBody Dispositivo dispositivo) {
         try {
             Dispositivo saved = service.create(dispositivo);
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Errore creazione dispositivo"));
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/devices/{id}")
     public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody Map<String, Object> body) {
         try {
-            // allow partial updates with 'stato' or 'status' keys or full dispositivo representation
             Boolean status;
             if (body.containsKey("stato")) {
-                status = "ATTIVO".equalsIgnoreCase((String) body.get("stato")) || Boolean.TRUE.equals(body.get("stato"));
+                status = "ATTIVO".equalsIgnoreCase(String.valueOf(body.get("stato")))
+                        || Boolean.TRUE.equals(body.get("stato"));
             } else if (body.containsKey("status")) {
                 status = Boolean.TRUE.equals(body.get("status"));
             } else {
@@ -96,40 +65,132 @@ public class DispositiviController {
             }
 
             Integer casello = body.containsKey("casello") ? ((Number) body.get("casello")).intValue() : null;
-            Integer corsia = body.containsKey("corsia") ? ((Number) body.get("corsia")).intValue() : null;
+            Integer corsia  = body.containsKey("corsia")  ? ((Number) body.get("corsia")).intValue()  : null;
 
             return service.getById(id).map(existing -> {
                 if (status != null) existing.setStatus(status);
                 if (casello != null) existing.setCasello(casello);
-                if (corsia != null) existing.setCorsia(corsia);
+                if (corsia  != null) existing.setCorsia(corsia);
                 Dispositivo saved = service.create(existing);
                 return ResponseEntity.ok(saved);
             }).orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Errore aggiornamento dispositivo"));
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore aggiornamento dispositivo"));
         }
     }
 
-    @PutMapping("/{id}/status")
-    public ResponseEntity<?> updateStatus(@PathVariable Integer id, @RequestBody Map<String, Boolean> body) {
+    @PutMapping("/devices/{id}/status")
+    public ResponseEntity<?> updateStatus(@PathVariable Integer id,
+                                          @RequestBody Map<String, Boolean> body) {
         try {
             Boolean status = body.get("status");
             service.updateStatus(id, status);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Errore aggiornamento stato"));
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/devices/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
         try {
             service.delete(id);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Errore cancellazione dispositivo"));
+        }
+    }
+
+    // ------------------- QUERY /devices/... -------------------
+
+    @GetMapping("/devices/sbarre")
+    public ResponseEntity<?> getSbarre() {
+        return ResponseEntity.ok(service.getSbarre());
+    }
+
+    @GetMapping("/devices/telecamere")
+    public ResponseEntity<?> getTelecamere() {
+        return ResponseEntity.ok(service.getTelecamere());
+    }
+
+    @GetMapping("/devices/totem")
+    public ResponseEntity<?> getTotem() {
+        return ResponseEntity.ok(service.getTotem());
+    }
+
+    @GetMapping("/devices/casello/{casello}")
+    public ResponseEntity<List<Dispositivo>> getByCasello(@PathVariable Integer casello) {
+        return ResponseEntity.ok(service.getByCasello(casello));
+    }
+
+    @GetMapping("/devices/corsia/{corsia}")
+    public ResponseEntity<List<Dispositivo>> getByCorsia(@PathVariable Integer corsia) {
+        return ResponseEntity.ok(service.getByCorsia(corsia));
+    }
+
+    @GetMapping("/devices/active")
+    public ResponseEntity<List<Dispositivo>> getActive() {
+        return ResponseEntity.ok(service.getActive());
+    }
+
+    @GetMapping("/devices/inactive")
+    public ResponseEntity<List<Dispositivo>> getInactive() {
+        return ResponseEntity.ok(service.getInactive());
+    }
+
+    @GetMapping("/devices/search")
+    public ResponseEntity<?> search(@RequestParam("q") String q) {
+        try {
+            if (q == null || q.isBlank())
+                return ResponseEntity.badRequest().body(Map.of("error", "q obbligatorio"));
+
+            try {
+                Integer id = Integer.parseInt(q);
+                return ResponseEntity.ok(service.getByCasello(id));
+            } catch (NumberFormatException ignored) {}
+
+            String s = q.toLowerCase();
+            if (s.contains("totem"))       return ResponseEntity.ok(service.getTotem());
+            if (s.contains("telecamera"))  return ResponseEntity.ok(service.getTelecamere());
+            if (s.contains("sbarra"))      return ResponseEntity.ok(service.getSbarre());
+            if (s.contains("attiv") || s.contains("active"))   return ResponseEntity.ok(service.getActive());
+            if (s.contains("inatt") || s.contains("inactive")) return ResponseEntity.ok(service.getInactive());
+
+            return ResponseEntity.badRequest().body(Map.of("error", "q non riconosciuto"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore ricerca dispositivi"));
+        }
+    }
+
+    // ------------------- NESTED: /lanes/{idCasello}/{numCorsia}/devices -------------------
+
+    @GetMapping("/lanes/{idCasello}/{numCorsia}/devices")
+    public ResponseEntity<?> getDevicesForLane(@PathVariable Integer idCasello,
+                                               @PathVariable Integer numCorsia) {
+        return ResponseEntity.ok(service.getByCaselloAndCorsia(idCasello, numCorsia));
+    }
+
+    @PostMapping("/lanes/{idCasello}/{numCorsia}/devices")
+    public ResponseEntity<?> createDeviceForLane(@PathVariable Integer idCasello,
+                                                 @PathVariable Integer numCorsia,
+                                                 @RequestBody Map<String, Object> body) {
+        try {
+            String tipo  = (String) body.get("tipo");
+            String stato = (String) body.getOrDefault("stato", body.getOrDefault("status", "ATTIVO"));
+            var created = service.createForLane(idCasello, numCorsia, tipo, stato);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore creazione dispositivo"));
         }
     }
 }

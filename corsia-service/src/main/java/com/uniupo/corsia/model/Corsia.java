@@ -6,9 +6,13 @@ import jakarta.persistence.*;
 @Table(name = "corsia")
 public class Corsia {
 
+    // Primary key: id_corsia (auto-generated)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_casello")
+    @Column(name = "id_corsia")
+    private Integer idCorsia;
+
+    @Column(name = "id_casello", nullable = false)
     private Integer casello;
 
     @Column(name = "num_corsia", nullable = false)
@@ -19,16 +23,16 @@ public class Corsia {
     private Verso verso;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo", nullable = false)
+    @Column(name = "tipo_corsia", nullable = false)
     private Tipo tipo;
 
     @Column(name = "is_closed", nullable = false)
     private Boolean isClosed;
 
-    public Corsia() {}
-
     public enum Tipo { NORMALE, TELEPASS, EMERGENZA }
     public enum Verso { ENTRATA, USCITA }
+
+    public Corsia() {}
 
     public Corsia(Integer casello, Integer numCorsia, Verso verso, Tipo tipo) {
         this.casello = casello;
@@ -45,6 +49,8 @@ public class Corsia {
         this.tipo = tipo;
         this.isClosed = isClosed;
     }
+
+    public Integer getIdCorsia() { return idCorsia; }
 
     public Tipo getTipo() {
         return tipo;
@@ -65,6 +71,8 @@ public class Corsia {
     public Integer getCasello() {
         return casello;
     }
+
+    public void setCasello(Integer casello) { this.casello = casello; }
 
     public Verso getVerso() {
         return verso;

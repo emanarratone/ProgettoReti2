@@ -9,13 +9,10 @@ public class Totem extends Dispositivo {
 
     public Totem() {
         super();
+        this.tipoDispositivo = "TOTEM";
     }
 
     public Totem(Boolean status, Integer corsia, Integer casello) {
-        super(status, corsia, casello);
-    }
-
-    public Totem(Integer ID, Boolean status, Integer corsia, Integer casello) {
-        super(ID, status, corsia, casello);
+        super(status, corsia, casello, "TOTEM");
     }
 }

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/toll")
 public class CaselloController {
 
     private final CaselloService service;
@@ -19,19 +18,19 @@ public class CaselloController {
         this.service = service;
     }
 
-    @GetMapping
-    public ResponseEntity<List<CaselloDTO>> getToll() {
-        List<CaselloDTO> list = service.getAll();
-        return ResponseEntity.ok(list);
+    // ---------------- GLOBAL /tolls (optional) ----------------
+
+    @GetMapping("/tolls")
+    public ResponseEntity<List<CaselloDTO>> getTolls() {
+        return ResponseEntity.ok(service.getAll());
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<CaselloDTO>> searchToll(@RequestParam("q") String q) {
-        List<CaselloDTO> list = service.search(q);
-        return ResponseEntity.ok(list);
+    @GetMapping("/tolls/search")
+    public ResponseEntity<List<CaselloDTO>> searchTolls(@RequestParam("q") String q) {
+        return ResponseEntity.ok(service.search(q));
     }
 
-    @PostMapping
+    @PostMapping("/tolls")
     public ResponseEntity<?> createToll(@RequestBody CaselloDTO body) {
         try {
             if (body.getSigla() == null || body.getIdAutostrada() == null || body.getLimite() == null) {
@@ -47,47 +46,16 @@ public class CaselloController {
         }
     }
 
-    @PutMapping("/{idCasello}")
-    public ResponseEntity<?> updateToll(@PathVariable Integer idCasello, @RequestBody Map<String, Object> body) {
+    @GetMapping("/highways/{idAutostrada}/tolls")
+    public ResponseEntity<?> getTollsForHighway(@PathVariable Integer idAutostrada) {
         try {
-            String sigla = (String) body.getOrDefault("sigla", body.get("nome_casello"));
-            Integer limite = body.get("limite") != null ? ((Number) body.get("limite")).intValue() : null;
-            Boolean chiuso = (Boolean) body.getOrDefault("chiuso", body.getOrDefault("closed", false));
-
-            if (sigla == null || sigla.isBlank() || limite == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "parametri obbligatori"));
-            }
-
-            // need to provide idAutostrada to service.update, fetch existing to retain idAutostrada
-            CaselloDTO existing = service.getById(idCasello).orElseThrow(() -> new IllegalArgumentException("Casello non trovato"));
-            CaselloDTO dto = new CaselloDTO(existing.getIdCasello(), sigla, existing.getIdAutostrada(), chiuso, limite);
-            CaselloDTO updated = service.updateFromDTO(idCasello, dto);
-            return ResponseEntity.ok(updated);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body(Map.of("error", "Errore aggiornamento casello"));
-        }
-    }
-
-    @DeleteMapping("/{idCasello}")
-    public ResponseEntity<?> deleteToll(@PathVariable Integer idCasello) {
-        try {
-            service.delete(idCasello);
-            return ResponseEntity.ok(Map.of("status", "ok"));
+            List<CaselloDTO> list = service.getByAutostrada(idAutostrada);
+            return ResponseEntity.ok(list);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore cancellazione casello"));
+                    .body(Map.of("error", "Errore interno casello-service"));
         }
-    }
-
-    // ---- helpers for highways -> tolls
-    @GetMapping("/highways/{idAutostrada}/tolls")
-    public ResponseEntity<?> getTollsForHighway(@PathVariable Integer idAutostrada) {
-        List<CaselloDTO> list = service.getByAutostrada(idAutostrada);
-        return ResponseEntity.ok(list);
     }
 
     @PostMapping("/highways/{idAutostrada}/tolls")
@@ -99,14 +67,63 @@ public class CaselloController {
             Boolean chiuso = (Boolean) body.getOrDefault("chiuso", body.getOrDefault("closed", false));
 
             if (nomeCasello == null || nomeCasello.isBlank()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "nome_casello obbligatorio"));
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "nome_casello obbligatorio"));
             }
 
             CaselloDTO created = service.createForHighway(idAutostrada, nomeCasello, limite, chiuso);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body(Map.of("error", "Errore creazione casello"));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore creazione casello"));
+        }
+    }
+
+    @PutMapping("/toll/{idCasello}")
+    public ResponseEntity<?> updateToll(@PathVariable Integer idCasello,
+                                        @RequestBody Map<String, Object> body) {
+        try {
+            String sigla = (String) body.getOrDefault("sigla", body.get("nome_casello"));
+            Integer limite = body.get("limite") != null ? ((Number) body.get("limite")).intValue() : null;
+            Boolean chiuso = (Boolean) body.getOrDefault("chiuso", body.getOrDefault("closed", false));
+
+            if (sigla == null || sigla.isBlank() || limite == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "parametri obbligatori"));
+            }
+
+            CaselloDTO existing = service.getById(idCasello)
+                    .orElseThrow(() -> new IllegalArgumentException("Casello non trovato"));
+
+            CaselloDTO dto = new CaselloDTO(
+                    existing.getIdCasello(),
+                    sigla,
+                    existing.getIdAutostrada(),
+                    chiuso,
+                    limite
+            );
+
+            CaselloDTO updated = service.updateFromDTO(idCasello, dto);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore aggiornamento casello"));
+        }
+    }
+
+    @DeleteMapping("/tolls/{idCasello}")
+    public ResponseEntity<?> deleteToll(@PathVariable Integer idCasello) {
+        try {
+            service.delete(idCasello);
+            return ResponseEntity.ok(Map.of("status", "ok"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore cancellazione casello"));
         }
     }
 }

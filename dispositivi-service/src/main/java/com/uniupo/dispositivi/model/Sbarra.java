@@ -6,16 +6,12 @@ import jakarta.persistence.Entity;
 @Entity
 @DiscriminatorValue("SBARRA")
 public class Sbarra extends Dispositivo {
-
     public Sbarra() {
         super();
+        this.tipoDispositivo = "SBARRA";
     }
-
     public Sbarra(Boolean status, Integer corsia, Integer casello) {
-        super(status, corsia, casello);
-    }
-
-    public Sbarra(Integer ID, Boolean status, Integer corsia, Integer casello) {
-        super(ID, status, corsia, casello);
+        super(status, corsia, casello, "SBARRA");
     }
 }
+

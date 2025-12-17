@@ -394,4 +394,16 @@ public class ApiGatewayController {
                     .body(Map.of("error", "Service unavailable: " + e.getMessage()));
         }
     }
+
+    @PutMapping("/devices/{id}")
+    public ResponseEntity<?> updateDevice(@PathVariable Integer id, @RequestBody Object body) {
+        String url = webConfig.getDispositiviUrl() + "/devices/" + id;
+        return forwardPut(url, body);
+    }
+
+    @DeleteMapping("/devices/{id}")
+    public ResponseEntity<?> deleteDevice(@PathVariable Integer id) {
+        String url = webConfig.getDispositiviUrl() + "/devices/" + id;
+        return forwardDelete(url);
+    }
 }

@@ -22,21 +22,29 @@ public abstract class Dispositivo {
     @Column(name = "stato", nullable = false)
     protected Boolean status;
 
+    @Column(name = "tipo_dispositivo", nullable = false)
+    protected String tipoDispositivo;
+
     public Dispositivo() {}
 
-    public Dispositivo(Integer ID, Boolean status, Integer corsia, Integer casello) {
+    public Dispositivo(Boolean status, Integer corsia, Integer casello, String tipoDispositivo) {
+        this.status = status;
+        this.corsia = corsia;
+        this.casello = casello;
+        this.tipoDispositivo = tipoDispositivo;
+    }
+
+    public Dispositivo(Integer ID, Boolean status, Integer corsia, Integer casello, String tipoDispositivo) {
         this.ID = ID;
         this.status = status;
         this.corsia = corsia;
         this.casello = casello;
+        this.tipoDispositivo = tipoDispositivo;
     }
 
-    public Dispositivo(Boolean status, Integer corsia, Integer casello) {
-        this.status = status;
-        this.corsia = corsia;
-        this.casello = casello;
+    public void setTipoDispositivo(String tipoDispositivo) {
+        this.tipoDispositivo = tipoDispositivo;
     }
-
     public Integer getID() { 
         return ID; 
     }
@@ -72,4 +80,5 @@ public abstract class Dispositivo {
     public void setStatus(Boolean status) {
         this.status = status;
     }
+
 }
