@@ -5,6 +5,7 @@ package com.uniupo.dispositivi.mqtt.dto;
  */
 public class FotoScattataEvent {
     private Integer idTelecamera;
+    private Integer idTotem;
     private Integer idCorsia;
     private Integer idCasello;
     private String targa;
@@ -13,7 +14,7 @@ public class FotoScattataEvent {
 
     public FotoScattataEvent() {}
 
-    public FotoScattataEvent(Integer idTelecamera, Integer idCorsia, Integer idCasello, 
+    public FotoScattataEvent(Integer idTelecamera, Integer idTotem, Integer idCorsia, Integer idCasello,
                            String targa, String timestamp, String urlFoto) {
         this.idTelecamera = idTelecamera;
         this.idCorsia = idCorsia;
@@ -29,6 +30,14 @@ public class FotoScattataEvent {
 
     public void setIdTelecamera(Integer idTelecamera) {
         this.idTelecamera = idTelecamera;
+    }
+
+    public Integer getIdTotem() {
+        return idTotem;
+    }
+
+    public void setIdTotem(Integer idTotem) {
+        this.idTotem = idTotem;
     }
 
     public Integer getIdCorsia() {

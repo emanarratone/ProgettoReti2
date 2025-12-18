@@ -71,7 +71,7 @@ public class TelecameraMqttListener {
                     .stream()
                     .filter(d -> d instanceof Telecamera && d.getStatusBoolean())
                     .map(d -> (Telecamera) d)
-                    .collect(Collectors.toList());
+                    .toList();
             
             if (telecamere.isEmpty()) {
                 System.err.println("[TELECAMERA-LISTENER] Nessuna telecamera attiva trovata per casello " 
@@ -85,7 +85,7 @@ public class TelecameraMqttListener {
             System.out.println("[TELECAMERA-LISTENER] Telecamera " + telecamera.getID() + " sta scattando foto...");
             
             // Simula un tempo di elaborazione
-            Thread.sleep(500);
+            //Thread.sleep(500);
             
             // Genera una targa simulata (in produzione arriverebbe dal riconoscimento OCR)
             String targaSimulata = generaTargaSimulata();
@@ -93,6 +93,7 @@ public class TelecameraMqttListener {
             // Crea l'evento di foto scattata
             FotoScattataEvent fotoEvent = new FotoScattataEvent(
                     telecamera.getID(),
+                    richiesta.getIdTotem(),
                     richiesta.getIdCorsia(),
                     richiesta.getIdCasello(),
                     targaSimulata,

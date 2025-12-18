@@ -4,16 +4,27 @@ package com.uniupo.dispositivi.mqtt.dto;
  * Evento pubblicato quando un utente richiede la generazione di un biglietto
  */
 public class RichiestaBigliettoEvent {
+
+    private Integer idTotem;
     private Integer idCorsia;
     private Integer idCasello;
     private String timestamp;
 
     public RichiestaBigliettoEvent() {}
 
-    public RichiestaBigliettoEvent(Integer idCorsia, Integer idCasello, String timestamp) {
+    public RichiestaBigliettoEvent(Integer idTotem, Integer idCorsia, Integer idCasello, String timestamp) {
+        this.idTotem = idTotem;
         this.idCorsia = idCorsia;
         this.idCasello = idCasello;
         this.timestamp = timestamp;
+    }
+
+    public Integer getIdTotem() {
+        return idTotem;
+    }
+
+    public void setIdTotem(Integer idTotem) {
+        this.idTotem = idTotem;
     }
 
     public Integer getIdCorsia() {

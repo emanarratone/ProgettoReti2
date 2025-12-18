@@ -209,14 +209,14 @@ public class DispositiviController {
      * POST /devices/totem/{idTotem}/generaBiglietto
      */
     @PostMapping("/devices/totem/{idTotem}/generaBiglietto")
-    public ResponseEntity<?> totemGeneraBiglietto(@PathVariable Integer idTotem) {
+    public ResponseEntity<?> triggerBiglietto(@PathVariable Integer idTotem) {
         try {
             // Verifica che il dispositivo sia un totem
             var dispositivo = service.getById(idTotem);
             if (dispositivo.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
-            
+
             var totem = dispositivo.get();
             if (!"TOTEM".equalsIgnoreCase(totem.getTipoDispositivo())) {
                 return ResponseEntity.badRequest()
@@ -225,6 +225,7 @@ public class DispositiviController {
 
             // Crea l'evento di richiesta biglietto
             RichiestaBigliettoEvent evento = new RichiestaBigliettoEvent(
+                    totem.getID(),
                     totem.getCorsia(),
                     totem.getCasello(),
                     LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)

@@ -42,9 +42,14 @@ public abstract class Dispositivo {
         this.tipoDispositivo = tipoDispositivo;
     }
 
+    public String getTipoDispositivo() {
+        return tipoDispositivo;
+    }
+
     public void setTipoDispositivo(String tipoDispositivo) {
         this.tipoDispositivo = tipoDispositivo;
     }
+
     public Integer getID() { 
         return ID; 
     }
