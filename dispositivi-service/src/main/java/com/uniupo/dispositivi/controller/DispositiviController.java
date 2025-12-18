@@ -2,10 +2,14 @@ package com.uniupo.dispositivi.controller;
 
 import com.uniupo.dispositivi.model.Dispositivo;
 import com.uniupo.dispositivi.service.DispositiviService;
+import com.uniupo.dispositivi.mqtt.dto.RichiestaBigliettoEvent;
+import com.uniupo.shared.mqtt.MqttMessageBroker;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -13,9 +17,11 @@ import java.util.Map;
 public class DispositiviController {
 
     private final DispositiviService service;
+    private final MqttMessageBroker mqttBroker;
 
-    public DispositiviController(DispositiviService service) {
+    public DispositiviController(DispositiviService service, MqttMessageBroker mqttBroker) {
         this.service = service;
+        this.mqttBroker = mqttBroker;
     }
 
     // ------------------- HEALTH -------------------
@@ -191,6 +197,53 @@ public class DispositiviController {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Errore creazione dispositivo"));
+        }
+    }
+
+    // ------------------- MQTT: Richiesta Generazione Biglietto -------------------
+
+    /**
+     * Endpoint per il totem che richiede la generazione di un biglietto.
+     * Il totem pubblica un evento sul broker MQTT che verrà ricevuto dalla telecamera.
+     * 
+     * POST /devices/totem/{idTotem}/generaBiglietto
+     */
+    @PostMapping("/devices/totem/{idTotem}/generaBiglietto")
+    public ResponseEntity<?> totemGeneraBiglietto(@PathVariable Integer idTotem) {
+        try {
+            // Verifica che il dispositivo sia un totem
+            var dispositivo = service.getById(idTotem);
+            if (dispositivo.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            var totem = dispositivo.get();
+            if (!"TOTEM".equalsIgnoreCase(totem.getTipoDispositivo())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Il dispositivo non è un totem"));
+            }
+
+            // Crea l'evento di richiesta biglietto
+            RichiestaBigliettoEvent evento = new RichiestaBigliettoEvent(
+                    totem.getCorsia(),
+                    totem.getCasello(),
+                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
+
+            // Pubblica l'evento sul broker MQTT
+            mqttBroker.publish("totem/generaBiglietto", evento);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "ok",
+                    "message", "Richiesta biglietto pubblicata dal totem sul broker MQTT",
+                    "idTotem", idTotem,
+                    "casello", totem.getCasello(),
+                    "corsia", totem.getCorsia()
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore pubblicazione richiesta: " + e.getMessage()));
         }
     }
 }

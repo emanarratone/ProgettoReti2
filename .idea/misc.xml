@@ -17,6 +17,7 @@
         <option value="$PROJECT_DIR$/utente-service/pom.xml" />
         <option value="$PROJECT_DIR$/casello-service/pom.xml" />
         <option value="$PROJECT_DIR$/frontend-service/pom.xml" />
+        <option value="$PROJECT_DIR$/mqtt-shared/pom.xml" />
       </list>
     </option>
   </component>
