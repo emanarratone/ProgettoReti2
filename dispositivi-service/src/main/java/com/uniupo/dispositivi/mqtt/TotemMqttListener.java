@@ -2,8 +2,10 @@ package com.uniupo.dispositivi.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.biglietto.model.Biglietto;
+import com.uniupo.biglietto.repository.BigliettoRepository;
 import com.uniupo.dispositivi.model.Dispositivo;
 import com.uniupo.dispositivi.model.Totem;
+import com.uniupo.dispositivi.mqtt.dto.BigliettoGeneratoEvent;
 import com.uniupo.dispositivi.mqtt.dto.FotoScattataEvent;
 import com.uniupo.dispositivi.repository.DispositivoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
@@ -21,14 +23,16 @@ public class TotemMqttListener {
 
     private final MqttMessageBroker mqttBroker;
     private final DispositivoRepository repo;
+    private final BigliettoRepository repoB;
     private final ObjectMapper objectMapper;
 
     private static final String TOPIC_FOTO_SCATTATA = "telecamera/fotoScattata";
     private static final String TOPIC_BIGLIETTO_GENERATO = "sbarra/apriSbarra";
 
-    public TotemMqttListener(MqttMessageBroker mqttBroker, DispositivoRepository repo, ObjectMapper objectMapper) {
+    public TotemMqttListener(MqttMessageBroker mqttBroker, DispositivoRepository repo, BigliettoRepository repoB, ObjectMapper objectMapper) {
         this.mqttBroker = mqttBroker;
         this.repo = repo;
+        this.repoB = repoB;
         this.objectMapper = objectMapper;
     }
 
@@ -46,12 +50,12 @@ public class TotemMqttListener {
         }
     }
 
-    private void handleFotoScattata(String topic, String message){
+    private void handleFotoScattata(String topic, String message) {
 
-        try{
+        try {
             System.out.println("[TOTEM-LISTENER] Ricevuta foto targa: " + message);
 
-            FotoScattataEvent evento =objectMapper.readValue(message, FotoScattataEvent.class);
+            FotoScattataEvent evento = objectMapper.readValue(message, FotoScattataEvent.class);
 
             List<Totem> totems = repo.findById(evento.getIdTotem())
                     .stream()
@@ -62,13 +66,21 @@ public class TotemMqttListener {
 
             Biglietto biglietto = new Biglietto(totem.getID(), evento.getTarga(), LocalDateTime.now(), evento.getIdCasello());
 
-            //GENERAZIONE TOPIC APERTURA SBARRA....FARE ANCHE PAGAMENTI
+            repoB.save(biglietto);
+
+            BigliettoGeneratoEvent event = new BigliettoGeneratoEvent(
+                    evento.getIdCorsia(),
+                    evento.getIdCasello()
+            );
+
+            mqttBroker.publish(TOPIC_BIGLIETTO_GENERATO, event);
+
+            System.out.println("[TOTEM-LISTENER] Biglietto generato");
 
         } catch (Exception e) {
             System.err.println("[TOTEM-LISTENER] Errore gestione richiesta: " + e.getMessage());
             e.printStackTrace();
         }
-
     }
 
 
