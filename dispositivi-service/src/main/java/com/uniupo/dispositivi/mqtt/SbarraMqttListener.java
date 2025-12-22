@@ -2,8 +2,7 @@ package com.uniupo.dispositivi.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.dispositivi.model.Sbarra;
-import com.uniupo.dispositivi.model.Totem;
-import com.uniupo.dispositivi.mqtt.dto.BigliettoGeneratoEvent;
+import com.uniupo.shared.mqtt.dto.BigliettoGeneratoEvent;
 import com.uniupo.dispositivi.repository.DispositivoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import jakarta.annotation.PostConstruct;
@@ -17,7 +16,7 @@ public class SbarraMqttListener {
     private final DispositivoRepository repo;
     private final ObjectMapper objectMapper;
 
-    private static final String TOPIC_BIGLIETTO_GENERATO = "sbarra/apriSbarra";
+    private static final String TOPIC_APERTURA_SBARRA = "sbarra/apriSbarra";
 
     public SbarraMqttListener(MqttMessageBroker mqttBroker, DispositivoRepository repo, ObjectMapper objectMapper) {
         this.mqttBroker = mqttBroker;
@@ -31,7 +30,7 @@ public class SbarraMqttListener {
 
             mqttBroker.connect();
 
-            mqttBroker.subscribe(TOPIC_BIGLIETTO_GENERATO, this::handleBigliettoGenerato);
+            mqttBroker.subscribe(TOPIC_APERTURA_SBARRA, this::handleAperturaSbarra);
 
 
         } catch (MqttException e) {
@@ -40,7 +39,7 @@ public class SbarraMqttListener {
         }
     }
 
-    private void handleBigliettoGenerato(String topic, String message){
+    private void handleAperturaSbarra(String topic, String message){
 
         try{
             System.out.println("[GATE-LISTENER] Ricevuta foto targa: " + message);
@@ -55,6 +54,7 @@ public class SbarraMqttListener {
             Sbarra sbarra = sbarre.get(0);
 
             //LOGICA DI APERTURA DELLA SBARRA QUI
+
 
         } catch (Exception e) {
             System.err.println("[GATE-LISTENER] Errore gestione richiesta: " + e.getMessage());

@@ -2,8 +2,8 @@ package com.uniupo.dispositivi.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.dispositivi.model.Telecamera;
-import com.uniupo.dispositivi.mqtt.dto.FotoScattataEvent;
-import com.uniupo.dispositivi.mqtt.dto.RichiestaBigliettoEvent;
+import com.uniupo.shared.mqtt.dto.FotoScattataEvent;
+import com.uniupo.shared.mqtt.dto.RichiestaBigliettoEvent;
 import com.uniupo.dispositivi.repository.DispositivoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import jakarta.annotation.PostConstruct;
@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 /**
  * Listener MQTT per le telecamere.

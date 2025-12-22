@@ -1,4 +1,4 @@
-package com.uniupo.dispositivi.mqtt.dto;
+package com.uniupo.shared.mqtt.dto;
 
 
 public class BigliettoGeneratoEvent {

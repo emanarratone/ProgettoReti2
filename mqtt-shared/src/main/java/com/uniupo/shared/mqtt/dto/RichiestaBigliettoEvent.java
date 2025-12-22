@@ -1,4 +1,4 @@
-package com.uniupo.dispositivi.mqtt.dto;
+package com.uniupo.shared.mqtt.dto;
 
 /**
  * Evento pubblicato quando un utente richiede la generazione di un biglietto

@@ -1,8 +1,9 @@
 package com.uniupo.dispositivi.controller;
 
 import com.uniupo.dispositivi.model.Dispositivo;
+import com.uniupo.shared.mqtt.dto.richiestaPagamentoEvent;
 import com.uniupo.dispositivi.service.DispositiviService;
-import com.uniupo.dispositivi.mqtt.dto.RichiestaBigliettoEvent;
+import com.uniupo.shared.mqtt.dto.RichiestaBigliettoEvent;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -237,6 +238,42 @@ public class DispositiviController {
             return ResponseEntity.ok(Map.of(
                     "status", "ok",
                     "message", "Richiesta biglietto pubblicata dal totem sul broker MQTT",
+                    "idTotem", idTotem,
+                    "casello", totem.getCasello(),
+                    "corsia", totem.getCorsia()
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore pubblicazione richiesta: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/devices/totem/{idTotem}/{idBiglietto}/richiestaPagamento")
+    public ResponseEntity<?> richiestaPagamento(@PathVariable Integer idTotem,
+                                                @PathVariable Integer idBiglietto) {
+        try {
+            // Verifica che il dispositivo sia un totem
+            var dispositivo = service.getById(idTotem);
+            if (dispositivo.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            var totem = dispositivo.get();
+            if (!"TOTEM".equalsIgnoreCase(totem.getTipoDispositivo())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Il dispositivo non è un totem"));
+            }
+
+            // Crea l'evento di richiesta biglietto
+            richiestaPagamentoEvent evento = new richiestaPagamentoEvent(idBiglietto, totem.getCasello());
+
+            // Pubblica l'evento sul broker MQTT
+            mqttBroker.publish("totem/pagaBiglietto", evento);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "ok",
+                    "message", "Richiesta pagamento biglietto pubblicata dal totem sul broker MQTT",
                     "idTotem", idTotem,
                     "casello", totem.getCasello(),
                     "corsia", totem.getCorsia()
