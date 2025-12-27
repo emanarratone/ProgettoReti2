@@ -5,7 +5,9 @@ import com.uniupo.biglietto.model.Biglietto;
 import com.uniupo.biglietto.repository.BigliettoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import com.uniupo.shared.mqtt.dto.BigliettoGeneratoEvent;
+import com.uniupo.shared.mqtt.dto.ElaboraDistanzaEvent;
 import com.uniupo.shared.mqtt.dto.FotoScattataEvent;
+import com.uniupo.shared.mqtt.dto.richiestaPagamentoEvent;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
@@ -20,6 +22,8 @@ public class mqttListener {
 
     private static final String TOPIC_FOTO_SCATTATA = "telecamera/fotoScattata";
     private static final String TOPIC_APERTURA_SBARRA = "sbarra/apriSbarra";
+    private static final String TOPIC_RICHIESTA_PAGAMENTO = "totem/pagaBiglietto";
+    private static final String TOPIC_ELABORAZIONE_PAGAMENTO = "pagamento/elaboraPagamento";
 
 
     public mqttListener(MqttMessageBroker mqttBroker, BigliettoRepository repo, ObjectMapper objectMapper) {
@@ -34,15 +38,16 @@ public class mqttListener {
             mqttBroker.connect();
 
             mqttBroker.subscribe(TOPIC_FOTO_SCATTATA, this::handleGenerazioneBiglietto);
+            mqttBroker.subscribe(TOPIC_RICHIESTA_PAGAMENTO, this::handlePagamentoGetBiglietto);
 
 
         } catch (MqttException e) {
-            System.err.println("[TOTEM-LISTENER] Errore connessione MQTT: " + e.getMessage());
+            System.err.println("[TICKET-LISTENER] Errore connessione MQTT: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private void handleGenerazioneBiglietto(String topic, String message){
+    private void handleGenerazioneBiglietto(String topic, String message) {
         try {
             System.out.println("[TICKET-LISTENER] Ricevuta richiesta generazione biglietto: " + message);
 
@@ -60,12 +65,34 @@ public class mqttListener {
 
             mqttBroker.publish(TOPIC_APERTURA_SBARRA, event);
 
-            System.out.println("[TOTEM-LISTENER] Biglietto generato");
+            System.out.println("[TICKET-LISTENER] Biglietto generato");
 
         } catch (Exception e) {
-            System.err.println("[TOTEM-LISTENER] Errore gestione richiesta: " + e.getMessage());
+            System.err.println("[TICKET-LISTENER] Errore gestione richiesta: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
+    private void handlePagamentoGetBiglietto(String topic, String message) {
+        try {
+            System.out.println("[TICKET-LISTENER] Ricevuta richiesta pagamento: " + message);
+
+            richiestaPagamentoEvent evento = objectMapper.readValue(message, richiestaPagamentoEvent.class);
+
+
+            Biglietto biglietto = repo.getById(evento.getIdBiglietto());
+
+
+            ElaboraDistanzaEvent event = new ElaboraDistanzaEvent(biglietto.getCaselloIn(), evento.getCaselloOut());
+
+            mqttBroker.publish(TOPIC_ELABORAZIONE_PAGAMENTO, event);
+            //DEVO ELABORARE L'IMPORTO E POI GENERARE IL PAGAMENTO
+
+            System.out.println("[TICKET-LISTENER] Biglietto trovato");
+
+        } catch (Exception e) {
+            System.err.println("[TICKET-LISTENER] Errore gestione richiesta: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }

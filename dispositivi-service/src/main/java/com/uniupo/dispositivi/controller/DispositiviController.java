@@ -265,10 +265,8 @@ public class DispositiviController {
                         .body(Map.of("error", "Il dispositivo non è un totem"));
             }
 
-            // Crea l'evento di richiesta biglietto
             richiestaPagamentoEvent evento = new richiestaPagamentoEvent(idBiglietto, totem.getCasello());
 
-            // Pubblica l'evento sul broker MQTT
             mqttBroker.publish("totem/pagaBiglietto", evento);
 
             return ResponseEntity.ok(Map.of(
