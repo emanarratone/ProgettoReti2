@@ -2,27 +2,27 @@ package com.uniupo.shared.mqtt.dto;
 
 public class ElaboraDistanzaEvent {
 
-    private Integer casello_in;
-    private Integer casello_out;
+    private String citta_in;
+    private String citta_out;
 
-    public ElaboraDistanzaEvent(Integer casello_in, Integer casello_out) {
-        this.casello_in = casello_in;
-        this.casello_out = casello_out;
+    public ElaboraDistanzaEvent(String citta_in, String citta_out) {
+        this.citta_in = citta_in;
+        this.citta_out = citta_out;
     }
 
-    public Integer getCasello_in() {
-        return casello_in;
+    public String getCitta_in() {
+        return citta_in;
     }
 
-    public void setCasello_in(Integer casello_in) {
-        this.casello_in = casello_in;
+    public void setCitta_in(String citta_in) {
+        this.citta_in = citta_in;
     }
 
-    public Integer getCasello_out() {
-        return casello_out;
+    public String getCitta_out() {
+        return citta_out;
     }
 
-    public void setCasello_out(Integer casello_out) {
-        this.casello_out = casello_out;
+    public void setCitta_out(String citta_out) {
+        this.citta_out = citta_out;
     }
 }

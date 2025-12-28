@@ -5,14 +5,13 @@ import com.uniupo.biglietto.model.Biglietto;
 import com.uniupo.biglietto.repository.BigliettoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import com.uniupo.shared.mqtt.dto.BigliettoGeneratoEvent;
-import com.uniupo.shared.mqtt.dto.ElaboraDistanzaEvent;
+import com.uniupo.shared.mqtt.dto.TrovaCaselliEvent;
 import com.uniupo.shared.mqtt.dto.FotoScattataEvent;
 import com.uniupo.shared.mqtt.dto.richiestaPagamentoEvent;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class mqttListener {
 
@@ -83,7 +82,7 @@ public class mqttListener {
             Biglietto biglietto = repo.getById(evento.getIdBiglietto());
 
 
-            ElaboraDistanzaEvent event = new ElaboraDistanzaEvent(biglietto.getCaselloIn(), evento.getCaselloOut());
+            TrovaCaselliEvent event = new TrovaCaselliEvent(biglietto.getCaselloIn(), evento.getCaselloOut());
 
             mqttBroker.publish(TOPIC_ELABORAZIONE_PAGAMENTO, event);
             //DEVO ELABORARE L'IMPORTO E POI GENERARE IL PAGAMENTO

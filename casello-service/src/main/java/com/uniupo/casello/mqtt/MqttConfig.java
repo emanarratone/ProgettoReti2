@@ -1,4 +1,4 @@
-package com.uniupo.biglietto.mqtt;
+package com.uniupo.casello.mqtt;
 
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +16,6 @@ public class MqttConfig {
 
     @Bean
     public MqttMessageBroker mqttMessageBroker() {
-        return new MqttMessageBroker(mqttHost, mqttPort, "biglietto-service");
+        return new MqttMessageBroker(mqttHost, mqttPort, "casello-service");
     }
 }
-

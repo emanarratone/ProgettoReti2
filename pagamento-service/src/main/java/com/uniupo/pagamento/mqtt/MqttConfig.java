@@ -1,4 +1,4 @@
-package com.uniupo.biglietto.mqtt;
+package com.uniupo.pagamento.mqtt;
 
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,4 +19,3 @@ public class MqttConfig {
         return new MqttMessageBroker(mqttHost, mqttPort, "biglietto-service");
     }
 }
-
