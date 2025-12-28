@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.biglietto.model.Biglietto;
 import com.uniupo.biglietto.repository.BigliettoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
-import com.uniupo.shared.mqtt.dto.BigliettoGeneratoEvent;
-import com.uniupo.shared.mqtt.dto.TrovaCaselliEvent;
-import com.uniupo.shared.mqtt.dto.FotoScattataEvent;
-import com.uniupo.shared.mqtt.dto.richiestaPagamentoEvent;
+import com.uniupo.shared.mqtt.dto.*;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
@@ -22,7 +19,7 @@ public class mqttListener {
     private static final String TOPIC_FOTO_SCATTATA = "telecamera/fotoScattata";
     private static final String TOPIC_APERTURA_SBARRA = "sbarra/apriSbarra";
     private static final String TOPIC_RICHIESTA_PAGAMENTO = "totem/pagaBiglietto";
-    private static final String TOPIC_ELABORAZIONE_PAGAMENTO = "pagamento/elaboraPagamento";
+    private static final String TOPIC_ELABORAZIONE_PAGAMENTO_TARGA = "pagamento/elaboraPagamento";
 
 
     public mqttListener(MqttMessageBroker mqttBroker, BigliettoRepository repo, ObjectMapper objectMapper) {
@@ -81,11 +78,9 @@ public class mqttListener {
 
             Biglietto biglietto = repo.getById(evento.getIdBiglietto());
 
+            TrovaAutoEvent event = new TrovaAutoEvent(biglietto.getTarga(), biglietto.getCaselloIn(), evento.getCaselloOut());
 
-            TrovaCaselliEvent event = new TrovaCaselliEvent(biglietto.getCaselloIn(), evento.getCaselloOut());
-
-            mqttBroker.publish(TOPIC_ELABORAZIONE_PAGAMENTO, event);
-            //DEVO ELABORARE L'IMPORTO E POI GENERARE IL PAGAMENTO
+            mqttBroker.publish(TOPIC_ELABORAZIONE_PAGAMENTO_TARGA, event);
 
             System.out.println("[TICKET-LISTENER] Biglietto trovato");
 

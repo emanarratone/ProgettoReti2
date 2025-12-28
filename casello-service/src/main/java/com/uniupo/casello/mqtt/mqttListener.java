@@ -16,7 +16,7 @@ public class mqttListener {
     private final CaselloRepository repo;
     private final ObjectMapper objectMapper;
 
-    private static final String TOPIC_ELABORAZIONE_PAGAMENTO = "pagamento/elaboraPagamento";
+    private static final String TOPIC_ELABORAZIONE_PAGAMENTO_CASELLO = "casello/elaboraPagamento";
     private static final String TOPIC_CALCOLO_IMPORTO = "pagamento/calcolaImporto";
 
     public mqttListener(MqttMessageBroker mqttBroker, CaselloRepository repo, ObjectMapper objectMapper) {
@@ -30,8 +30,7 @@ public class mqttListener {
         try {
             mqttBroker.connect();
 
-            mqttBroker.subscribe(TOPIC_ELABORAZIONE_PAGAMENTO, this::handleGenerazionePagamento);
-
+            mqttBroker.subscribe(TOPIC_ELABORAZIONE_PAGAMENTO_CASELLO, this::handleGenerazionePagamento);
 
         } catch (MqttException e) {
             System.err.println("[CASELLO-LISTENER] Errore connessione MQTT: " + e.getMessage());
@@ -47,9 +46,10 @@ public class mqttListener {
             Casello in = repo.getById(evento.getCasello_in());
             Casello out = repo.getById(evento.getCasello_out());
 
-            ElaboraDistanzaEvent event = new ElaboraDistanzaEvent(in.getSigla(), out.getSigla());
+            ElaboraDistanzaEvent event = new ElaboraDistanzaEvent(in.getSigla(), out.getSigla(), evento.getClasse_veicolo());
 
             mqttBroker.publish(TOPIC_CALCOLO_IMPORTO, event);
+
         }catch (Exception e) {
             System.err.println("[CASELLO-LISTENER] Errore gestione richiesta: " + e.getMessage());
             e.printStackTrace();

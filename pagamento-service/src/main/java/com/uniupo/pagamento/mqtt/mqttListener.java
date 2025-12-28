@@ -42,6 +42,7 @@ public class mqttListener {
             ElaboraDistanzaEvent evento = objectMapper.readValue(message, ElaboraDistanzaEvent.class);
 
 
+
         }catch (Exception e) {
             System.err.println("[PAGAMENTO-LISTENER] Errore gestione richiesta: " + e.getMessage());
             e.printStackTrace();

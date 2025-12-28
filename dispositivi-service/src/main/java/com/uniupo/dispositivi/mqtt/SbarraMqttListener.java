@@ -32,7 +32,6 @@ public class SbarraMqttListener {
 
             mqttBroker.subscribe(TOPIC_APERTURA_SBARRA, this::handleAperturaSbarra);
 
-
         } catch (MqttException e) {
             System.err.println("[GATE-LISTENER] Errore connessione MQTT: " + e.getMessage());
             e.printStackTrace();
