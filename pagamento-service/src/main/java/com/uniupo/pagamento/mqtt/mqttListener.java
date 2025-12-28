@@ -2,6 +2,7 @@ package com.uniupo.pagamento.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uniupo.pagamento.model.Pagamento;
 import com.uniupo.pagamento.repository.PagamentoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import com.uniupo.shared.mqtt.dto.ElaboraDistanzaEvent;
@@ -13,6 +14,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class mqttListener {
@@ -21,6 +24,8 @@ public class mqttListener {
     private final PagamentoRepository repo;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
+
+
     private static final String TOPIC_CALCOLO_IMPORTO = "pagamento/calcolaImporto";
 
     public mqttListener(MqttMessageBroker mqttBroker, PagamentoRepository repo, ObjectMapper objectMapper,RestTemplate restTemplate) {
@@ -50,6 +55,11 @@ public class mqttListener {
 
             ElaboraDistanzaEvent evento = objectMapper.readValue(message, ElaboraDistanzaEvent.class);
 
+            Double pedaggio = calcolaPedaggio(evento.getCitta_in(), evento.getCitta_out(), getTariffa(evento.getClasse_veicolo()));
+
+            Pagamento pagamento = new Pagamento(evento.getIdBiglietto(), pedaggio, false, LocalDateTime.now(), evento.getCasello_out());
+
+            repo.save(pagamento); //mi fermo qua o apro la sbarra?
 
 
         }catch (Exception e) {
@@ -58,12 +68,24 @@ public class mqttListener {
         }
     }
 
-    public double calcolaPedaggio(String caselloIngresso, String caselloUscita) {
+    private double getTariffa(String Classe){
+        double val = switch (Classe) {
+            case "A" -> 0.07;
+            case "B" -> 0.09;
+            case "C" -> 0.12;
+            case "D" -> 0.16;
+            case "E" -> 0.20;
+            default -> 0.0;
+        };
+        return val;
+    }
+
+    private Double calcolaPedaggio(String caselloIngresso, String caselloUscita, Double tariffaPerKm) {
         Dotenv dotenv = Dotenv.load();
         String apiKey = dotenv.get("KEY_GOOGLE");
 
         try {
-            // Distance Matrix con NOMI caselli (stringhe dirette)
+
             String url = String.format(
                     "https://maps.googleapis.com/maps/api/distancematrix/json?" +
                             "origins=%s&destinations=%s&key=%s&units=metric&mode=driving",
@@ -81,7 +103,7 @@ public class mqttListener {
 
                 String status = element.path("status").asText();
                 if (!"OK".equals(status)) {
-                    return -1;
+                    return -1.0;
                 }
 
                 // Estrai distanza e calcola pedaggio
@@ -91,14 +113,14 @@ public class mqttListener {
                 /**
                  * Aggiungere la comunicazione al microservizio per ottenere la targa e di conseguenza la classe del veicolo
                  * **/
-                //double pedaggio = distanzaKm * tariffaPerKm;
+                double pedaggio = distanzaKm * tariffaPerKm;
 
-                //return Math.round(pedaggio * 100) / 100.0; // 2 decimali
+                return Math.round(pedaggio * 100) / 100.0; // 2 decimali
             }
 
         } catch (Exception e) {
            System.out.println(e.getMessage());
         }
-        return -1;
+        return -1.0;
     }
 }

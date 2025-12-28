@@ -1,12 +1,10 @@
 package com.uniupo.pagamento.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.pagamento.model.Pagamento;
 import com.uniupo.pagamento.service.PagamentoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -16,7 +14,6 @@ import java.util.Map;
 public class PagamentoController {
 
     private final PagamentoService service;
-
 
     public PagamentoController(PagamentoService service) {
         this.service = service;

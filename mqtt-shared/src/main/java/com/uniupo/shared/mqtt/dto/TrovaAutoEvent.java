@@ -1,14 +1,16 @@
 package com.uniupo.shared.mqtt.dto;
 
 public class TrovaAutoEvent {
-    String targa;
-    Integer Casello_in;
-    Integer Casello_out;
+    private String targa;
+    private Integer Casello_in;
+    private Integer Casello_out;
+    private Integer idBiglietto;
 
-    public TrovaAutoEvent(String targa, Integer casello_in, Integer casello_out) {
+    public TrovaAutoEvent(String targa, Integer casello_in, Integer casello_out, Integer idBiglietto) {
         this.targa = targa;
         Casello_in = casello_in;
         Casello_out = casello_out;
+        this.idBiglietto = idBiglietto;
     }
 
     public String getTarga() {
@@ -33,5 +35,13 @@ public class TrovaAutoEvent {
 
     public void setCasello_out(Integer casello_out) {
         Casello_out = casello_out;
+    }
+
+    public Integer getIdBiglietto() {
+        return idBiglietto;
+    }
+
+    public void setIdBiglietto(Integer idBiglietto) {
+        this.idBiglietto = idBiglietto;
     }
 }

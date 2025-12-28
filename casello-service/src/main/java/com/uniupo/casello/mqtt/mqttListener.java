@@ -46,7 +46,7 @@ public class mqttListener {
             Casello in = repo.getById(evento.getCasello_in());
             Casello out = repo.getById(evento.getCasello_out());
 
-            ElaboraDistanzaEvent event = new ElaboraDistanzaEvent(in.getSigla(), out.getSigla(), evento.getClasse_veicolo());
+            ElaboraDistanzaEvent event = new ElaboraDistanzaEvent(in.getSigla(), out.getSigla(), evento.getClasse_veicolo(), evento.getIdBiglietto(), evento.getCasello_out());
 
             mqttBroker.publish(TOPIC_CALCOLO_IMPORTO, event);
 

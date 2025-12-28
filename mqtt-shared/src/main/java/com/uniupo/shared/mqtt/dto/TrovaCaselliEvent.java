@@ -5,11 +5,13 @@ public class TrovaCaselliEvent {
     private Integer casello_in;
     private Integer casello_out;
     private String classe_veicolo;
+    private Integer idBiglietto;
 
-    public TrovaCaselliEvent(Integer casello_in, Integer casello_out, String classe_veicolo) {
+    public TrovaCaselliEvent(Integer casello_in, Integer casello_out, String classe_veicolo, Integer idBiglietto) {
         this.casello_in = casello_in;
         this.casello_out = casello_out;
         this.classe_veicolo = classe_veicolo;
+        this.idBiglietto = idBiglietto;
     }
 
     public Integer getCasello_in() {
@@ -34,5 +36,13 @@ public class TrovaCaselliEvent {
 
     public void setClasse_veicolo(String classe_veicolo) {
         this.classe_veicolo = classe_veicolo;
+    }
+
+    public Integer getIdBiglietto() {
+        return idBiglietto;
+    }
+
+    public void setIdBiglietto(Integer idBiglietto) {
+        this.idBiglietto = idBiglietto;
     }
 }
