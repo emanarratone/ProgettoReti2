@@ -249,6 +249,46 @@ public class DispositiviController {
         }
     }
 
+    @PostMapping("/devices/telecamera/{idTelecamera}/generaBiglietto")
+    public ResponseEntity<?> triggerTelepass(@PathVariable Integer idTelecamera) {
+        try {
+
+            var dispositivo = service.getById(idTelecamera);
+            if (dispositivo.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            var telecamera = dispositivo.get();
+            if (!"TELECAMERA".equalsIgnoreCase(telecamera.getTipoDispositivo())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Il dispositivo non è una telecamera"));
+            }
+
+            // Crea l'evento di richiesta biglietto
+            RichiestaBigliettoEvent evento = new RichiestaBigliettoEvent(
+                    telecamera.getID(),
+                    telecamera.getCorsia(),
+                    telecamera.getCasello(),
+                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
+
+            // Pubblica l'evento sul broker MQTT
+            mqttBroker.publish("totem/generaBiglietto", evento);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "ok",
+                    "message", "Richiesta biglietto pubblicata dalla telecamera sul broker MQTT",
+                    "idTelecamera", idTelecamera,
+                    "casello", telecamera.getCasello(),
+                    "corsia", telecamera.getCorsia()
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore pubblicazione richiesta: " + e.getMessage()));
+        }
+    }
+
     @PostMapping("/devices/totem/{idTotem}/{idBiglietto}/richiestaPagamento")
     public ResponseEntity<?> richiestaPagamento(@PathVariable Integer idTotem,
                                                 @PathVariable Integer idBiglietto) {
@@ -265,7 +305,7 @@ public class DispositiviController {
                         .body(Map.of("error", "Il dispositivo non è un totem"));
             }
 
-            richiestaPagamentoEvent evento = new richiestaPagamentoEvent(idBiglietto, totem.getCasello());
+            richiestaPagamentoEvent evento = new richiestaPagamentoEvent(idBiglietto, totem.getCasello(), totem.getCorsia());
 
             mqttBroker.publish("totem/pagaBiglietto", evento);
 
@@ -275,6 +315,39 @@ public class DispositiviController {
                     "idTotem", idTotem,
                     "casello", totem.getCasello(),
                     "corsia", totem.getCorsia()
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Errore pubblicazione richiesta: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/devices/totem/{idTelecamera}/{idBiglietto}/richiestaPagamento")
+    public ResponseEntity<?> richiestaPagamentoTelepass(@PathVariable Integer idTelecamera,
+                                                @PathVariable Integer idBiglietto) {
+        try {
+            var dispositivo = service.getById(idTelecamera);
+            if (dispositivo.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            var telecamera = dispositivo.get();
+            if (!"TELECAMERA".equalsIgnoreCase(telecamera.getTipoDispositivo())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Il dispositivo non è una telecamera"));
+            }
+
+            richiestaPagamentoEvent evento = new richiestaPagamentoEvent(idBiglietto, telecamera.getCasello(), telecamera.getCorsia());
+
+            mqttBroker.publish("totem/pagaBiglietto", evento);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "ok",
+                    "message", "Richiesta pagamento biglietto pubblicata dal totem sul broker MQTT",
+                    "idTotem", idTelecamera,
+                    "casello", telecamera.getCasello(),
+                    "corsia", telecamera.getCorsia()
             ));
         } catch (Exception e) {
             e.printStackTrace();

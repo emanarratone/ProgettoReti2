@@ -5,12 +5,22 @@ public class TrovaAutoEvent {
     private Integer Casello_in;
     private Integer Casello_out;
     private Integer idBiglietto;
+    private Integer corsia;
 
-    public TrovaAutoEvent(String targa, Integer casello_in, Integer casello_out, Integer idBiglietto) {
+    public TrovaAutoEvent(String targa, Integer casello_in, Integer casello_out, Integer idBiglietto, Integer corsia) {
         this.targa = targa;
-        Casello_in = casello_in;
-        Casello_out = casello_out;
+        this.Casello_in = casello_in;
+        this.Casello_out = casello_out;
+        this.corsia = corsia;
         this.idBiglietto = idBiglietto;
+    }
+
+    public Integer getCorsia() {
+        return corsia;
+    }
+
+    public void setCorsia(Integer corsia) {
+        this.corsia = corsia;
     }
 
     public String getTarga() {

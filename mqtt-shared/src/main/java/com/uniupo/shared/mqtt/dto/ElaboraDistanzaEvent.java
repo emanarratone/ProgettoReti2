@@ -7,13 +7,23 @@ public class ElaboraDistanzaEvent {
     private String Classe_veicolo;
     private Integer idBiglietto;
     private Integer casello_out;
+    private Integer corsia;
 
-    public ElaboraDistanzaEvent(String citta_in, String citta_out, String classe_veicolo, Integer idBiglietto, Integer casello_out) {
+    public ElaboraDistanzaEvent(String citta_in, String citta_out, String classe_veicolo, Integer idBiglietto, Integer casello_out, Integer corsia) {
         this.citta_in = citta_in;
         this.citta_out = citta_out;
-        Classe_veicolo = classe_veicolo;
+        this.Classe_veicolo = classe_veicolo;
+        this.corsia = corsia;
         this.idBiglietto = idBiglietto;
         this.casello_out = casello_out;
+    }
+
+    public Integer getCorsia() {
+        return corsia;
+    }
+
+    public void setCorsia(Integer corsia) {
+        this.corsia = corsia;
     }
 
     public String getCitta_in() {

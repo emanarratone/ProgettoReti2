@@ -2,7 +2,7 @@ package com.uniupo.dispositivi.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.dispositivi.model.Sbarra;
-import com.uniupo.shared.mqtt.dto.BigliettoGeneratoEvent;
+import com.uniupo.shared.mqtt.dto.AperturaSbarraEvent;
 import com.uniupo.dispositivi.repository.DispositivoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import jakarta.annotation.PostConstruct;
@@ -43,7 +43,7 @@ public class SbarraMqttListener {
         try{
             System.out.println("[GATE-LISTENER] Ricevuta foto targa: " + message);
 
-            BigliettoGeneratoEvent evento = objectMapper.readValue(message, BigliettoGeneratoEvent.class);
+            AperturaSbarraEvent evento = objectMapper.readValue(message, AperturaSbarraEvent.class);
 
             List<Sbarra> sbarre = repo.findByCaselloAndCorsia(evento.getIdCasello(), evento.getIdCorsia())
                     .stream()

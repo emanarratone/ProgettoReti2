@@ -34,7 +34,6 @@ public class mqttListener {
 
             mqttBroker.subscribe(TOPIC_ELABORAZIONE_PAGAMENTO_TARGA, this::handleElaborazionePagamentoTarga);
 
-
         } catch (MqttException e) {
             System.err.println("[AUTO-LISTENER] Errore connessione MQTT: " + e.getMessage());
             e.printStackTrace();
@@ -49,7 +48,7 @@ public class mqttListener {
             TrovaAutoEvent evento = objectMapper.readValue(message, TrovaAutoEvent.class);
             Veicolo veicolo = repo.getById(evento.getTarga());
 
-            TrovaCaselliEvent event = new TrovaCaselliEvent(evento.getCasello_in(), evento.getCasello_out(), veicolo.getTipoVeicolo().toString(), evento.getIdBiglietto());
+            TrovaCaselliEvent event = new TrovaCaselliEvent(evento.getCasello_in(), evento.getCasello_out(), veicolo.getTipoVeicolo().toString(), evento.getIdBiglietto(), evento.getCorsia());
 
             mqttBroker.publish(TOPIC_ELABORAZIONE_PAGAMENTO_CASELLO, event);
 
@@ -58,6 +57,5 @@ public class mqttListener {
             e.printStackTrace();
         }
     }
-
 
 }

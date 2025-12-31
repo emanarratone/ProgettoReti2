@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.pagamento.model.Pagamento;
 import com.uniupo.pagamento.repository.PagamentoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
+import com.uniupo.shared.mqtt.dto.AperturaSbarraEvent;
 import com.uniupo.shared.mqtt.dto.ElaboraDistanzaEvent;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -25,7 +26,7 @@ public class mqttListener {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
 
-
+    private static final String TOPIC_APERTURA_SBARRA = "sbarra/apriSbarra";
     private static final String TOPIC_CALCOLO_IMPORTO = "pagamento/calcolaImporto";
 
     public mqttListener(MqttMessageBroker mqttBroker, PagamentoRepository repo, ObjectMapper objectMapper,RestTemplate restTemplate) {
@@ -57,10 +58,13 @@ public class mqttListener {
 
             Double pedaggio = calcolaPedaggio(evento.getCitta_in(), evento.getCitta_out(), getTariffa(evento.getClasse_veicolo()));
 
-            Pagamento pagamento = new Pagamento(evento.getIdBiglietto(), pedaggio, false, LocalDateTime.now(), evento.getCasello_out());
+            Pagamento pagamento = new Pagamento(evento.getIdBiglietto(), pedaggio, true, LocalDateTime.now(), evento.getCasello_out()); //per semplicità il biglietto è già pagato
 
-            repo.save(pagamento); //mi fermo qua o apro la sbarra?
+            repo.save(pagamento);
 
+            AperturaSbarraEvent event = new AperturaSbarraEvent(evento.getCasello_out(), evento.getCorsia());
+
+            mqttBroker.publish(TOPIC_APERTURA_SBARRA, event);
 
         }catch (Exception e) {
             System.err.println("[PAGAMENTO-LISTENER] Errore gestione richiesta: " + e.getMessage());

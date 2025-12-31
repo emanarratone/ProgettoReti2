@@ -1,12 +1,12 @@
 package com.uniupo.shared.mqtt.dto;
 
 
-public class BigliettoGeneratoEvent {
+public class AperturaSbarraEvent {
 
     private Integer idCasello;
     private Integer idCorsia;
 
-    public BigliettoGeneratoEvent(Integer idCasello, Integer idCorsia) {
+    public AperturaSbarraEvent(Integer idCasello, Integer idCorsia) {
         this.idCasello = idCasello;
         this.idCorsia = idCorsia;
     }
