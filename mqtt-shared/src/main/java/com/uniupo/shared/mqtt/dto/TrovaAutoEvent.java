@@ -1,18 +1,30 @@
 package com.uniupo.shared.mqtt.dto;
 
+import java.time.LocalDateTime;
+
 public class TrovaAutoEvent {
     private String targa;
     private Integer Casello_in;
     private Integer Casello_out;
     private Integer idBiglietto;
     private Integer corsia;
+    private LocalDateTime timestamp_in;
 
-    public TrovaAutoEvent(String targa, Integer casello_in, Integer casello_out, Integer idBiglietto, Integer corsia) {
+    public TrovaAutoEvent(String targa, Integer casello_in, Integer casello_out, Integer idBiglietto, Integer corsia, LocalDateTime timestamp_in) {
         this.targa = targa;
         this.Casello_in = casello_in;
         this.Casello_out = casello_out;
         this.corsia = corsia;
         this.idBiglietto = idBiglietto;
+        this.timestamp_in = timestamp_in;
+    }
+
+    public LocalDateTime getTimestamp_in() {
+        return timestamp_in;
+    }
+
+    public void setTimestamp_in(LocalDateTime timestamp_in) {
+        this.timestamp_in = timestamp_in;
     }
 
     public Integer getCorsia() {

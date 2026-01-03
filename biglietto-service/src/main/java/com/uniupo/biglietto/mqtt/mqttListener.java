@@ -78,7 +78,7 @@ public class mqttListener {
 
             Biglietto biglietto = repo.getById(evento.getIdBiglietto());
 
-            TrovaAutoEvent event = new TrovaAutoEvent(biglietto.getTarga(), biglietto.getCaselloIn(), evento.getCaselloOut(), biglietto.getIdBiglietto(), evento.getCorsia());
+            TrovaAutoEvent event = new TrovaAutoEvent(biglietto.getTarga(), biglietto.getCaselloIn(), evento.getCaselloOut(), biglietto.getIdBiglietto(), evento.getCorsia(), biglietto.getTimestampIn());
 
             mqttBroker.publish(TOPIC_ELABORAZIONE_PAGAMENTO_TARGA, event);
 

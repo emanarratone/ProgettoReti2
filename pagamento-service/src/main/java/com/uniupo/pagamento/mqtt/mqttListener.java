@@ -6,6 +6,7 @@ import com.uniupo.pagamento.model.Pagamento;
 import com.uniupo.pagamento.repository.PagamentoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import com.uniupo.shared.mqtt.dto.AperturaSbarraEvent;
+import com.uniupo.shared.mqtt.dto.CreazioneMultaEvent;
 import com.uniupo.shared.mqtt.dto.ElaboraDistanzaEvent;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -15,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -28,6 +30,7 @@ public class mqttListener {
 
     private static final String TOPIC_APERTURA_SBARRA = "sbarra/apriSbarra";
     private static final String TOPIC_CALCOLO_IMPORTO = "pagamento/calcolaImporto";
+    private static final String TOPIC_MULTA = "multa/creaMulta";
 
     public mqttListener(MqttMessageBroker mqttBroker, PagamentoRepository repo, ObjectMapper objectMapper,RestTemplate restTemplate) {
         this.mqttBroker = mqttBroker;
@@ -56,15 +59,19 @@ public class mqttListener {
 
             ElaboraDistanzaEvent evento = objectMapper.readValue(message, ElaboraDistanzaEvent.class);
 
-            Double pedaggio = calcolaPedaggio(evento.getCitta_in(), evento.getCitta_out(), getTariffa(evento.getClasse_veicolo()));
+            TempoPedaggioMulte pedaggio = calcolaPedaggio(evento.getCitta_in(), evento.getCitta_out(), getTariffa(evento.getClasse_veicolo()));
 
-            Pagamento pagamento = new Pagamento(evento.getIdBiglietto(), pedaggio, true, LocalDateTime.now(), evento.getCasello_out()); //per semplicità il biglietto è già pagato
+            if(pedaggio == null) throw new RuntimeException();
+
+            Pagamento pagamento = new Pagamento(evento.getIdBiglietto(), pedaggio.getPedaggio(), true, LocalDateTime.now(), evento.getCasello_out()); //per semplicità il biglietto è già pagato
 
             repo.save(pagamento);
 
             AperturaSbarraEvent event = new AperturaSbarraEvent(evento.getCasello_out(), evento.getCorsia());
 
             mqttBroker.publish(TOPIC_APERTURA_SBARRA, event);
+
+            checkMulta(evento.getCitta_in(), evento.getCitta_out(), evento.getTimestamp_in(), pagamento.getTimestampOut(), pedaggio.getDistanzaKm(), evento.getIdBiglietto(), evento.getTarga());
 
         }catch (Exception e) {
             System.err.println("[PAGAMENTO-LISTENER] Errore gestione richiesta: " + e.getMessage());
@@ -84,7 +91,7 @@ public class mqttListener {
         return val;
     }
 
-    private Double calcolaPedaggio(String caselloIngresso, String caselloUscita, Double tariffaPerKm) {
+    private TempoPedaggioMulte calcolaPedaggio(String caselloIngresso, String caselloUscita, Double tariffaPerKm) {
         Dotenv dotenv = Dotenv.load();
         String apiKey = dotenv.get("KEY_GOOGLE");
 
@@ -107,24 +114,70 @@ public class mqttListener {
 
                 String status = element.path("status").asText();
                 if (!"OK".equals(status)) {
-                    return -1.0;
+                    throw new RuntimeException();
                 }
 
                 // Estrai distanza e calcola pedaggio
                 long distanzaMetri = element.path("distance").path("value").asLong();
                 double distanzaKm = distanzaMetri / 1000.0;
 
-                /**
-                 * Aggiungere la comunicazione al microservizio per ottenere la targa e di conseguenza la classe del veicolo
-                 * **/
                 double pedaggio = distanzaKm * tariffaPerKm;
 
-                return Math.round(pedaggio * 100) / 100.0; // 2 decimali
-            }
+                return new TempoPedaggioMulte(distanzaKm, Math.round(pedaggio * 100) / 100.0);  //evita chiamate ridondanti alle api
 
+            }
         } catch (Exception e) {
            System.out.println(e.getMessage());
         }
-        return -1.0;
+        return null;
+    }
+
+    private static class TempoPedaggioMulte{
+
+        private Double distanzaKm;
+        private double pedaggio;
+
+        public TempoPedaggioMulte(Double distanzaKm, double pedaggio) {
+            this.distanzaKm = distanzaKm;
+            this.pedaggio = pedaggio;
+        }
+
+        public double getPedaggio() {
+            return pedaggio;
+        }
+
+        public void setPedaggio(double pedaggio) {
+            this.pedaggio = pedaggio;
+        }
+
+        public Double getDistanzaKm() {
+            return distanzaKm;
+        }
+
+        public void setDistanzaKm(Double distanzaKm) {
+            this.distanzaKm = distanzaKm;
+        }
+    }
+
+    private void checkMulta(String caselloIngresso, String caselloUscita, LocalDateTime time_in, LocalDateTime time_out, Double distanzaKm, Integer idBiglietto, String targa) {
+
+        try {
+            System.out.println("[PAGAMENTO-LISTENER] Elaborazione multa in corso...");
+
+            //velocità (media) = spazio/tempo
+
+            Duration durata = Duration.between(time_in, time_out);
+
+            long tempo = durata.toSeconds() / 3600;
+
+            double velocita = distanzaKm / tempo;
+
+            CreazioneMultaEvent evento = new CreazioneMultaEvent(idBiglietto, targa);
+
+            if (velocita >= 130.0) mqttBroker.publish(TOPIC_MULTA, evento);
+        }catch (Exception e) {
+            System.err.println("[PAGAMENTO-LISTENER] Errore gestione richiesta: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

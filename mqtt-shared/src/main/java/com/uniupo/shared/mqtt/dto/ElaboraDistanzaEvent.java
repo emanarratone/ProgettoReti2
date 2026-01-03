@@ -1,5 +1,7 @@
 package com.uniupo.shared.mqtt.dto;
 
+import java.time.LocalDateTime;
+
 public class ElaboraDistanzaEvent {
 
     private String citta_in;
@@ -8,14 +10,34 @@ public class ElaboraDistanzaEvent {
     private Integer idBiglietto;
     private Integer casello_out;
     private Integer corsia;
+    private LocalDateTime timestamp_in;
+    private String targa;
 
-    public ElaboraDistanzaEvent(String citta_in, String citta_out, String classe_veicolo, Integer idBiglietto, Integer casello_out, Integer corsia) {
+    public ElaboraDistanzaEvent(String targa, String citta_in, String citta_out, String classe_veicolo, Integer idBiglietto, Integer casello_out, Integer corsia, LocalDateTime timestamp_in) {
         this.citta_in = citta_in;
         this.citta_out = citta_out;
         this.Classe_veicolo = classe_veicolo;
         this.corsia = corsia;
         this.idBiglietto = idBiglietto;
         this.casello_out = casello_out;
+        this.timestamp_in = timestamp_in;
+        this.targa = targa;
+    }
+
+    public String getTarga() {
+        return targa;
+    }
+
+    public void setTarga(String targa) {
+        this.targa = targa;
+    }
+
+    public LocalDateTime getTimestamp_in() {
+        return timestamp_in;
+    }
+
+    public void setTimestamp_in(LocalDateTime timestamp_in) {
+        this.timestamp_in = timestamp_in;
     }
 
     public Integer getCorsia() {

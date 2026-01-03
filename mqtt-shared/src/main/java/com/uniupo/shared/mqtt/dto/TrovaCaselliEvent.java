@@ -1,5 +1,7 @@
 package com.uniupo.shared.mqtt.dto;
 
+import java.time.LocalDateTime;
+
 public class TrovaCaselliEvent {
 
     private Integer casello_in;
@@ -7,13 +9,33 @@ public class TrovaCaselliEvent {
     private String classe_veicolo;
     private Integer idBiglietto;
     private Integer corsia;
+    private LocalDateTime timestamp_in;
+    private String targa;
 
-    public TrovaCaselliEvent(Integer casello_in, Integer casello_out, String classe_veicolo, Integer idBiglietto, Integer corsia) {
+    public TrovaCaselliEvent(String targa, Integer casello_in, Integer casello_out, String classe_veicolo, Integer idBiglietto, Integer corsia, LocalDateTime timestamp_in) {
         this.casello_in = casello_in;
         this.casello_out = casello_out;
         this.corsia = corsia;
         this.classe_veicolo = classe_veicolo;
         this.idBiglietto = idBiglietto;
+        this.timestamp_in = timestamp_in;
+        this.targa = targa;
+    }
+
+    public String getTarga() {
+        return targa;
+    }
+
+    public void setTarga(String targa) {
+        this.targa = targa;
+    }
+
+    public LocalDateTime getTimestamp_in() {
+        return timestamp_in;
+    }
+
+    public void setTimestamp_in(LocalDateTime timestamp_in) {
+        this.timestamp_in = timestamp_in;
     }
 
     public Integer getCorsia() {

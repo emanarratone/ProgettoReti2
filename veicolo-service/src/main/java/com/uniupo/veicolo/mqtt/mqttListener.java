@@ -48,7 +48,7 @@ public class mqttListener {
             TrovaAutoEvent evento = objectMapper.readValue(message, TrovaAutoEvent.class);
             Veicolo veicolo = repo.getById(evento.getTarga());
 
-            TrovaCaselliEvent event = new TrovaCaselliEvent(evento.getCasello_in(), evento.getCasello_out(), veicolo.getTipoVeicolo().toString(), evento.getIdBiglietto(), evento.getCorsia());
+            TrovaCaselliEvent event = new TrovaCaselliEvent(veicolo.getTarga(), evento.getCasello_in(), evento.getCasello_out(), veicolo.getTipoVeicolo().toString(), evento.getIdBiglietto(), evento.getCorsia(), evento.getTimestamp_in());
 
             mqttBroker.publish(TOPIC_ELABORAZIONE_PAGAMENTO_CASELLO, event);
 
