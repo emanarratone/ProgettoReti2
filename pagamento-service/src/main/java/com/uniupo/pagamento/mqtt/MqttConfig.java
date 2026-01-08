@@ -16,6 +16,6 @@ public class MqttConfig {
 
     @Bean
     public MqttMessageBroker mqttMessageBroker() {
-        return new MqttMessageBroker(mqttHost, mqttPort, "biglietto-service");
+        return new MqttMessageBroker(mqttHost, mqttPort, "pagamento-service");
     }
 }
