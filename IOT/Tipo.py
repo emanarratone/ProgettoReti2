@@ -1,0 +1,4 @@
+class Tipo:
+    NORMALE = "NORMALE"
+    TELEPASS = "TELEPASS"
+    EMERGENZA = "EMERGENZA"
