@@ -37,8 +37,8 @@ class GestoreBroker:
         self.topic_corrente = topic_sub
 
         self.broker.subscribe(topic_sub)
-        # CORREZIONE: ujson.dumps assicura che il backend riceva JSON vero, non una stringa quotata
-        self.broker.publish(topic_pub, ujson.dumps(payload))
+        # Inviamo il payload come dict: `MQTTBroker.publish` gestisce la serializzazione
+        self.broker.publish(topic_pub, payload)
 
         tentativi = 0
         while self.dati_ricevuti is None and tentativi < 50:

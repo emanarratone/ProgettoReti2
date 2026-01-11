@@ -11,7 +11,7 @@ public class Veicolo {
     private String targa;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_veicolo")
+    @Column(name = "classe_veicolo")
     private TipoVeicolo tipoVeicolo;
 
     public enum TipoVeicolo { A, B, C, D, E }

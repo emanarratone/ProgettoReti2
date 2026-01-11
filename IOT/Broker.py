@@ -24,7 +24,11 @@ class MQTTBroker:
         if self.client:
             try:
                 t = topic.encode() if isinstance(topic, str) else topic
-                msg = ujson.dumps(data)
+                # Se i dati sono già una stringa o bytes, usiamoli così; altrimenti serializziamo il dict
+                if isinstance(data, (str, bytes)):
+                    msg = data
+                else:
+                    msg = ujson.dumps(data)
                 self.client.publish(t, msg)
                 print(f'📤 Pubblicato su {topic}: {data}')
                 return True

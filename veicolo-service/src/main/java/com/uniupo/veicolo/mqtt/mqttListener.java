@@ -9,7 +9,9 @@ import com.uniupo.veicolo.model.Veicolo;
 import com.uniupo.veicolo.repository.VeicoloRepository;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.springframework.stereotype.Component;
 
+@Component
 public class mqttListener {
 
 
@@ -19,7 +21,7 @@ public class mqttListener {
 
     private static final String TOPIC_ELABORAZIONE_PAGAMENTO_TARGA = "auto/elaboraPagamento";
     private static final String TOPIC_ELABORAZIONE_PAGAMENTO_CASELLO = "casello/elaboraPagamento";
-
+    private static final String TOPIC_GET_VEICOLO = "veicolo/richiesta";
 
     public mqttListener(MqttMessageBroker mqttBroker, VeicoloRepository repo, ObjectMapper objectMapper) {
         this.mqttBroker = mqttBroker;
@@ -33,6 +35,7 @@ public class mqttListener {
             mqttBroker.connect();
 
             mqttBroker.subscribe(TOPIC_ELABORAZIONE_PAGAMENTO_TARGA, this::handleElaborazionePagamentoTarga);
+            mqttBroker.subscribe(TOPIC_GET_VEICOLO, this::handleRichiestaVeicolo);
 
         } catch (MqttException e) {
             System.err.println("[AUTO-LISTENER] Errore connessione MQTT: " + e.getMessage());
@@ -40,6 +43,37 @@ public class mqttListener {
         }
     }
 
+    private void handleRichiestaVeicolo(String topic, String message) {
+        try {
+            // 1. Python invia un JSON, quindi dobbiamo estrarre il campo "targa"
+            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(message);
+            String targaRichiesta = root.get("targa").asText();
+
+            System.out.println("[VEICOLO-SERVICE] ESP richiede info per targa: " + targaRichiesta);
+
+            // 2. Cerco nel DB
+            repo.findById(targaRichiesta).ifPresentOrElse(veicolo -> {
+                try {
+                    String jsonRisposta = objectMapper.writeValueAsString(veicolo);
+
+                    // 3. COSTRUISCO IL TOPIC DINAMICO (deve coincidere con Python)
+
+                    String topicRispostaDinamico = "veicolo/" + targaRichiesta + "/risposta";
+
+                    mqttBroker.publish(topicRispostaDinamico, jsonRisposta);
+                    System.out.println("[VEICOLO-SERVICE] Risposta inviata su " + topicRispostaDinamico + ": " + jsonRisposta);
+
+                } catch (Exception e) {
+                    System.err.println("Errore durante l'invio della risposta: " + e.getMessage());
+                }
+            }, () -> {
+                System.out.println("[VEICOLO-SERVICE] Veicolo non trovato: " + targaRichiesta);
+            });
+
+        } catch (Exception e) {
+            System.err.println("[VEICOLO-SERVICE] Errore parsing JSON dalla richiesta: " + e.getMessage());
+        }
+    }
     private void handleElaborazionePagamentoTarga (String topic, String message){
 
         try {
@@ -57,5 +91,4 @@ public class mqttListener {
             e.printStackTrace();
         }
     }
-
 }
