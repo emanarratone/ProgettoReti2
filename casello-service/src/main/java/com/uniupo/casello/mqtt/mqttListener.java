@@ -70,16 +70,16 @@ public class mqttListener {
             RichiestaDatiCaselloEvent richiesta = objectMapper.readValue(message, RichiestaDatiCaselloEvent.class);
 
             // Log di controllo: se vedi "null", il JSON dell'ESP32 è sbagliato
-            System.out.println("[CASELLO-DEBUG] Cerco casello ID: " + richiesta.getId_casello());
+            System.out.println("[CASELLO-DEBUG] Cerco casello ID: " + richiesta.getIdCasello());
 
-            repo.findById(richiesta.getId_casello()).ifPresentOrElse(casello -> {
+            repo.findById(richiesta.getIdCasello()).ifPresentOrElse(casello -> {
                 try {
                     String jsonRisposta = objectMapper.writeValueAsString(casello);
                     mqttBroker.publish("casello/risposta/" + casello.getIdCasello(), jsonRisposta);
                     System.out.println("[CASELLO-SUCCESS] Risposta inviata!");
                 } catch (Exception e) { e.printStackTrace(); }
             }, () -> {
-                System.err.println("[CASELLO-WARN] Casello " + richiesta.getId_casello() + " non trovato nel DB!");
+                System.err.println("[CASELLO-WARN] Casello " + richiesta.getIdCasello() + " non trovato nel DB!");
             });
 
         } catch (Exception e) {

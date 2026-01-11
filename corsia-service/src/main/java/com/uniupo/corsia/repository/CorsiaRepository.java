@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CorsiaRepository extends JpaRepository<Corsia, Integer> {
@@ -17,4 +18,6 @@ public interface CorsiaRepository extends JpaRepository<Corsia, Integer> {
     Integer findMaxNumCorsiaByCasello(@org.springframework.data.repository.query.Param("casello") Integer casello);
 
     void deleteByCaselloAndNumCorsia(Integer casello, Integer numCorsia);
+
+    Optional<Corsia> findByCaselloAndNumCorsia(Integer casello, Integer numCorsia);
 }

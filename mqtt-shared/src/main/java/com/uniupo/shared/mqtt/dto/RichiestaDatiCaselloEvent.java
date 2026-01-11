@@ -15,6 +15,6 @@ public class RichiestaDatiCaselloEvent {
     // Getter e Setter
     public String getComando() { return comando; }
     public void setComando(String comando) { this.comando = comando; }
-    public Integer getId_casello() { return id_casello; }
+    public Integer getIdCasello() { return id_casello; }
     public void setId_casello(Integer id_casello) { this.id_casello = id_casello; }
 }
