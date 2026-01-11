@@ -6,7 +6,7 @@ import shutil
 
 IP = input("IP ESP32 (10.187.40.110): ") or "10.187.40.110"
 PORT = 8080
-BACKUP_DIR = "ESP32_Sync"
+BACKUP_DIR = "File esp32 Backup"
 
 def safe_recv(sock):
     """Ricevi risposta completa"""
