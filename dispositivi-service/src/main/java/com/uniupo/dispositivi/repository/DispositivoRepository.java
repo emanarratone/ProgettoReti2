@@ -11,6 +11,5 @@ public interface DispositivoRepository extends JpaRepository<Dispositivo, Intege
     List<Dispositivo> findByCasello(Integer casello);
     List<Dispositivo> findByCorsia(Integer corsia);
     List<Dispositivo> findByStatus(Boolean status);
-
     List<Dispositivo> findByCaselloAndCorsia(Integer casello, Integer corsia);
 }

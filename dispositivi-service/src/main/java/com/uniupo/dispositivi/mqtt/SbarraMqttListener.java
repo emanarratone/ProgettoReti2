@@ -7,9 +7,11 @@ import com.uniupo.dispositivi.repository.DispositivoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public class SbarraMqttListener {
 
     private final MqttMessageBroker mqttBroker;
@@ -51,9 +53,6 @@ public class SbarraMqttListener {
                     .map(d -> (Sbarra) d).toList();
 
             Sbarra sbarra = sbarre.get(0);
-
-            //LOGICA DI APERTURA DELLA SBARRA QUI
-
 
         } catch (Exception e) {
             System.err.println("[GATE-LISTENER] Errore gestione richiesta: " + e.getMessage());

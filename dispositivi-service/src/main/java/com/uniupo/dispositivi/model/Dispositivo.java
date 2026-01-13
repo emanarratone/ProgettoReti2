@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "dispositivo")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "tipo", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorColumn(name = "tipo_dispositivo", discriminatorType = DiscriminatorType.STRING)
 public abstract class Dispositivo {
 
     @Id
@@ -22,7 +22,7 @@ public abstract class Dispositivo {
     @Column(name = "stato", nullable = false)
     protected Boolean status;
 
-    @Column(name = "tipo_dispositivo", nullable = false)
+    @Column(name = "tipo_dispositivo", insertable = false, updatable = false)
     protected String tipoDispositivo;
 
     public Dispositivo() {}

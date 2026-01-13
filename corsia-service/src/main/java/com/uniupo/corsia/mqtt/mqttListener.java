@@ -18,7 +18,6 @@ public class mqttListener {
     private final ObjectMapper objectMapper;
 
     private static final String TOPIC_RICHIESTA_CONFIG = "casello/richiesta";
-    private static final String TOPIC_RISPOSTA_CONFIG = "casello/risposta";
 
     public mqttListener(MqttMessageBroker mqttBroker, CorsiaRepository repo, ObjectMapper objectMapper) {
         this.mqttBroker = mqttBroker;
