@@ -7,9 +7,9 @@ class Casello:
         self.limite = limite
 
         def __str__(self):
-        return f"""id_casello:{self.id_casello} /
-                sigla:{self.sigla} /
-                id_autostrada:{self.id_autostrada} /
-                is_closed:{self.is_closed} /
-                limite:{self.limite} /
-                """
+            return f"""id_casello:{self.id_casello} /
+                    sigla:{self.sigla} /
+                    id_autostrada:{self.id_autostrada} /
+                    is_closed:{self.is_closed} /
+                    limite:{self.limite} /
+                    """

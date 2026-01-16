@@ -29,12 +29,14 @@ public class PagamentoService {
         return repository.findByIdBiglietto(idBiglietto);
     }
 
+    // Aggiornato: ora cerca per stringa 'NON_PAGATO'
     public List<Pagamento> getUnpaid() {
-        return repository.findByPagato(false);
+        return repository.findByStato("NON_PAGATO");
     }
 
+    // Aggiornato: ora cerca per stringa 'PAGATO'
     public List<Pagamento> getPaid() {
-        return repository.findByPagato(true);
+        return repository.findByStato("PAGATO");
     }
 
     @Transactional
@@ -46,7 +48,7 @@ public class PagamentoService {
     public Optional<Pagamento> markAsPaid(Integer id) {
         return repository.findById(id)
                 .map(p -> {
-                    p.setPagato(true);
+                    p.setStato("PAGATO"); // Corretto setter
                     return repository.save(p);
                 });
     }
@@ -56,7 +58,7 @@ public class PagamentoService {
         return repository.findById(id)
                 .map(existing -> {
                     existing.setPrezzo(pagamento.getPrezzo());
-                    existing.setPagato(pagamento.getPagato());
+                    existing.setStato(pagamento.getStato()); // Corretto setter
                     existing.setCaselloOut(pagamento.getCaselloOut());
                     existing.setTimestampOut(pagamento.getTimestampOut());
                     return repository.save(existing);

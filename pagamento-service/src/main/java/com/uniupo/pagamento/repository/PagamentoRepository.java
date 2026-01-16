@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface PagamentoRepository extends JpaRepository<Pagamento, Integer> {
     List<Pagamento> findByIdBiglietto(Integer idBiglietto);
-    List<Pagamento> findByPagato(Boolean pagato);
+    List<Pagamento> findByStato(String stato);
 }

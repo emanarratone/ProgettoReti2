@@ -1,7 +1,9 @@
 package com.uniupo.veicolo.mqtt;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
+import com.uniupo.shared.mqtt.dto.ElaboraDistanzaEvent;
 import com.uniupo.shared.mqtt.dto.TrovaAutoEvent;
 import com.uniupo.shared.mqtt.dto.TrovaCaselliEvent;
 import com.uniupo.shared.mqtt.dto.richiestaPagamentoEvent;
@@ -11,6 +13,8 @@ import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 public class mqttListener {
 
@@ -19,9 +23,10 @@ public class mqttListener {
     private final VeicoloRepository repo;
     private final ObjectMapper objectMapper;
 
-    private static final String TOPIC_ELABORAZIONE_PAGAMENTO_TARGA = "auto/elaboraPagamento";
+    private static final String TOPIC_ELABORAZIONE_PAGAMENTO_TARGA = "veicolo/elaboraPagamento";
     private static final String TOPIC_ELABORAZIONE_PAGAMENTO_CASELLO = "casello/elaboraPagamento";
     private static final String TOPIC_GET_VEICOLO = "veicolo/richiesta";
+    private static final String TOPIC_GET_VEICOLO_PAGAMENTO = "veicolo/richiediClasse";
 
     public mqttListener(MqttMessageBroker mqttBroker, VeicoloRepository repo, ObjectMapper objectMapper) {
         this.mqttBroker = mqttBroker;
@@ -36,6 +41,7 @@ public class mqttListener {
 
             mqttBroker.subscribe(TOPIC_ELABORAZIONE_PAGAMENTO_TARGA, this::handleElaborazionePagamentoTarga);
             mqttBroker.subscribe(TOPIC_GET_VEICOLO, this::handleRichiestaVeicolo);
+            mqttBroker.subscribe(TOPIC_GET_VEICOLO_PAGAMENTO, this::handleRichiestaClasse);
 
         } catch (MqttException e) {
             System.err.println("[AUTO-LISTENER] Errore connessione MQTT: " + e.getMessage());
@@ -89,6 +95,33 @@ public class mqttListener {
         } catch (Exception e) {
             System.err.println("[AUTO-LISTENER] Errore gestione richiesta: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void handleRichiestaClasse(String topic, String message) {
+        try {
+            TrovaAutoEvent info = objectMapper.readValue(message, TrovaAutoEvent.class);
+
+            // Recupera la classe dal proprio DB locale tramite targa
+            String classe = repo.findByTarga(info.getTarga()).get().getTipoVeicolo().toString();
+
+            // Creiamo un DTO che includa la classe (possiamo riusare ElaboraDistanzaEvent mettendo ID al posto dei nomi per ora)
+            ElaboraDistanzaEvent arricchitoClasse = new ElaboraDistanzaEvent(
+                    info.getTarga(),
+                    info.getCasello_in().toString(), // Per ora passiamo l'ID come stringa
+                    info.getCasello_out().toString(),
+                    classe,
+                    info.getIdBiglietto(),
+                    info.getCasello_out(),
+                    info.getCorsia(),
+                    info.getTimestamp_in()
+            );
+
+            mqttBroker.publish("casello/richiediNomi", arricchitoClasse);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        } catch (MqttException e) {
+            throw new RuntimeException(e);
         }
     }
 }

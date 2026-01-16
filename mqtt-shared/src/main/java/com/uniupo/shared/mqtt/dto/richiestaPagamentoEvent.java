@@ -1,11 +1,20 @@
 package com.uniupo.shared.mqtt.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class richiestaPagamentoEvent {
-
+    @JsonProperty("idBiglietto")
     private Integer idBiglietto;
+    @JsonProperty("caselloOut")
     private Integer caselloOut;
-    private Integer corsia;
 
+    public String getTarga() {
+        return targa;
+    }
+
+    private String targa;
+    private Integer corsia;
+    private boolean isTelepass;
     public richiestaPagamentoEvent(Integer idBiglietto, Integer caselloOut, Integer corsia) {
         this.idBiglietto = idBiglietto;
         this.caselloOut = caselloOut;
@@ -35,4 +44,5 @@ public class richiestaPagamentoEvent {
     public void setCorsia(Integer corsia) {
         this.corsia = corsia;
     }
+
 }

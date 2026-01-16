@@ -9,47 +9,38 @@ public class Pagamento {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_transazione")
-    private Integer idTransazione;
-    
-    @Column(name = "id_biglietto")
+    @Column(name = "id_pagamento") // Allineato al nome SQL
+    private Integer idPagamento;
+
+    @Column(name = "id_biglietto", nullable = false)
     private Integer idBiglietto;
-    
-    @Column(name = "casello_out")
-    private Integer caselloOut;
-    
-    @Column(name = "prezzo")
+
+    @Column(name = "importo", nullable = false)
     private Double prezzo;
-    
-    @Column(name = "pagato")
-    private Boolean pagato;
-    
-    @Column(name = "timestamp_out")
+
+    @Column(name = "stato", nullable = false)
+    private String stato; // Cambiato da Boolean a String per contenere 'PAGATO' o 'NON_PAGATO'
+
+    @Column(name = "timestamp_out", nullable = false)
     private LocalDateTime timestampOut;
+
+    @Column(name = "casello_out", nullable = false)
+    private Integer caselloOut;
 
     public Pagamento() {}
 
-    public Pagamento(Integer idBiglietto, Double prezzo, Boolean pagato, LocalDateTime timestampOut, Integer caselloOut) {
+    // Costruttore per nuovi inserimenti (senza ID perché autogenerato)
+    public Pagamento(Integer idBiglietto, Double prezzo, String stato, LocalDateTime timestampOut, Integer caselloOut) {
         this.idBiglietto = idBiglietto;
         this.prezzo = prezzo;
-        this.pagato = pagato;
-        this.timestampOut = timestampOut;
-        this.caselloOut = caselloOut;
-    }
-
-    public Pagamento(Integer idTransazione, Integer idBiglietto, Double prezzo, Boolean pagato, 
-                     LocalDateTime timestampOut, Integer caselloOut) {
-        this.idTransazione = idTransazione;
-        this.idBiglietto = idBiglietto;
-        this.prezzo = prezzo;
-        this.pagato = pagato;
+        this.stato = stato;
         this.timestampOut = timestampOut;
         this.caselloOut = caselloOut;
     }
 
     // Getters and Setters
-    public Integer getIdTransazione() { return idTransazione; }
-    public void setIdTransazione(Integer idTransazione) { this.idTransazione = idTransazione; }
+    public Integer getIdPagamento() { return idPagamento; }
+    public void setIdPagamento(Integer idPagamento) { this.idPagamento = idPagamento; }
 
     public Integer getIdBiglietto() { return idBiglietto; }
     public void setIdBiglietto(Integer idBiglietto) { this.idBiglietto = idBiglietto; }
@@ -60,8 +51,8 @@ public class Pagamento {
     public Double getPrezzo() { return prezzo; }
     public void setPrezzo(Double prezzo) { this.prezzo = prezzo; }
 
-    public Boolean getPagato() { return pagato; }
-    public void setPagato(Boolean pagato) { this.pagato = pagato; }
+    public String getStato() { return stato; }
+    public void setStato(String stato) { this.stato = stato; }
 
     public LocalDateTime getTimestampOut() { return timestampOut; }
     public void setTimestampOut(LocalDateTime timestampOut) { this.timestampOut = timestampOut; }

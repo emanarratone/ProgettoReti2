@@ -4,46 +4,42 @@ import time
 class GestoreBroker:
     def __init__(self, broker):
         self.broker = broker
-        self.dati_ricevuti = None
+        self.risposte = {}  # Dizionario per memorizzare le risposte per topic
         self.topic_corrente = None
-        # Impostiamo la callback una sola volta
+        # Impostiamo la callback una sola volta all'avvio
         self.broker.set_callback(self.callback_globale)
 
     def callback_globale(self, topic, msg):
         t = topic.decode()
-        if t == self.topic_corrente:
-            try:
-                # Carichiamo il JSON una sola volta
-                self.dati_ricevuti = ujson.loads(msg)
-            except:
-                print("Errore decodifica JSON")
+        try:
+            # Decodifica robusta: gestisce sia bytes che stringhe
+            payload = msg.decode() if isinstance(msg, bytes) else msg
+            self.risposte[t] = ujson.loads(payload)
+            print(f"📩 Messaggio ricevuto su {t}")
+        except Exception as e:
+            print(f"❌ Errore decodifica JSON su {t}:", e)
 
-    def callback_mqtt(self, topic, msg):
-        topic_ricevuto = topic.decode()
-        if topic_ricevuto == self.topic_atteso:
-            try:
-                # Decodifica il messaggio da byte a stringa e poi a dizionario
-                self.dati_ricevuti = ujson.loads(msg.decode('utf-8'))
-            except Exception as e:
-                # Se msg è già una stringa o c'è un errore, proviamo così:
-                try:
-                    self.dati_ricevuti = ujson.loads(msg)
-                except:
-                    print("Errore critico decodifica JSON:", e)
-                    self.dati_ricevuti = None
-
-    def richiedi(self, topic_pub, payload, topic_sub):
-        self.dati_ricevuti = None
-        self.topic_corrente = topic_sub
-
-        self.broker.subscribe(topic_sub)
-        # Inviamo il payload come dict: `MQTTBroker.publish` gestisce la serializzazione
-        self.broker.publish(topic_pub, payload)
-
-        tentativi = 0
-        while self.dati_ricevuti is None and tentativi < 50:
-            self.broker.check_msg()
-            time.sleep(0.1)
-            tentativi += 1
-
-        return self.dati_ricevuti
+    def richiedi(self, topic_invio, payload, topic_risposta, timeout=3):
+        # 1. Mi iscrivo al topic dove il server risponderà
+        print(f"📥 Iscrizione a {topic_risposta}...")
+        self.broker.subscribe(topic_risposta)
+        
+        # 2. Pulisco vecchia cache per questo topic specifico
+        self.risposte[topic_risposta] = None 
+        
+        # 3. Invio la richiesta
+        print(f"📤 Pubblicazione su {topic_invio}...")
+        self.broker.publish(topic_invio, ujson.dumps(payload))
+        
+        # 4. Loop di attesa (fino a 'timeout' secondi)
+        start = time.time()
+        while (time.time() - start) < timeout:
+            self.broker.check_msg() # Forza il broker a leggere i pacchetti in arrivo
+            
+            if self.risposte.get(topic_risposta) is not None:
+                return self.risposte[topic_risposta]
+            
+            time.sleep(0.1) # Breve attesa per non sovraccaricare la CPU
+        
+        print(f"⚠️ Timeout: nessuna risposta da {topic_risposta} dopo {timeout}s")
+        return None

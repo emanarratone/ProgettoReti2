@@ -1,15 +1,19 @@
 package com.uniupo.casello.mqtt;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.casello.model.Casello;
 import com.uniupo.casello.repository.CaselloRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
 import com.uniupo.shared.mqtt.dto.ElaboraDistanzaEvent;
 import com.uniupo.shared.mqtt.dto.RichiestaDatiCaselloEvent;
+import com.uniupo.shared.mqtt.dto.TrovaAutoEvent;
 import com.uniupo.shared.mqtt.dto.TrovaCaselliEvent;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
 
 @Component
 public class mqttListener {
@@ -22,7 +26,7 @@ public class mqttListener {
     private static final String TOPIC_RICHIESTA_CONFIG = "casello/richiesta";
     private static final String TOPIC_ELABORAZIONE_PAGAMENTO_CASELLO = "casello/elaboraPagamento";
     private static final String TOPIC_CALCOLO_IMPORTO = "pagamento/calcolaImporto";
-    private static final String TOPIC_RISPOSTA_CONFIG = "casello/risposta/";
+    private static final String TOPIC_NOMI_CASELLO = "casello/richiediNomi";
 
     public mqttListener(MqttMessageBroker mqttBroker, CaselloRepository repo, ObjectMapper objectMapper) {
         this.mqttBroker = mqttBroker;
@@ -37,6 +41,7 @@ public class mqttListener {
 
             mqttBroker.subscribe(TOPIC_ELABORAZIONE_PAGAMENTO_CASELLO, this::handleGenerazionePagamento);
             mqttBroker.subscribe(TOPIC_RICHIESTA_CONFIG, this::handleRichiestaConfigurazione);
+            mqttBroker.subscribe(TOPIC_NOMI_CASELLO, this::handleRichiestaNomi);
         } catch (MqttException e) {
             System.err.println("[CASELLO-LISTENER] Errore connessione MQTT: " + e.getMessage());
             e.printStackTrace();
@@ -87,4 +92,23 @@ public class mqttListener {
         }
     }
 
+    private void handleRichiestaNomi(String topic, String message) {
+        try {
+            ElaboraDistanzaEvent ev = objectMapper.readValue(message, ElaboraDistanzaEvent.class);
+
+            // Traduce ID -> Nomi città
+            String nomeIn = repo.findById(Integer.parseInt(ev.getCitta_in())).get().getSigla();
+            String nomeOut = repo.findById(Integer.parseInt(ev.getCitta_out())).get().getSigla();
+            ev.setCitta_in(nomeIn);
+            ev.setCitta_out(nomeOut);
+
+            // Ora il messaggio è "completo" per il calcolo finale
+            mqttBroker.publish("pagamento/calcolaImporto", ev);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        } catch (MqttException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
+

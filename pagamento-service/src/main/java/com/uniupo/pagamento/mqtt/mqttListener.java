@@ -1,17 +1,18 @@
 package com.uniupo.pagamento.mqtt;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uniupo.pagamento.model.Pagamento;
 import com.uniupo.pagamento.repository.PagamentoRepository;
 import com.uniupo.shared.mqtt.MqttMessageBroker;
-import com.uniupo.shared.mqtt.dto.AperturaSbarraEvent;
 import com.uniupo.shared.mqtt.dto.CreazioneMultaEvent;
 import com.uniupo.shared.mqtt.dto.ElaboraDistanzaEvent;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
+@Component
 public class mqttListener {
 
     private final MqttMessageBroker mqttBroker;
@@ -28,7 +30,6 @@ public class mqttListener {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
 
-    private static final String TOPIC_APERTURA_SBARRA = "sbarra/apriSbarra";
     private static final String TOPIC_CALCOLO_IMPORTO = "pagamento/calcolaImporto";
     private static final String TOPIC_MULTA = "multa/creaMulta";
 
@@ -43,10 +44,7 @@ public class mqttListener {
     public void init(){
         try {
             mqttBroker.connect();
-
             mqttBroker.subscribe(TOPIC_CALCOLO_IMPORTO, this::handleCalcoloImporto);
-
-
         } catch (MqttException e) {
             System.err.println("[PAGAMENTO-LISTENER] Errore connessione MQTT: " + e.getMessage());
             e.printStackTrace();
@@ -54,28 +52,38 @@ public class mqttListener {
     }
 
     private void handleCalcoloImporto(String topic, String message) {
-        try{
-            System.out.println("[PAGAMENTO-LISTENER] Ricevuta richiesta per la generazione del pagamento");
+        try {
+            ElaboraDistanzaEvent finale = objectMapper.readValue(message, ElaboraDistanzaEvent.class);
 
-            ElaboraDistanzaEvent evento = objectMapper.readValue(message, ElaboraDistanzaEvent.class);
+            TempoPedaggioMulte pedaggioInfo = calcolaPedaggio(
+                    finale.getCitta_in(),
+                    finale.getCitta_out(),
+                    getTariffa(finale.getClasse_veicolo())
+            );
 
-            TempoPedaggioMulte pedaggio = calcolaPedaggio(evento.getCitta_in(), evento.getCitta_out(), getTariffa(evento.getClasse_veicolo()));
+            if (pedaggioInfo != null) {
+                LocalDateTime oraUscita = LocalDateTime.now();
 
-            if(pedaggio == null) throw new RuntimeException();
+                Pagamento p = new Pagamento();
+                p.setIdBiglietto(finale.getIdBiglietto());
+                p.setCaselloOut(finale.getCasello_out());
+                p.setPrezzo(pedaggioInfo.getPedaggio());
+                p.setTimestampOut(oraUscita);
+                p.setStato("PAGATO");
+                repo.save(p);
 
-            Pagamento pagamento = new Pagamento(evento.getIdBiglietto(), pedaggio.getPedaggio(), true, LocalDateTime.now(), evento.getCasello_out()); //per semplicità il biglietto è già pagato
+                // 2. Controllo Tutor con Tolleranza
+                checkMulta(
+                        finale.getTimestamp_in(),
+                        oraUscita,
+                        pedaggioInfo.getDistanzaKm(),
+                        finale.getIdBiglietto(),
+                        finale.getTarga()
+                );
 
-            repo.save(pagamento);
-
-            AperturaSbarraEvent event = new AperturaSbarraEvent(evento.getCasello_out(), evento.getCorsia());
-
-            mqttBroker.publish(TOPIC_APERTURA_SBARRA, event);
-
-            checkMulta(evento.getCitta_in(), evento.getCitta_out(), evento.getTimestamp_in(), pagamento.getTimestampOut(), pedaggio.getDistanzaKm(), evento.getIdBiglietto(), evento.getTarga());
-
-        }catch (Exception e) {
-            System.err.println("[PAGAMENTO-LISTENER] Errore gestione richiesta: " + e.getMessage());
-            e.printStackTrace();
+            }
+        } catch (Exception e) {
+            System.err.println("[PAGAMENTO] Errore nel processamento: " + e.getMessage());
         }
     }
 
@@ -95,39 +103,39 @@ public class mqttListener {
         Dotenv dotenv = Dotenv.load();
         String apiKey = dotenv.get("KEY_GOOGLE");
 
-        try {
+        if (apiKey == null || apiKey.isEmpty()) {
+            System.err.println("[PAGAMENTO] Errore: API KEY mancante nel file .env!");
+            return null;
+        }
 
+        try {
             String url = String.format(
-                    "https://maps.googleapis.com/maps/api/distancematrix/json?" +
-                            "origins=%s&destinations=%s&key=%s&units=metric&mode=driving",
+                    "https://maps.googleapis.com/maps/api/distancematrix/json?origins=%s&destinations=%s&key=%s",
                     URLEncoder.encode(caselloIngresso, StandardCharsets.UTF_8),
                     URLEncoder.encode(caselloUscita, StandardCharsets.UTF_8),
                     apiKey
             );
 
-
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            JsonNode root = objectMapper.readTree(response.getBody());
 
-            if (response.getStatusCode() == HttpStatus.OK) {
-                JsonNode root = objectMapper.readTree(response.getBody());
-                JsonNode element = root.path("rows").get(0).path("elements").get(0);
+            // Logga l'intera risposta di Google per vedere cosa dice
+            System.out.println("[GOOGLE-RESPONSE] " + response.getBody());
 
-                String status = element.path("status").asText();
-                if (!"OK".equals(status)) {
-                    throw new RuntimeException();
-                }
+            JsonNode element = root.path("rows").get(0).path("elements").get(0);
+            String status = element.path("status").asText();
 
-                // Estrai distanza e calcola pedaggio
+            if ("OK".equals(status)) {
                 long distanzaMetri = element.path("distance").path("value").asLong();
                 double distanzaKm = distanzaMetri / 1000.0;
-
                 double pedaggio = distanzaKm * tariffaPerKm;
-
-                return new TempoPedaggioMulte(distanzaKm, Math.round(pedaggio * 100) / 100.0);  //evita chiamate ridondanti alle api
-
+                return new TempoPedaggioMulte(distanzaKm, Math.round(pedaggio * 100) / 100.0);
+            } else {
+                System.err.println("[PAGAMENTO] Google Maps ha risposto con stato: " + status +
+                        " per le città: " + caselloIngresso + ", " + caselloUscita);
             }
         } catch (Exception e) {
-           System.out.println(e.getMessage());
+            System.err.println("[PAGAMENTO] Errore durante la chiamata API: " + e.getMessage());
         }
         return null;
     }
@@ -159,25 +167,36 @@ public class mqttListener {
         }
     }
 
-    private void checkMulta(String caselloIngresso, String caselloUscita, LocalDateTime time_in, LocalDateTime time_out, Double distanzaKm, Integer idBiglietto, String targa) {
 
+    private void checkMulta(LocalDateTime time_in, LocalDateTime time_out, Double distanzaKm, Integer idBiglietto, String targa) {
         try {
-            System.out.println("[PAGAMENTO-LISTENER] Elaborazione multa in corso...");
+            // Calcolo tempo impiegato in secondi
+            long secondiEffettivi = Duration.between(time_in, time_out).getSeconds();
 
-            //velocità (media) = spazio/tempo
+            // Configurazione limiti
+            double limiteCasello = 130.0;
+            double tolleranza = 1.05; // +5%
+            double limiteConTolleranza = limiteCasello * tolleranza;
 
-            Duration durata = Duration.between(time_in, time_out);
+            //ogni 10 secondi corrispondono al limite di velocità con tolleranza es: 105km/h -> 105km percorsi in 10 second
+            double tempoMinimoConsentito = (distanzaKm / limiteConTolleranza) * 10;
 
-            long tempo = durata.toSeconds() / 3600;
+            System.out.println(secondiEffettivi + " " + tempoMinimoConsentito + " " + targa);
 
-            double velocita = distanzaKm / tempo;
 
-            CreazioneMultaEvent evento = new CreazioneMultaEvent(idBiglietto, targa);
+            if (secondiEffettivi < tempoMinimoConsentito) {
+                double velocitaMedia = distanzaKm / (secondiEffettivi) * 10;
+                System.out.println("!!! ECCESSO DI VELOCITÀ RILEVATO !!!");
+                System.out.println("Targa: " + targa + " | Velocità Media: " + Math.round(velocitaMedia) + " km/h");
 
-            if (velocita >= 130.0) mqttBroker.publish(TOPIC_MULTA, evento);
-        }catch (Exception e) {
-            System.err.println("[PAGAMENTO-LISTENER] Errore gestione richiesta: " + e.getMessage());
-            e.printStackTrace();
+                CreazioneMultaEvent eventoMulta = new CreazioneMultaEvent(idBiglietto, targa);
+                String jsonMulta = objectMapper.writeValueAsString(eventoMulta);
+                mqttBroker.publish(TOPIC_MULTA, jsonMulta);
+            } else {
+                System.out.println("[TUTOR] Velocità entro i limiti per la targa: " + targa);
+            }
+        } catch (Exception e) {
+            System.err.println("[MULTA] Errore nel calcolo: " + e.getMessage());
         }
     }
 }

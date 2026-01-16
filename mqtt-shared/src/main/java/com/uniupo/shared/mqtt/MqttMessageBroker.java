@@ -1,5 +1,6 @@
 package com.uniupo.shared.mqtt;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.eclipse.paho.client.mqttv3.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,6 +27,11 @@ public class MqttMessageBroker {
         this.brokerUrl = "tcp://" + host + ":" + port;
         this.clientId = clientId != null ? clientId : "client-" + UUID.randomUUID().toString();
         this.objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        objectMapper.findAndRegisterModules();
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.objectMapper.findAndRegisterModules();
+        this.objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     /**

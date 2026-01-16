@@ -1,5 +1,6 @@
 package com.uniupo.shared.mqtt.dto;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public class TrovaAutoEvent {

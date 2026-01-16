@@ -40,16 +40,18 @@ public class DispositiviMqttListener {
 
     private void handleRichiestaConfigurazione(String topic, String message) {
         try {
+            // Cleanup stringhe
             if (message.startsWith("\"") && message.endsWith("\"")) {
-                // Deserializza la stringa nella sua forma JSON reale
                 message = objectMapper.readValue(message, String.class);
             }
+            System.out.println("🔍 Cleaned: '" + message + "'");
 
             RichiestaDatiCorsiaEvent richiesta = objectMapper.readValue(message, RichiestaDatiCorsiaEvent.class);
-
-            System.out.println("Ricevuto correttamente: dispositivi =" );
+            System.out.println("✅ Deserializzato: idCasello=" + richiesta.getIdCasello() +
+                    ", numCorsia=" + richiesta.getNumCorsia());
 
             List<Dispositivo> dispositivi = repo.findByCaselloAndCorsia(richiesta.getIdCasello(), richiesta.getNumCorsia());
+            System.out.println("📊 Trovati " + dispositivi.size() + " dispositivi");
 
             if (!dispositivi.isEmpty()) {
                 try {

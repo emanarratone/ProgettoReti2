@@ -1,7 +1,9 @@
-class Totem(Dispositivo): # Ereditiamo da Dispositivo
-    def __init__(self, schermo, ir, corsia, casello, dispositivo_id=None):
+from Dispositivo import Dispositivo
+
+class Totem(Dispositivo):
+    def __init__(self, status, corsia, casello, dispositivo_id,schermo, ir):
         super().__init__(
-            status=True,
+            status=status,
             corsia=corsia,
             casello=casello,
             tipo_dispositivo="TOTEM",
