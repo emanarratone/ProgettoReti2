@@ -1,0 +1,142 @@
+package DB;
+
+import model.Autostrada.Multa;
+import org.springframework.http.ResponseEntity;
+
+import java.sql.*;
+
+import static java.sql.Timestamp.valueOf;
+
+
+public class daoMulte {
+
+    public int contaMulteUltime24h() throws SQLException {
+        String sql = "SELECT COUNT(*)\n" +
+                "FROM multa\n" +
+                "JOIN pagamento\n" +
+                "ON multa.id_biglietto = pagamento.id_biglietto;\n";
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            rs.next();
+            return rs.getInt(1);
+        }
+    }
+
+    public String getMulteRecentiJson() throws SQLException {
+        String SQL =
+                "SELECT " +
+                        "    m.id_multa, " +
+                        "    m.targa, " +
+                        "    m.importo, " +
+                        "    m.pagato, " +
+                        "    r.nome AS nome_regione " +
+                        "FROM MULTA m " +
+                        "LEFT JOIN BIGLIETTO b  ON b.id_biglietto  = m.id_biglietto " +
+                        "LEFT JOIN CASELLO c    ON c.id_casello    = b.casello_in " +
+                        "LEFT JOIN AUTOSTRADA a ON a.id_autostrada = c.id_autostrada " +
+                        "LEFT JOIN REGIONE r    ON r.id_regione    = a.id_regione";
+
+        try (Connection con = DbConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(SQL);
+             ResultSet rs = ps.executeQuery()) {
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+
+            boolean first = true;
+            while (rs.next()) {
+                if (!first) sb.append(",");
+                first = false;
+
+                int id              = rs.getInt("id_multa");
+                String targa        = rs.getString("targa");
+                double imp          = rs.getDouble("importo");
+                boolean pagato      = rs.getBoolean("pagato");
+                String nomeRegione  = rs.getString("nome_regione");
+
+                if (targa == null) targa = "";
+                if (nomeRegione == null) nomeRegione = "";
+
+                // escape base per stringhe JSON
+                targa       = targa.replace("\\", "\\\\").replace("\"", "\\\"");
+                nomeRegione = nomeRegione.replace("\\", "\\\\").replace("\"", "\\\"");
+
+                sb.append(String.format(java.util.Locale.US,
+                        "{" +
+                                "\"id_multa\":%d," +
+                                "\"targa\":\"%s\"," +
+                                "\"importo\":%.2f," +
+                                "\"pagato\":%s," +
+                                "\"nome_regione\":\"%s\"" +
+                                "}",
+                        id,
+                        targa,
+                        imp,
+                        pagato ? "true" : "false",
+                        nomeRegione
+                ));
+            }
+            sb.append("]");
+            return sb.toString();
+        }
+    }
+
+    public ResponseEntity<String> insertMulta(Multa m) throws SQLException {
+        String s = "INSERT INTO MULTA (targa, importo, pagato, id_biglietto) VALUES (?,?,?,?)";
+
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(s)) {
+            ps.setString(1, m.getTarga());
+            ps.setDouble(2, m.getImporto());
+            ps.setBoolean(3, m.getPagato());
+            ps.setInt(4, m.getBiglietto());
+
+            int righeInserite = ps.executeUpdate();
+            if (righeInserite > 0) {
+                return ResponseEntity.ok("{\"message\":\"Multa inserita con successo\"}");
+            } else {
+                return ResponseEntity.internalServerError().body("{\"error\":\"Inserimento multa fallito\"}");
+            }
+        }
+    }
+
+
+
+    public ResponseEntity<String> updateMulta(Multa m1, Multa m2) throws SQLException {
+        String sql = "UPDATE Multa SET Pagato = ? WHERE id_multa = ?";  // Corretta asdrubale tabella Multa
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, m2.getPagato());
+            ps.setInt(2, m1.getId());
+            int righeAggiornate = ps.executeUpdate();
+            if (righeAggiornate > 0) {
+                return ResponseEntity.ok("{\"message\":\"Multa aggiornata con successo\"}");
+            } else {
+                return ResponseEntity.status(404).body("{\"error\":\"Multa non trovata\"}");
+            }
+        }
+    }
+
+    public ResponseEntity<String> deleteMulta(Multa m) throws SQLException {
+        String sql = "DELETE FROM Multa WHERE id_multa = ?";
+
+        try (Connection conn = DbConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, m.getId());
+                int righeEliminate = ps.executeUpdate();
+
+                if (righeEliminate == 0) {
+                    conn.rollback();
+                    return ResponseEntity.status(404).body("{\"error\":\"Multa non trovata\"}");
+                }
+                return ResponseEntity.ok("{\"message\":\"Multa eliminata con successo\"}");
+            } catch (SQLException ex) {
+                return ResponseEntity.internalServerError().body("{\"error\":\"Errore interno durante l'eliminazione\"}");
+            }
+        }
+    }
+
+}
