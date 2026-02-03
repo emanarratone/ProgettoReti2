@@ -75,8 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
     statusEl.textContent = msg || '';
   }
 
-  // Attiva livello nella barra orizzontale
-  function setActiveLevel(level) {
+ function setActiveLevel(level) {
     const order = ['regions', 'highways', 'tolls', 'lanes', 'devices'];
     const currentIndex = order.indexOf(level);
 
@@ -84,11 +83,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const liLevel = li.dataset.level;
       const liIndex = order.indexOf(liLevel);
       li.classList.toggle('active-level', liLevel === level);
-      if (liIndex !== -1 && liIndex < currentIndex) {
-        li.classList.add('visited-level');
-      } else {
-        li.classList.remove('visited-level');
-      }
+      if (liIndex !== -1 && liIndex < currentIndex) li.classList.add('visited-level');
+      else li.classList.remove('visited-level');
     });
 
     currentLevel = level;
@@ -200,30 +196,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Gestione click barra livelli
   levelList.addEventListener('click', function (e) {
-    const li = e.target.closest('.list-group-item');
-    if (!li) return;
-    const level = li.dataset.level;
+      const li = e.target.closest('.list-group-item');
+      if (!li) return;
+      const level = li.dataset.level;
 
-    if (level === 'regions') {
-      state.region = null;
-      state.highway = null;
-      state.toll = null;
-      state.lane = null;
-      loadRegions();
-    } else if (level === 'highways' && state.region) {
-      resetBelow('region');
-      loadHighwaysForRegion(state.region.id);
-    } else if (level === 'tolls' && state.highway) {
-      resetBelow('highway');
-      loadTollsForHighway(state.highway.id);
-    } else if (level === 'lanes' && state.toll) {
-      resetBelow('toll');
-      loadLanesForToll(state.toll.id);
-    } else if (level === 'devices' && state.lane) {
-      loadDevicesForLane(state.lane.num_corsia, state.lane.id_casello);
-    }
-    updatePathSummary();
-  });
+      if (level === 'regions') {
+        state.region = null; state.highway = null; state.toll = null; state.lane = null;
+        loadRegions();
+      } else if (level === 'highways' && state.region) {
+        loadHighwaysForRegion(state.region.id);
+      } else if (level === 'tolls' && state.highway) {
+        loadTollsForHighway(state.highway.id);
+      } else if (level === 'lanes' && state.toll) {
+        loadLanesForToll(state.toll.id);
+      } else if (level === 'devices' && state.lane) {
+        loadDevicesForLane(state.lane.num_corsia, state.lane.id_casello);
+      }
+      updatePathSummary();
+    });
 
   // helper: rende selezionabile una li per CRUD
   function makeSelectableLi(li, obj) {
@@ -657,49 +647,49 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
 
-function renderSelectedRegions() {
-  selectedRegionsEl.innerHTML = '';
-  const current = highwayRegionIdsEl.value
-    ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
-    : [];
+ function renderSelectedRegions() {
+    selectedRegionsEl.innerHTML = '';
+    const current = highwayRegionIdsEl.value
+      ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
+      : [];
 
-  current.forEach(id => {
-    const tag = document.createElement('span');
-    tag.className = 'badge bg-primary d-flex align-items-center gap-1';
+    current.forEach(id => {
+      const tag = document.createElement('span');
+      tag.className = 'badge bg-primary d-flex align-items-center gap-1';
 
-    const spanText = document.createElement('span');
-    spanText.textContent = cachedRegions[id] || ('Regione ' + id);
-    tag.appendChild(spanText);
+      const spanText = document.createElement('span');
+      spanText.textContent = cachedRegions[id] || ('Regione ' + id);
+      tag.appendChild(spanText);
 
-    const btnX = document.createElement('button');
-    btnX.type = 'button';
-    btnX.className = 'btn-close btn-close-white btn-sm ms-1';
-    btnX.addEventListener('click', () => {
-      const updated = current.filter(x => x !== id);
-      highwayRegionIdsEl.value = updated.join(',');
-      renderSelectedRegions();
+      const btnX = document.createElement('button');
+      btnX.type = 'button';
+      btnX.className = 'btn-close btn-close-white btn-sm ms-1';
+      btnX.addEventListener('click', () => {
+        const updated = current.filter(x => x !== id);
+        highwayRegionIdsEl.value = updated.join(',');
+        renderSelectedRegions();
+      });
+
+      tag.appendChild(btnX);
+      selectedRegionsEl.appendChild(tag);
     });
-
-    tag.appendChild(btnX);
-    selectedRegionsEl.appendChild(tag);
-  });
-}
-
-function addRegionToSelected(id, name) {
-  const current = highwayRegionIdsEl.value
-    ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
-    : [];
-
-  if (!current.includes(id)) {
-    current.push(id);
-    highwayRegionIdsEl.value = current.join(',');
-    cachedRegions[id] = name;
   }
 
-  highwayRegionInput.value = '';
-  regionSuggestionsEl.innerHTML = '';
-  renderSelectedRegions();
-}
+ function addRegionToSelected(id, name) {
+    const current = highwayRegionIdsEl.value
+      ? highwayRegionIdsEl.value.split(',').map(v => Number(v))
+      : [];
+
+    if (!current.includes(id)) {
+      current.push(id);
+      highwayRegionIdsEl.value = current.join(',');
+      cachedRegions[id] = name;
+    }
+
+    highwayRegionInput.value = '';
+    regionSuggestionsEl.innerHTML = '';
+    renderSelectedRegions();
+  }
 
   // --- CRUD: dialog separato ---
 
@@ -725,15 +715,11 @@ function addRegionToSelected(id, name) {
   }
 
   function configureModalFields() {
-    // Nascondi tutti i gruppi specifici
     groupCasello.classList.add('d-none');
     groupCorsia.classList.add('d-none');
     groupDispositivo.classList.add('d-none');
 
-    // Trova il gruppo del campo nome
     const nameGroup = fieldName.closest('.mb-3');
-
-    // Di default nascondi tutto
     nameGroup.classList.add('d-none');
     fieldName.required = false;
     fieldName.value = '';
@@ -743,9 +729,7 @@ function addRegionToSelected(id, name) {
         nameGroup.classList.remove('d-none');
         fieldNameLabel.textContent = 'Nome regione';
         fieldName.required = true;
-        if (currentAction === 'edit' && selectedItem) {
-          fieldName.value = selectedItem.name || '';
-        }
+        if (currentAction === 'edit' && selectedItem) fieldName.value = selectedItem.name || '';
         break;
 
       case 'highways':
@@ -758,7 +742,6 @@ function addRegionToSelected(id, name) {
         regionSuggestionsEl.innerHTML = '';
 
         if (currentAction === 'create') {
-          // preimposta la regione da cui stai navigando
           if (state.region) {
             highwayRegionIdsEl.value = String(state.region.id);
             cachedRegions[state.region.id] = state.region.name;
@@ -766,8 +749,6 @@ function addRegionToSelected(id, name) {
             highwayRegionIdsEl.value = '';
           }
           renderSelectedRegions();
-        } else if (currentAction === 'edit' && selectedItem) {
-          // per ora nessuna gestione regioni in edit
         }
         break;
 
@@ -776,49 +757,18 @@ function addRegionToSelected(id, name) {
         fieldNameLabel.textContent = 'Nome casello';
         fieldName.required = true;
         groupCasello.classList.remove('d-none');
-
-        if (currentAction === 'create') {
-          document.getElementById('caselloLimite').value = 130;
-          document.getElementById('caselloChiuso').checked = false;
-        } else if (currentAction === 'edit' && selectedItem) {
-          fieldName.value = selectedItem.name || '';
-          document.getElementById('caselloLimite').value = selectedItem.limite || 130;
-          document.getElementById('caselloChiuso').checked = !!selectedItem.chiuso;
-        }
         break;
 
       case 'lanes':
-        // NESSUN CAMPO NOME PER CORSIE
-        nameGroup.classList.add('d-none');
-        fieldName.required = false;
         groupCorsia.classList.remove('d-none');
-
-        if (currentAction === 'create') {
-          document.getElementById('corsiaVerso').value = '';
-          document.getElementById('corsiaTipo').value = '';
-          document.getElementById('corsiaChiuso').checked = false;
-        } else if (currentAction === 'edit' && selectedItem) {
-          document.getElementById('corsiaVerso').value = selectedItem.verso || '';
-          document.getElementById('corsiaTipo').value = selectedItem.tipo || '';
-          document.getElementById('corsiaChiuso').checked = !!selectedItem.chiuso;
-        }
         break;
 
       case 'devices':
-        nameGroup.classList.add('d-none');
-        fieldName.required = false;
         groupDispositivo.classList.remove('d-none');
-
-        if (currentAction === 'create') {
-          document.getElementById('dispTipo').value  = '';
-          document.getElementById('dispStato').value = '';
-        } else if (currentAction === 'edit' && selectedItem) {
-          document.getElementById('dispTipo').value  = selectedItem.tipo || '';
-          document.getElementById('dispStato').value = selectedItem.stato || '';
-        }
         break;
     }
   }
+
 
   let regionSearchTimeout = null;
 
@@ -829,35 +779,27 @@ highwayRegionInput.addEventListener('input', () => {
   if (regionSearchTimeout) clearTimeout(regionSearchTimeout);
   if (query.length < 2) return;
 
-  regionSearchTimeout = setTimeout(() => {
-    fetch('/api/regions/search?q=' + encodeURIComponent(query))
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        regionSuggestionsEl.innerHTML = '';
-        if (!Array.isArray(data) || data.length === 0) return;
+regionSearchTimeout = setTimeout(() => {
+      fetch('/api/regions/search?q=' + encodeURIComponent(query))
+        .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+        .then(data => {
+          regionSuggestionsEl.innerHTML = '';
+          if (!Array.isArray(data) || data.length === 0) return;
 
-        data.forEach(r => {
-          const li = document.createElement('button');
-          li.type = 'button';
-          li.className = 'list-group-item list-group-item-action';
-          const name = r.nomeRegione || r.nome || r.name;
-          const id   = r.id_regione || r.id;
-          li.textContent = name;
-          li.addEventListener('click', () => {
-            addRegionToSelected(id, name);
+          data.forEach(r => {
+            const li = document.createElement('button');
+            li.type = 'button';
+            li.className = 'list-group-item list-group-item-action';
+            const name = r.nomeRegione || r.nome || r.name;
+            const id   = r.id_regione || r.id;
+            li.textContent = name;
+            li.addEventListener('click', () => addRegionToSelected(id, name));
+            regionSuggestionsEl.appendChild(li);
           });
-          regionSuggestionsEl.appendChild(li);
-        });
-      })
-      .catch(err => {
-        console.error('Errore ricerca regioni:', err);
-      });
-  }, 300);
-});
-
+        })
+        .catch(err => console.error('Errore ricerca regioni:', err));
+    }, 300);
+  });
 
   function pickId(item, ...fields) {
     if (!item) return null;

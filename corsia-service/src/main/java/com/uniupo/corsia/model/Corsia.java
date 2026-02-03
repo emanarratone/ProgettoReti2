@@ -28,9 +28,8 @@ public class Corsia {
     @Column(name = "is_closed", nullable = false)
     private Boolean isClosed;
 
-    // ENUM INTERNI
     public enum Tipo {
-        NORMALE, TELEPASS, EMERGENZA
+        MANUALE, TELEPASS, EMERGENZA
     }
 
     public enum Verso {
