@@ -41,7 +41,7 @@ public class CorsiaService {
         try { verso = Corsia.Verso.valueOf(versoStr); } catch (Exception e) { verso = Corsia.Verso.ENTRATA; }
 
         Corsia.Tipo tipo;
-        try { tipo = Corsia.Tipo.valueOf(tipoStr); } catch (Exception e) { tipo = Corsia.Tipo.NORMALE; }
+        try { tipo = Corsia.Tipo.valueOf(tipoStr); } catch (Exception e) { tipo = Corsia.Tipo.MANUALE; }
 
         Corsia a = new Corsia(idCasello, nextNum, verso, tipo, chiuso != null && chiuso);
         Corsia saved = repo.save(a);

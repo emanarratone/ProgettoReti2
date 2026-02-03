@@ -161,52 +161,96 @@ public class ApiGatewayController {
         return ResponseEntity.ok(Map.of("success", true));
     }
 
-    // ================== LEGACY DASHBOARD ENDPOINTS (with dev fallback) ==================
     @GetMapping("/tolls")
     public ResponseEntity<?> getTolls() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getLegacyUrl() + "/api/tolls");
+        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/api/tolls");
         if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("Legacy /api/tolls not available, returning empty list fallback (status {})", resp.getStatusCode());
+        logger.warn("/api/tolls not available, returning empty list fallback (status {})", resp.getStatusCode());
         return ResponseEntity.ok(new Object[0]);
     }
 
     @GetMapping("/traffic")
     public ResponseEntity<?> getTrafficKpi() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getLegacyUrl() + "/api/traffic");
+        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/api/traffic");
         if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("Legacy /api/traffic not available, returning fallback KPI (status {})", resp.getStatusCode());
+        logger.warn("/api/traffic not available, returning fallback KPI (status {})", resp.getStatusCode());
         return ResponseEntity.ok(Map.of("media", 0, "oggi", 0, "variazione", 0.0));
     }
 
     @GetMapping("/traffic/trend")
     public ResponseEntity<?> getTrafficTrend() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getLegacyUrl() + "/api/traffic/trend");
+        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/api/traffic/trend");
         if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("Legacy /api/traffic/trend not available, returning empty trend fallback (status {})", resp.getStatusCode());
+        logger.warn("/api/traffic/trend not available, returning empty trend fallback (status {})", resp.getStatusCode());
         return ResponseEntity.ok(new Object[0]);
     }
 
     @GetMapping("/traffic/peaks")
     public ResponseEntity<?> getTrafficPeaks() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getLegacyUrl() + "/api/traffic/peaks");
+        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/api/traffic/peaks");
         if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("Legacy /api/traffic/peaks not available, returning empty peaks fallback (status {})", resp.getStatusCode());
+        logger.warn("/api/traffic/peaks not available, returning empty peaks fallback (status {})", resp.getStatusCode());
         return ResponseEntity.ok(new Object[0]);
     }
 
     @GetMapping("/assets")
     public ResponseEntity<?> getAssets() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getLegacyUrl() + "/api/assets");
-        if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("Legacy /api/assets not available, returning zeroed assets fallback (status {})", resp.getStatusCode());
-        return ResponseEntity.ok(Map.of("caselli", 0, "corsie", 0, "dispositivi", 0));
+
+        int caselli = 0;
+        int corsie = 0;
+        int dispositivi = 0;
+
+        try {
+            String caselloUrl = webConfig.getCaselloUrl() + "/tolls";
+            logger.info("Casello URL: {}", caselloUrl);
+
+            ResponseEntity<Object[]> caselliResp = restTemplate.getForEntity(caselloUrl, Object[].class);
+            logger.info("Casello response: status={}, body.length={}",
+                    caselliResp.getStatusCode(),
+                    caselliResp.getBody() != null ? caselliResp.getBody().length : "null");
+
+            if (caselliResp.getStatusCode().is2xxSuccessful() && caselliResp.getBody() != null) {
+                caselli = caselliResp.getBody().length;
+            }
+        } catch (Exception e) {
+            logger.error("ERRORE casello: {}", e.getMessage(), e);
+        }
+
+        try {
+            ResponseEntity<Object[]> corsieResp =
+                    restTemplate.getForEntity(webConfig.getCorsiaUrl() + "/lanes", Object[].class);
+            if (corsieResp.getStatusCode().is2xxSuccessful() && corsieResp.getBody() != null) {
+                corsie = corsieResp.getBody().length;
+
+            }
+        } catch (Exception e) {
+            logger.warn("Error querying corsia-service for /lanes: {}", e.getMessage());
+        }
+
+        try {
+            ResponseEntity<Object[]> dispResp =
+                    restTemplate.getForEntity(webConfig.getDispositiviUrl() + "/devices", Object[].class);
+            if (dispResp.getStatusCode().is2xxSuccessful() && dispResp.getBody() != null) {
+                dispositivi = dispResp.getBody().length;
+            }
+        } catch (Exception e) {
+            logger.warn("Error querying dispositivi-service for /devices: {}", e.getMessage());
+        }
+        logger.info("Assets finali: caselli={}, corsie={}, dispositivi={}", caselli, corsie, dispositivi);
+        return ResponseEntity.ok(
+                Map.of(
+                        "caselli", caselli,
+                        "corsie", corsie,
+                        "dispositivi", dispositivi
+                )
+        );
     }
 
     @GetMapping("/fines/list")
     public ResponseEntity<?> getFinesList() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getLegacyUrl() + "/api/fines/list");
+        ResponseEntity<?> resp = forwardGet(webConfig.getMultaUrl() + "/api/fines/list");
         if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("Legacy /api/fines/list not available, returning empty list fallback (status {})", resp.getStatusCode());
+        logger.warn("/api/fines/list not available, returning empty list fallback (status {})", resp.getStatusCode());
         return ResponseEntity.ok(new Object[0]);
     }
 
@@ -214,10 +258,9 @@ public class ApiGatewayController {
     @GetMapping("/fines")
     public ResponseEntity<?> getFinesCount() {
         // try legacy first
-        ResponseEntity<?> legacy = forwardGet(webConfig.getLegacyUrl() + "/api/fines");
+        ResponseEntity<?> legacy = forwardGet(webConfig.getAutostradaUrl() + "/api/fines");
         if (legacy.getStatusCode().is2xxSuccessful()) return legacy;
 
-        // fallback: ask multa-service for list and return count
         try {
             ResponseEntity<Object[]> listResp = restTemplate.getForEntity(webConfig.getMultaUrl() + "/fines", Object[].class);
             if (listResp.getStatusCode().is2xxSuccessful() && listResp.getBody() != null) {
@@ -232,7 +275,7 @@ public class ApiGatewayController {
     @GetMapping("/payments")
     public ResponseEntity<?> getPaymentsPending() {
         // try legacy first
-        ResponseEntity<?> legacy = forwardGet(webConfig.getLegacyUrl() + "/api/payments");
+        ResponseEntity<?> legacy = forwardGet(webConfig.getPagamentoUrl() + "/api/payments");
         if (legacy.getStatusCode().is2xxSuccessful()) return legacy;
 
         // fallback: ask pagamento-service /payments/unpaid
