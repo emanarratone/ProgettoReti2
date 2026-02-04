@@ -8,6 +8,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -176,7 +177,6 @@ public class ApiGatewayController {
     }
 
 
-
     @GetMapping("/traffic/trend")
     public ResponseEntity<?> getTrafficTrend() {
         ResponseEntity<?> resp = forwardGet(webConfig.getBigliettoUrl() + "/traffic/trend");
@@ -185,12 +185,14 @@ public class ApiGatewayController {
         return ResponseEntity.ok(new Object[0]);
     }
 
-    @GetMapping("/traffic/peaks")
-    public ResponseEntity<?> getTrafficPeaks() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/api/traffic/peaks");
-        if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("/api/traffic/peaks not available, returning empty peaks fallback (status {})", resp.getStatusCode());
-        return ResponseEntity.ok(new Object[0]);
+    @GetMapping("/traffic/24hours")
+    public ResponseEntity<?> getTraffic24Hours() {
+        return forwardGet(webConfig.getBigliettoUrl() + "/tickets/traffic/24hours");
+    }
+
+    @GetMapping("/traffic/30days")
+    public ResponseEntity<?> getTraffic30Days() {
+        return forwardGet(webConfig.getBigliettoUrl() + "/tickets/traffic/30days");
     }
 
     @GetMapping("/assets")

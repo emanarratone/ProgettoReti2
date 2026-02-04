@@ -65,20 +65,24 @@
   </div>
 
   <!-- Grafici -->
-  <div class="row g-3 mb-3">
-    <div class="col-12 col-lg-6">
-      <div class="card bg-white p-3 card-chart mb-3">
-        <h6 class="mb-2">Trend traffico</h6>
-        <canvas id="trafficChart" aria-label="Grafico traffico giornaliero" role="img"></canvas>
-      </div>
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+            <div class="card bg-white p-3 mb-3">
+                <h6 class="mb-2">Trend traffico (Ultimi 30gg)</h6>
+                <div class="chart-container" style="position: relative; height:300px; width:100%;">
+                    <canvas id="dailyChart" aria-label="Grafico traffico giornaliero" role="img"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card bg-white p-3 mb-3">
+                <h6 class="mb-2">Picchi orari (Ultime 24h)</h6>
+                <div class="chart-container" style="position: relative; height:300px; width:100%;">
+                    <canvas id="trafficChart" aria-label="Grafico picchi orari" role="img"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="col-12 col-lg-6">
-      <div class="card bg-white p-3 card-chart mb-3">
-        <h6 class="mb-2">Picchi orari</h6>
-        <canvas id="peaksChart" aria-label="Grafico picchi orari" role="img"></canvas>
-      </div>
-    </div>
-  </div>
 
   <!-- Tabelle: Autostrada / Multe -->
   <div class="row g-3 mb-3">

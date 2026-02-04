@@ -35,9 +35,9 @@ public class BigliettoService {
         return repository.findByTarga(targa);
     }
 
-    public Map<String, Object> getTrafficStats30d() {
+    public Map<String, Object> getAverageTraffic() {
         try {
-            List<Object[]> rawStats = repository.getTrafficStatsRaw();
+            List<Object[]> rawStats = repository.getTraffiAverage30d();
             if (rawStats.isEmpty()) {
                 return Map.of("media", 0, "totale_30d", 0);
             }
@@ -58,7 +58,13 @@ public class BigliettoService {
         }
     }
 
+    public List<Object[]> getTraffic30Days() {
+        return repository.getTraffic30days();
+    }
 
+    public List<Object[]> getTraffic24Hours() {
+        return repository.getTraffic24hours();
+    }
     @Transactional
     public Biglietto create(Biglietto biglietto) {
         return repository.save(biglietto);

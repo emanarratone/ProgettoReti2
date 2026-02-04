@@ -40,10 +40,20 @@ public class BigliettoController {
     }
 
     @GetMapping("/traffic")
-    public ResponseEntity<Map<String, Object>> getTrafficStats() {
-        Map<String, Object> stats = service.getTrafficStats30d();
+    public ResponseEntity<Map<String, Object>> getTrafficAverage() {
+        Map<String, Object> stats = service.getAverageTraffic();
         logger.info("🌐 API: {}", stats);
         return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/traffic/30days")
+    public ResponseEntity<List<Object[]>> get30Days() {
+        return ResponseEntity.ok(service.getTraffic30Days());
+    }
+
+    @GetMapping("/traffic/24hours")
+    public ResponseEntity<List<Object[]>> get24Hours() {
+        return ResponseEntity.ok(service.getTraffic24Hours());
     }
 
     @PostMapping

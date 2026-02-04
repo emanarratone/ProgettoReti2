@@ -1,3 +1,6 @@
+
+let trafficChartInstance = null;
+let dailyChartInstance = null;
   // Logout
 document.getElementById('logoutBtn').addEventListener('click', function () {
   fetch('/api/logout', {
@@ -45,7 +48,6 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
       .catch(err => console.error("Errore nel recupero ruolo:", err));
 
     // KPI traffico
- // SOSTITUISCI QUESTA FUNZIONE:
  fetch('/api/tickets/traffic')
    .then(res => {
      console.log('HTTP Status:', res.status);  // DEBUG
@@ -139,92 +141,95 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
         console.error("Errore fetch KPI pagamenti:", err);
         document.getElementById("kpiPayments").textContent = "Errore";
       });
-
-    // Trend traffico (line chart)
-    fetch('/api/traffic/trend')
-      .then(res => {
-        if (!res.ok) throw new Error('Errore HTTP: ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (data.error) {
-          console.error("Errore API trend traffico:", data.error);
-          return;
+    function safeChart(canvasId, config) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || !canvas.getContext) {
+            console.warn(`❌ Canvas "${canvasId}" non trovato`);
+            return null;
         }
 
-        const labels = data.map(p => p.day);
-        const values = data.map(p => p.count);
-
-        const ctx = document.getElementById('trafficChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Veicoli / giorno',
-              data: values,
-              borderColor: 'rgba(54, 162, 235, 1)',
-              backgroundColor: 'rgba(54, 162, 235, 0.1)',
-              tension: 0.2,
-              pointRadius: 2
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: true }
-            }
-          }
-        });
-      })
-      .catch(err => console.error("Errore fetch trend traffico:", err));
-
-    // Picchi orari (bar chart)
-    fetch('/api/traffic/peaks')
-      .then(res => {
-        if (!res.ok) throw new Error('Errore HTTP: ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (data.error) {
-          console.error("Errore API picchi orari:", data.error);
-          return;
+        // Distruggi l'istanza esistente se presente
+        if (canvasId === 'trafficChart' && trafficChartInstance) {
+            trafficChartInstance.destroy();
+        } else if (canvasId === 'dailyChart' && dailyChartInstance) {
+            dailyChartInstance.destroy();
         }
 
-        const hours = Array.from({ length: 24 }, (_, h) => h);
-        const counts = Array(24).fill(0);
+        const ctx = canvas.getContext('2d');
+        const newChart = new Chart(ctx, config);
 
-        data.forEach(p => {
-          const h = Number(p.hour);
-          if (h >= 0 && h < 24) {
-            counts[h] = p.count;
-          }
+        // Salva la nuova istanza
+        if (canvasId === 'trafficChart') trafficChartInstance = newChart;
+        if (canvasId === 'dailyChart') dailyChartInstance = newChart;
+
+        console.log(`✅ Grafico "${canvasId}" inizializzato`);
+        return newChart;
+    }
+    // Trend traffico 24h (line chart)
+  fetch('/api/traffic/24hours')
+      .then(res => res.json())
+      .then(data => {
+          const labels = data.map(row => {
+              const ora = Array.isArray(row) ? row[0] : (row.ora || 0);
+              return `${String(ora).padStart(2, '0')}:00`;
+          });
+          const values = data.map(row => Array.isArray(row) ? row[1] : (row.count || row.conteggio || 0));
+
+          safeChart('trafficChart', {
+              type: 'line',
+              data: {
+                  labels: labels,
+                  datasets: [{
+                      label: 'Veicoli/Ora',
+                      data: values,
+                      borderColor: '#3498db',
+                      backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                      fill: true,
+                      tension: 0.4
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: { y: { beginAtZero: true } }
+              }
+          });
+      });
+
+
+    // Trend 30gg (line chart)
+    fetch('/api/traffic/30days')
+        .then(res => res.json())
+        .then(data => {
+            // Invertiamo i dati per mostrare l'ordine cronologico (dal più vecchio al più nuovo)
+            const sortedData = [...data].reverse();
+
+            const labels = sortedData.map(row => {
+                const d = Array.isArray(row) ? row[0] : (row.data || row[0]);
+                return d ? d.toString().slice(5, 10) : '??'; // Formato MM-DD
+            });
+            const values = sortedData.map(row => Array.isArray(row) ? row[1] : (row.biglietti_giornalieri || 0));
+
+            safeChart('dailyChart', {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Biglietti/Giorno',
+                        data: values,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
         });
-
-        const hourLabels = hours.map(h => h.toString().padStart(2, '0') + ':00');
-
-        const ctx = document.getElementById('peaksChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: hourLabels,
-            datasets: [{
-              label: 'Veicoli / ora (oggi)',
-              data: counts,
-              backgroundColor: 'rgba(255, 159, 64, 0.6)'
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: true }
-            }
-          }
-        });
-      })
-      .catch(err => console.error("Errore fetch picchi orari:", err));
-
-      // Fetch regione–autostrada–casello e mostra in tabella (esempio)
 // Tabella Autostrada: Regione – Autostrada – Casello
 fetch('/api/tolls')
   .then(res => {
@@ -355,3 +360,4 @@ if (searchBtn) {
       });
   });
 }
+

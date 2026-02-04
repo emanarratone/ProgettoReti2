@@ -503,7 +503,15 @@ fieldset legend {
   font-size: 1rem;         /* Dimensione dell’icona*/
 }
 
+.chart-container, .card-body {
+    position: relative;
+    height: 300px; /* Imposta un'altezza fissa realistica */
+    width: 100%;
+}
 
+canvas {
+    max-height: 100% !important;
+}
 
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 576px) {
