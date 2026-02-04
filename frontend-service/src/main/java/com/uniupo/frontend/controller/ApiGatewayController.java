@@ -163,23 +163,23 @@ public class ApiGatewayController {
 
     @GetMapping("/tolls")
     public ResponseEntity<?> getTolls() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/api/tolls");
+        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/tolls");
         if (resp.getStatusCode().is2xxSuccessful()) return resp;
         logger.warn("/api/tolls not available, returning empty list fallback (status {})", resp.getStatusCode());
         return ResponseEntity.ok(new Object[0]);
     }
 
-    @GetMapping("/traffic")
-    public ResponseEntity<?> getTrafficKpi() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/api/traffic");
-        if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("/api/traffic not available, returning fallback KPI (status {})", resp.getStatusCode());
-        return ResponseEntity.ok(Map.of("media", 0, "oggi", 0, "variazione", 0.0));
+    @GetMapping("/tickets/traffic")
+    public ResponseEntity<?> getTicketsTraffic() {
+        logger.info("🔥 Gateway → biglietti-service/traffic");
+        return forwardGet(webConfig.getBigliettoUrl() + "/tickets/traffic");
     }
+
+
 
     @GetMapping("/traffic/trend")
     public ResponseEntity<?> getTrafficTrend() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/api/traffic/trend");
+        ResponseEntity<?> resp = forwardGet(webConfig.getBigliettoUrl() + "/traffic/trend");
         if (resp.getStatusCode().is2xxSuccessful()) return resp;
         logger.warn("/api/traffic/trend not available, returning empty trend fallback (status {})", resp.getStatusCode());
         return ResponseEntity.ok(new Object[0]);

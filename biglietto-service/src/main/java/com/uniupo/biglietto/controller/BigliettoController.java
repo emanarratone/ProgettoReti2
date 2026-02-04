@@ -2,6 +2,8 @@ package com.uniupo.biglietto.controller;
 
 import com.uniupo.biglietto.model.Biglietto;
 import com.uniupo.biglietto.service.BigliettoService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +16,7 @@ import java.util.Map;
 public class BigliettoController {
 
     private final BigliettoService service;
+    private static final Logger logger = LoggerFactory.getLogger(BigliettoController.class);
 
     public BigliettoController(BigliettoService service) {
         this.service = service;
@@ -34,6 +37,13 @@ public class BigliettoController {
     @GetMapping("/targa/{targa}")
     public ResponseEntity<List<Biglietto>> getByTarga(@PathVariable String targa) {
         return ResponseEntity.ok(service.getByTarga(targa));
+    }
+
+    @GetMapping("/traffic")
+    public ResponseEntity<Map<String, Object>> getTrafficStats() {
+        Map<String, Object> stats = service.getTrafficStats30d();
+        logger.info("🌐 API: {}", stats);
+        return ResponseEntity.ok(stats);
     }
 
     @PostMapping

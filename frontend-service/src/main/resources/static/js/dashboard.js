@@ -45,28 +45,28 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
       .catch(err => console.error("Errore nel recupero ruolo:", err));
 
     // KPI traffico
-fetch('/api/traffic')
-  .then(res => {
-    if (!res.ok) {
-      throw new Error('Errore HTTP: ' + res.status);
-    }
-    return res.json();
-  })
-  .then(data => {
-    if (data.error) {
-      console.error("Errore API KPI traffico:", data.error);
-      document.getElementById("kpiTrafficAvg").textContent = "N/D";
-      return;
-    }
+ // SOSTITUISCI QUESTA FUNZIONE:
+ fetch('/api/tickets/traffic')
+   .then(res => {
+     console.log('HTTP Status:', res.status);  // DEBUG
+     if (!res.ok) throw new Error('HTTP ' + res.status);
+     return res.json();
+   })
+   .then(data => {
+     console.log('JSON ricevuto:', data);  // ← CRUCIALE!
 
-    const mediaFormatted = Number(data.media).toLocaleString();
-    document.getElementById("kpiTrafficAvg").textContent = mediaFormatted;
+     // Fix NaN + formato italiano
+     const media = parseInt(data.media || 0);
+     document.getElementById("kpiTrafficAvg").innerHTML =
+       media > 0 ? `<strong>${media}</strong>` : "0";
 
-  })
-  .catch(err => {
-    console.error("Errore fetch KPI traffico:", err);
-    document.getElementById("kpiTrafficAvg").textContent = "Errore";
-  });
+     console.log('Media mostrata:', media);
+   })
+   .catch(err => {
+     console.error('Fetch errore:', err);
+     document.getElementById("kpiTrafficAvg").textContent = "0";
+   });
+
 
     // KPI asset: caselli, corsie, dispositivi
     fetch('/api/assets')
