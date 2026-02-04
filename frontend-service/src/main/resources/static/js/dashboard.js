@@ -245,20 +245,35 @@ fetch('/api/tolls')
     const tbody = document.getElementById('highwaysTable');
     if (!tbody) return;
 
-tbody.innerHTML = '';
-data.forEach(row => {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${row.nome}</td>
-    <td>
-      <a href="/autostrada.html" class="text-decoration-none">
-        ${row.nome_autostrada}
-      </a>
-    </td>
-  `;
-  tbody.appendChild(tr);
-});
+// Joint tra regione e autostrada
+Promise.all([
+  fetch('/api/highways').then(res => res.json()),
+  fetch('/api/regions').then(res => res.json())
+]).then(([highways, regions]) => {
 
+console.log(highways)
+console.log(regions)
+
+  // Crea un dizionario delle regioni per accesso rapido { id: nome }
+  const regionMap = {};
+  regions.forEach(r => regionMap[r.id] = r.nome);
+
+  const tbody = document.getElementById('highwaysTable');
+  tbody.innerHTML = '';
+
+  highways.forEach(row => {
+    const nomeRegione = regionMap[row.idRegione] || 'Sconosciuta';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${nomeRegione}</td>
+      <td>
+        <span>${row.sigla}</span>
+      </td>
+
+    `;
+    tbody.appendChild(tr);
+  });
+}).catch(err => console.error("Errore nel join:", err));
   })
   .catch(err => console.error("Errore fetch /api/tolls:", err));
 
@@ -299,9 +314,8 @@ data.forEach((row, index) => {
   const statoClass = row.pagato ? 'text-success' : 'text-danger';
 
   tr.innerHTML = `
-    <td>${row.id_multa}</td>
+    <td>${row.id}</td>
     <td>${row.targa}</td>
-    <td>${row.data}</td>
     <td>€ ${Number(row.importo).toFixed(2)}</td>
     <td class="${statoClass}">${statoLabel}</td>
   `;

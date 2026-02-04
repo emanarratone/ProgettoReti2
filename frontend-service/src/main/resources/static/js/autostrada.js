@@ -4,14 +4,6 @@
     const highwayRegionIdsEl  = document.getElementById('highwayRegionIds');
     const selectedRegionsEl   = document.getElementById('selectedRegions');
 
- // Debug: verifica che tutti gli elementi esistano
-  console.log('Elementi trovati:', {
-    groupAutostrada: !!groupAutostrada,
-    highwayRegionInput: !!highwayRegionInput,
-    regionSuggestionsEl: !!regionSuggestionsEl,
-    highwayRegionIdsEl: !!highwayRegionIdsEl,
-    selectedRegionsEl: !!selectedRegionsEl
-  });
   const itemsList   = document.getElementById('itemsList');
   const statusEl    = document.getElementById('status');
   const levelTitle  = document.getElementById('levelTitle');

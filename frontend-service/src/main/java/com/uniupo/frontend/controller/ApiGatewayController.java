@@ -164,10 +164,17 @@ public class ApiGatewayController {
 
     @GetMapping("/tolls")
     public ResponseEntity<?> getTolls() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getAutostradaUrl() + "/tolls");
-        if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("/api/tolls not available, returning empty list fallback (status {})", resp.getStatusCode());
-        return ResponseEntity.ok(new Object[0]);
+        // Cambiato da "/toll" a "/tolls" per coincidere con il microservizio
+        String url = webConfig.getCaselloUrl() + "/tolls";
+        logger.info("Forwarding to Casello Service: {}", url);
+        return forwardGet(url);
+    }
+
+    // 2. Endpoint per la tabella Multe (usato da fetch('/api/fines/list'))
+    @GetMapping("/fines/list")
+    public ResponseEntity<?> getFinesList() {
+        // Inoltra alla lista completa delle multe
+        return forwardGet(webConfig.getMultaUrl() + "/fines");
     }
 
     @GetMapping("/tickets/traffic")
@@ -246,14 +253,6 @@ public class ApiGatewayController {
                         "dispositivi", dispositivi
                 )
         );
-    }
-
-    @GetMapping("/fines/list")
-    public ResponseEntity<?> getFinesList() {
-        ResponseEntity<?> resp = forwardGet(webConfig.getMultaUrl() + "/api/fines/list");
-        if (resp.getStatusCode().is2xxSuccessful()) return resp;
-        logger.warn("/api/fines/list not available, returning empty list fallback (status {})", resp.getStatusCode());
-        return ResponseEntity.ok(new Object[0]);
     }
 
     // KPI endpoints that compute from microservices when legacy not present
