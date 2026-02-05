@@ -86,7 +86,7 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
           document.getElementById("kpiToll").textContent = "N/D";
           return;
         }
-
+        console.log(data)
         document.getElementById("kpiPeak").textContent   = Number(data.caselli).toLocaleString();
         document.getElementById("kpiLanes").textContent  = Number(data.corsie).toLocaleString();
         document.getElementById("kpiToll").textContent   = Number(data.dispositivi).toLocaleString();
@@ -277,15 +277,12 @@ console.log(regions)
   })
   .catch(err => console.error("Errore fetch /api/tolls:", err));
 
-
 // Tabella Multe: ultimi 7 giorni
 fetch('/api/fines/list')
   .then(async res => {
     if (!res.ok) throw new Error('Errore HTTP: ' + res.status);
 
     const raw = await res.text();
-    console.log('RAW /api/fines/list:', raw);  // <-- guarda questo in console
-
     // prova asdrubale fare il parse solo se sembra JSON
     try {
       return JSON.parse(raw);
@@ -325,53 +322,68 @@ data.forEach((row, index) => {
   })
   .catch(err => console.error("Errore fetch /api/fines/list:", err));
 
-
-// Ricerca veicoli per targa
-const searchBtn = document.getElementById('searchPlateBtn');
-if (searchBtn) {
-  searchBtn.addEventListener('click', function () {
-    const input = document.getElementById('searchPlate');
-    const info  = document.getElementById('searchPlateInfo');
-    const tbody = document.getElementById('vehicleSearchTable');
-
-    if (!input || !tbody) return;
-
-    const plate = (input.value || '').trim().toUpperCase();
-    if (!plate) {
-      if (info) info.textContent = 'Inserisci una targa.';
-      return;
-    }
-
-    if (info) info.textContent = 'Ricerca in corso...';
-    tbody.innerHTML = '';
-
-    fetch('/api/vehicles?plate=' + encodeURIComponent(plate))
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          data.forEach(r => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${r.timestampIn}</td>
-              <td>${r.caselloIn}</td>
-              <td>${r.timestampOut}</td>
-              <td>${r.caselloOut}</td>
-              <td>€ ${Number(r.importo).toFixed(2)}</td>
-            `;
-            tbody.appendChild(tr);
-          });
-          if (info) info.textContent = `Trovati ${data.length} passaggi per ${plate}.`;
-        } else {
-          if (info) info.textContent = `Nessun passaggio trovato per ${plate}.`;
-        }
-      })
-      .catch(err => {
-        console.error('Errore ricerca veicoli:', err);
-        if (info) info.textContent = 'Errore durante la ricerca.';
-      });
-  });
+// Funzione helper per validare e formattare le date
+function formatSafeDate(dateVal) {
+    if (!dateVal) return null;
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? null : d.toLocaleString('it-IT');
 }
 
+/**
+ * Gestione Ricerca Veicoli
+ */
+/**
+ * Sezione Ricerca Veicolo
+ */
+(function() {
+    const searchBtn = document.getElementById('searchPlateBtn');
+    const inputPlate = document.getElementById('searchPlate');
+    const infoBox = document.getElementById('searchPlateInfo');
+    const tableBody = document.getElementById('vehicleSearchTable');
+
+    if (!searchBtn) return;
+
+    searchBtn.addEventListener('click', () => {
+        const plate = inputPlate.value.trim().toUpperCase();
+        if (!plate) return;
+
+        infoBox.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Ricerca...';
+        tableBody.innerHTML = '';
+
+        fetch(`/api/vehicles/history?plate=${plate}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log("[DEBUG] Dati ricevuti:", data); // Controlla qui l'importo
+                infoBox.innerHTML = `Trovati <strong>${data.length}</strong> record per ${plate}`;
+
+                data.forEach((row) => {
+                     const tr = document.createElement('tr');
+
+                     // Formattazione
+                     const dIn = row.dataIngresso ? new Date(row.dataIngresso).toLocaleString('it-IT') : '-';
+                     const dOut = row.dataUscita ? new Date(row.dataUscita).toLocaleString('it-IT') : '---';
+
+                     // Gestione importo (se null metti 0)
+                     const imp = row.importo ? parseFloat(row.importo).toFixed(2) : "0.00";
+
+                     const badgeClass = row.stato === 'PAGATO' ? 'bg-success' : 'bg-warning text-dark';
+
+                     tr.innerHTML = `
+                         <td>${dIn}</td>
+                         <td><strong class="text-primary">${row.siglaIngresso}</strong></td>
+                         <td>${dOut}</td>
+                         <td><strong class="text-danger">${row.siglaUscita}</strong></td>
+                         <td>
+                             <span class="badge ${badgeClass}">€ ${imp}</span>
+                             <small class="d-block text-muted">${row.stato}</small>
+                         </td>
+                     `;
+                     tableBody.appendChild(tr);
+                 });
+            })
+            .catch(err => {
+                console.error("Errore fetch:", err);
+                infoBox.innerHTML = '<span class="text-danger">Errore nel caricamento dei dati</span>';
+            });
+    });
+})();

@@ -19,8 +19,6 @@ public class CorsiaController {
         this.service = service;
     }
 
-    // -------- CRUD globale /lanes (se ti serve) --------
-
     @GetMapping("/lanes")
     public ResponseEntity<List<CorsiaDTO>> getLanes() {
         return ResponseEntity.ok(service.getAll());

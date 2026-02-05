@@ -1,5 +1,6 @@
 package com.uniupo.pagamento.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -15,6 +16,7 @@ public class Pagamento {
     @Column(name = "id_biglietto", nullable = false)
     private Integer idBiglietto;
 
+    @JsonProperty("importo")
     @Column(name = "importo", nullable = false)
     private Double prezzo;
 

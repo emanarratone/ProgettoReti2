@@ -1,6 +1,7 @@
 package com.uniupo.frontend.controller;
 
 import com.uniupo.frontend.config.WebConfig;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -8,6 +9,8 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -75,12 +78,14 @@ public class ApiGatewayController {
     // ================== PAGAMENTO ==================
     @GetMapping("/payments/**")
     public ResponseEntity<?> getPayments() {
+        // Deve puntare a /payments (plurale), come definito nel microservizio
         return forwardGet(webConfig.getPagamentoUrl() + "/payments");
     }
 
-    @PostMapping("/payments")
-    public ResponseEntity<?> createPayment(@RequestBody Object body) {
-        return forwardPost(webConfig.getPagamentoUrl() + "/payments", body);
+    @GetMapping("/payments/biglietto/{idBiglietto}")
+    public ResponseEntity<?> getPaymentsByTicket(@PathVariable Integer idBiglietto) {
+        // Punta all'endpoint specifico del microservizio
+        return forwardGet(webConfig.getPagamentoUrl() + "/payments/biglietto/" + idBiglietto);
     }
 
     // ================== MULTA ==================
@@ -129,6 +134,71 @@ public class ApiGatewayController {
         }
         
         return response;
+    }
+
+    @GetMapping("/vehicles/history")
+    public ResponseEntity<?> getVehicleHistory(@RequestParam String plate) {
+        try {
+            // 1. Carica nomi caselli
+            Map<Integer, String> tollNames = fetchTollMap();
+
+            // 2. Recupera Biglietti
+            String ticketUrl = webConfig.getBigliettoUrl() + "/tickets/targa/" + plate;
+            ResponseEntity<List<Map<String, Object>>> ticketsResp = restTemplate.exchange(
+                    ticketUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+
+            List<Map<String, Object>> tickets = ticketsResp.getBody();
+            List<Map<String, Object>> history = new ArrayList<>();
+
+            if (tickets != null) {
+                for (Map<String, Object> t : tickets) {
+                    Map<String, Object> row = new HashMap<>();
+
+                    // Biglietto ID
+                    Object idBObj = t.get("id_biglietto") != null ? t.get("id_biglietto") : t.get("idBiglietto");
+                    Integer idB = ((Number) idBObj).intValue();
+
+                    // TRADUZIONE CASELLO INGRESSO
+                    Object idIn = t.get("casello_in") != null ? t.get("casello_in") : t.get("caselloIn");
+                    String nomeIn = tollNames.getOrDefault(((Number) idIn).intValue(), "Casello " + idIn);
+
+                    row.put("dataIngresso", t.get("timestamp_in") != null ? t.get("timestamp_in") : t.get("timestampIn"));
+                    row.put("siglaIngresso", nomeIn);
+
+                    // 3. Recupero Pagamento
+                    try {
+                        String pUrl = webConfig.getPagamentoUrl() + "/payments/biglietto/" + idB;
+                        ResponseEntity<List<Map<String, Object>>> pResp = restTemplate.exchange(
+                                pUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+
+                        List<Map<String, Object>> payments = pResp.getBody();
+                        if (payments != null && !payments.isEmpty()) {
+                            Map<String, Object> p = payments.get(0);
+
+                            // TRADUZIONE CASELLO USCITA
+                            Object idOut = p.get("casello_out") != null ? p.get("casello_out") : p.get("caselloOut");
+                            String nomeOut = tollNames.getOrDefault(((Number) idOut).intValue(), "Casello " + idOut);
+
+                            row.put("dataUscita", p.get("timestamp_out") != null ? p.get("timestamp_out") : p.get("timestampOut"));
+                            row.put("siglaUscita", nomeOut);
+                            row.put("importo", p.get("importo"));
+                            row.put("stato", "PAGATO");
+                        } else {
+                            row.put("dataUscita", null);
+                            row.put("siglaUscita", "-");
+                            row.put("importo", 0.0);
+                            row.put("stato", "IN VIAGGIO");
+                        }
+                    } catch (Exception e) {
+                        row.put("stato", "ERRORE");
+                    }
+                    history.add(row);
+                }
+            }
+            return ResponseEntity.ok(history);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Errore: " + e.getMessage());
+        }
     }
 
     @PostMapping("/register")
@@ -449,5 +519,38 @@ public class ApiGatewayController {
     public ResponseEntity<?> deleteDevice(@PathVariable Integer id) {
         String url = webConfig.getDispositiviUrl() + "/devices/" + id;
         return forwardDelete(url);
+    }
+
+    private Map<Integer, String> fetchTollMap() {
+        Map<Integer, String> tollMap = new HashMap<>();
+        try {
+            // Costruisce l'URL puntando all'endpoint globale dei caselli
+            String tollUrl = webConfig.getCaselloUrl() + "/tolls";
+
+            // Esegue la chiamata REST per ottenere la lista di tutti i caselli
+            ResponseEntity<List<Map<String, Object>>> tollsResp = restTemplate.exchange(
+                    tollUrl,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+            );
+
+            if (tollsResp.getBody() != null) {
+                for (Map<String, Object> t : tollsResp.getBody()) {
+                    // Gestisce la mappatura cercando l'ID sia come 'id_casello' che come 'idCasello'
+                    Object idObj = t.get("id_casello") != null ? t.get("id_casello") : t.get("idCasello");
+                    if (idObj instanceof Number) {
+                        int idVal = ((Number) idObj).intValue();
+                        String sigla = (String) t.get("sigla");
+                        tollMap.put(idVal, sigla);
+                    }
+                }
+            }
+            logger.info("Mappa caselli caricata con successo: {} elementi", tollMap.size());
+        } catch (Exception e) {
+            // Se il servizio caselli è offline, il sistema logga l'errore e restituisce una mappa vuota
+            logger.error("Impossibile caricare la mappa dei caselli: {}", e.getMessage());
+        }
+        return tollMap;
     }
 }
