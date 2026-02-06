@@ -47,6 +47,7 @@ let userIsAdmin = false; // Variabile globale
          document.getElementById('roleBadge').textContent = 'Impiegato';
        }
        loadRegions();
+       updatePathSummary();
     });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -115,107 +116,109 @@ function getActionButtonsHtml() {
     selectedItem = null;
   }
 
-  // Reset livelli sottostanti
-  function resetBelow(level) {
-    if (level === 'region') {
-      state.highway = null;
-      state.toll = null;
-      state.lane = null;
-    } else if (level === 'highway') {
-      state.toll = null;
-      state.lane = null;
-    } else if (level === 'toll') {
-      state.lane = null;
-    }
+// Reset livelli sottostanti
+function resetBelow(level) {
+  if (level === 'region') {
+    state.highway = null;
+    state.toll = null;
+    state.lane = null;
+  } else if (level === 'highway') {
+    state.toll = null;
+    state.lane = null;
+  } else if (level === 'toll') {
+    state.lane = null;
   }
+  // Ogni volta che resettiamo i dati sottostanti, aggiorniamo il breadcrumb
+  updatePathSummary();
+}
 
   // PATH SUMMARY: breadcrumb cliccabile
-  function updatePathSummary() {
-    pathSummary.innerHTML = '';
+ function updatePathSummary() {
+   pathSummary.innerHTML = '';
 
-    if (!state.region) {
-      pathSummary.textContent = 'Seleziona una regione per iniziare.';
-      return;
-    }
+   // Se non c'è una regione, siamo al livello radice
+   if (!state.region) {
+     pathSummary.textContent = 'Seleziona una regione per iniziare.';
+     return;
+   }
 
-    const separator = document.createTextNode(' > ');
+   const separator = () => {
+     const span = document.createElement('span');
+     span.textContent = ' > ';
+     span.className = 'mx-2 text-muted';
+     return span;
+   };
 
-    // Regione
-    if (state.region) {
-      const aRegion = document.createElement('a');
-      aRegion.href = '#';
-      aRegion.className = 'link-primary';
-      aRegion.textContent = state.region.name;
-      aRegion.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        state.region = null;
-        state.highway = null;
-        state.toll = null;
-        state.lane = null;
-        loadRegions();
-        updatePathSummary();
-      });
-      pathSummary.appendChild(aRegion);
-    }
+   // --- 1. REGIONE ---
+   const aRegion = document.createElement('a');
+   aRegion.href = '#';
+   aRegion.className = 'text-decoration-none';
+   aRegion.textContent = state.region.name;
+   aRegion.onclick = (e) => {
+     e.preventDefault();
+     resetBelow('region');
+     state.region = null;
+     loadRegions();
+     updatePathSummary();
+   };
+   pathSummary.appendChild(aRegion);
 
-    // Autostrada
-    if (state.highway) {
-      pathSummary.appendChild(separator.cloneNode());
-      const aHighway = document.createElement('a');
-      aHighway.href = '#';
-      aHighway.className = 'link-primary';
-      aHighway.textContent = state.highway.name;
-      aHighway.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        if (!state.region) return;
-        resetBelow('region');
-        loadHighwaysForRegion(state.region.id);
-        updatePathSummary();
-      });
-      pathSummary.appendChild(aHighway);
-    }
+   // --- 2. AUTOSTRADA ---
+   if (state.highway) {
+     pathSummary.appendChild(separator());
+     const aHighway = document.createElement('a');
+     aHighway.href = '#';
+     aHighway.className = 'text-decoration-none';
+     aHighway.textContent = state.highway.name;
+     aHighway.onclick = (e) => {
+       e.preventDefault();
+       resetBelow('highway');
+       loadHighwaysForRegion(state.region.id);
+       updatePathSummary();
+     };
+     pathSummary.appendChild(aHighway);
+   }
 
-    // Casello
-    if (state.toll) {
-      pathSummary.appendChild(separator.cloneNode());
-      const aToll = document.createElement('a');
-      aToll.href = '#';
-      aToll.className = 'link-primary';
-      aToll.textContent = state.toll.name;
-      aToll.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        resetBelow('highway');
-        loadTollsForHighway(state.highway.id);
-        updatePathSummary();
-      });
-      pathSummary.appendChild(aToll);
-    }
+   // --- 3. CASELLO ---
+   if (state.toll) {
+     pathSummary.appendChild(separator());
+     const aToll = document.createElement('a');
+     aToll.href = '#';
+     aToll.className = 'text-decoration-none';
+     aToll.textContent = state.toll.name;
+     aToll.onclick = (e) => {
+       e.preventDefault();
+       resetBelow('toll');
+       loadTollsForHighway(state.highway.id);
+       updatePathSummary();
+     };
+     pathSummary.appendChild(aToll);
+   }
 
-    // Corsia
-    if (state.lane) {
-      pathSummary.appendChild(separator.cloneNode());
-      const aLane = document.createElement('a');
-      aLane.href = '#';
-      aLane.className = 'link-primary';
-      aLane.textContent = state.lane.name;
-      aLane.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        resetBelow('toll');
-        loadLanesForToll(state.toll.id);
-        updatePathSummary();
-      });
-      pathSummary.appendChild(aLane);
-    }
+   // --- 4. CORSIA ---
+   if (state.lane) {
+     pathSummary.appendChild(separator());
+     const aLane = document.createElement('a');
+     aLane.href = '#';
+     aLane.className = 'text-decoration-none';
+     aLane.textContent = state.lane.name;
+     aLane.onclick = (e) => {
+       e.preventDefault();
+       loadLanesForToll(state.toll.id);
+       updatePathSummary();
+     };
+     pathSummary.appendChild(aLane);
+   }
 
-    // Livello finale "Dispositivi"
-    const currentLevelLi = document.querySelector('#levelList .list-group-item.active-level');
-    if (currentLevelLi && currentLevelLi.dataset.level === 'devices') {
-      pathSummary.appendChild(separator.cloneNode());
-      const spanDevices = document.createElement('span');
-      spanDevices.textContent = 'Dispositivi';
-      pathSummary.appendChild(spanDevices);
-    }
-  }
+   // --- 5. LIVELLO DISPOSITIVI
+   if (currentLevel === 'devices') {
+     pathSummary.appendChild(separator());
+     const spanDev = document.createElement('span');
+     spanDev.className = 'text-dark fw-bold';
+     spanDev.textContent = 'Dispositivi';
+     pathSummary.appendChild(spanDev);
+   }
+ }
 
   // Gestione click barra livelli
   levelList.addEventListener('click', function (e) {
@@ -1038,22 +1041,25 @@ crudModalEl.addEventListener('hidden.bs.modal', () => {
       });
   }
 
-  function doDelete() {
+function doDelete() {
     const url = getEndpointForUpdateOrDelete();
     if (!url) return;
-    fetch(url, { method: 'DELETE' })
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json().catch(() => ({}));
-      })
-      .then(() => {
-        reloadCurrentLevel();
-      })
-      .catch(err => {
-        console.error('Errore cancellazione:', err);
-        alert('Errore nella cancellazione.');
-      });
-  }
+
+    if (confirm("Attenzione: l'eliminazione di questo elemento comporterà la rimozione a cascata di tutti i dati collegati (Autostrade, Caselli, ecc.). Continuare?")) {
+
+        fetch(url, { method: 'DELETE' })
+            .then(res => {
+                if (res.ok) {
+                    // Feedback immediato all'utente
+                    alert("Eliminazione avviata. Il sistema sta pulendo i dati in background.");
+                    reloadCurrentLevel(); // Ricarica la lista (la regione sparirà subito)
+                } else {
+                    alert("Errore durante l'eliminazione.");
+                }
+            })
+            .catch(err => console.error("Errore:", err));
+    }
+}
 
   function updateAddButtonLabel() {
     switch (currentLevel) {

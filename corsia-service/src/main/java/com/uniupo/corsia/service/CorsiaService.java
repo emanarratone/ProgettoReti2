@@ -2,8 +2,11 @@ package com.uniupo.corsia.service;
 
 import com.uniupo.corsia.model.Corsia;
 import com.uniupo.corsia.model.dto.CorsiaDTO;
+import com.uniupo.corsia.rabbitMQ.CaselloEventListener;
 import com.uniupo.corsia.repository.CorsiaRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,9 +16,11 @@ import java.util.Objects;
 public class CorsiaService {
 
     private final CorsiaRepository repo;
+    private final RabbitTemplate rabbitTemplate;
 
-    public CorsiaService(CorsiaRepository repo) {
+    public CorsiaService(CorsiaRepository repo, RabbitTemplate rabbitTemplate) {
         this.repo = repo;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     public List<CorsiaDTO> getAll() {
@@ -71,8 +76,16 @@ public class CorsiaService {
     }
 
     @Transactional
-    public void delete(Integer id) {
-        repo.deleteById(id);
+    public void deleteByCaselloAndNumCorsia(Integer casello, Integer numCorsia) {
+        String compositeId = casello + ":" + numCorsia;
+        rabbitTemplate.convertAndSend(
+                "corsia.exchange",
+                "corsia.deleted",
+                compositeId
+        );
+        repo.deleteByCaselloAndNumCorsia(casello, numCorsia);
+
+        System.out.println("Corsia " + compositeId + " eliminata. Messaggio inviato ai dispositivi.");
     }
 
     public List<CorsiaDTO> search(Integer idCasello) {

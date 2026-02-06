@@ -2,19 +2,26 @@ package com.uniupo.casello.service;
 
 import com.uniupo.casello.model.Casello;
 import com.uniupo.casello.model.dto.CaselloDTO;
+import com.uniupo.casello.rabbitMQ.RabbitMQConfig;
 import com.uniupo.casello.repository.CaselloRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CaselloService {
 
     private final CaselloRepository repo;
 
-    public CaselloService(CaselloRepository repo) {
+    private final RabbitTemplate rabbitTemplate;
+
+    public CaselloService(CaselloRepository repo, RabbitTemplate rabbitTemplate) {
         this.repo = repo;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     public List<CaselloDTO> getAll() {
@@ -48,7 +55,21 @@ public class CaselloService {
 
     @Transactional
     public void delete(Integer id) {
+        // 1. Verifica se esiste (opzionale ma consigliato per evitare errori silenziosi)
+        if (!repo.existsById(id)) {
+            throw new IllegalArgumentException("Casello non trovato con ID: " + id);
+        }
+
+        // 2. NOTIFICA ALLE CORSIE (Trigger della cascata verso il basso)
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.CASELLO_EXCHANGE,
+                RabbitMQConfig.CASELLO_ROUTING_KEY,
+                id
+        );
+
+        // 3. Eliminazione locale
         repo.deleteById(id);
+        System.out.println("Casello " + id + " eliminato. Messaggio inviato alle corsie.");
     }
 
     public List<CaselloDTO> search(String query) {

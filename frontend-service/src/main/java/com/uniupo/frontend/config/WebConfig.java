@@ -10,6 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    // Caricamento degli URL dai placeholder definiti in application.properties
     @Value("${backend.autostrada.url}")
     private String autostradaUrl;
 
@@ -40,77 +41,33 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${backend.utente.url}")
     private String utenteUrl;
 
-    @Value("${backend.legacy.url:}")
-    private String legacyUrl;
-
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
 
+    /**
+     * Configurazione CORS per HTTPS.
+     * Permette le chiamate provenienti dal frontend sicuro verso i microservizi.
+     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                .allowedOrigins("*")
+        registry.addMapping("/**")
+                .allowedOrigins("https://localhost:8080") // Obbligatorio per navigazione HTTPS
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*");
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins("https://localhost:8080")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")
-                        .allowCredentials(false);
-            }
-        };
-    }
-
-    public String getAutostradaUrl() {
-        return autostradaUrl;
-    }
-
-    public String getCaselloUrl() {
-        return caselloUrl;
-    }
-
-    public String getCorsiaUrl() {
-        return corsiaUrl;
-    }
-
-    public String getRegioneUrl() {
-        return regioneUrl;
-    }
-
-    public String getDispositiviUrl() {
-        return dispositiviUrl;
-    }
-
-    public String getBigliettoUrl() {
-        return bigliettoUrl;
-    }
-
-    public String getPagamentoUrl() {
-        return pagamentoUrl;
-    }
-
-    public String getMultaUrl() {
-        return multaUrl;
-    }
-
-    public String getVeicoloUrl() {
-        return veicoloUrl;
-    }
-
-    public String getUtenteUrl() {
-        return utenteUrl;
-    }
-
-    public String getLegacyUrl() {
-        return legacyUrl;
-    }
+    // --- GETTERS ---
+    public String getAutostradaUrl() { return autostradaUrl; }
+    public String getCaselloUrl() { return caselloUrl; }
+    public String getCorsiaUrl() { return corsiaUrl; }
+    public String getRegioneUrl() { return regioneUrl; }
+    public String getDispositiviUrl() { return dispositiviUrl; }
+    public String getBigliettoUrl() { return bigliettoUrl; }
+    public String getPagamentoUrl() { return pagamentoUrl; }
+    public String getMultaUrl() { return multaUrl; }
+    public String getVeicoloUrl() { return veicoloUrl; }
+    public String getUtenteUrl() { return utenteUrl; }
 }
