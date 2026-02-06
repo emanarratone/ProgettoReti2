@@ -59,7 +59,6 @@ public class UtenteController {
 
         return service.login(username, password)
                 .map(u -> {
-                    // FONDAMENTALE: Salva l'utente nella sessione qui!
                     session.setAttribute("user", u);
                     logger.info("Sessione creata per l'utente: {}", username);
 

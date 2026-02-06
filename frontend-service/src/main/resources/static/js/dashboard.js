@@ -42,7 +42,8 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
         } else {
           adminTools.forEach(el => el.style.display = 'none');
           document.body.classList.remove('is-admin');
-          document.getElementById('roleBadge').style.display = 'none';
+          document.getElementById('roleBadge').style.display = '';
+          document.getElementById('roleBadge').textContent = 'Impiegato';
         }
       })
       .catch(err => console.error("Errore nel recupero ruolo:", err));
