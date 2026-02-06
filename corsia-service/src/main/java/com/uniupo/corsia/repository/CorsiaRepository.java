@@ -20,4 +20,6 @@ public interface CorsiaRepository extends JpaRepository<Corsia, Integer> {
     void deleteByCaselloAndNumCorsia(Integer casello, Integer numCorsia);
 
     Optional<Corsia> findByCaselloAndNumCorsia(Integer casello, Integer numCorsia);
+
+    List<Corsia> findByCasello(Integer casello);
 }

@@ -411,12 +411,12 @@ public class ApiGatewayController {
 
     @PutMapping("/tolls/{id}")
     public ResponseEntity<?> updateToll(@PathVariable Integer id, @RequestBody Object body) {
-        return forwardPut(webConfig.getCaselloUrl() + "/toll/" + id, body);
+        return forwardPut(webConfig.getCaselloUrl() + "/tolls/" + id, body); // aggiunto 's'
     }
 
     @DeleteMapping("/tolls/{id}")
     public ResponseEntity<?> deleteToll(@PathVariable Integer id) {
-        return forwardDelete(webConfig.getCaselloUrl() + "/toll/" + id);
+        return forwardDelete(webConfig.getCaselloUrl() + "/tolls/" + id); // aggiunto 's'
     }
 
     // ---- CORSIE legacy-style routing
@@ -497,14 +497,15 @@ public class ApiGatewayController {
 
     private ResponseEntity<?> forwardDelete(String url) {
         try {
+            logger.info("Gateway DELETE forwarding to: {}", url);
             restTemplate.delete(url);
-            return ResponseEntity.ok(Map.of("status", "ok"));
+            return ResponseEntity.ok(Map.of("success", true));
         } catch (HttpStatusCodeException e) {
-            logger.warn("Backend DELETE returned status {} for {}: {}", e.getStatusCode(), url, e.getResponseBodyAsString());
+            logger.warn("Backend DELETE error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         } catch (Exception e) {
-            logger.error("Error forwarding DELETE to {}: {}", url, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            logger.error("Error forwarding DELETE to {}: {}", url, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Service unavailable: " + e.getMessage()));
         }
     }
@@ -517,8 +518,7 @@ public class ApiGatewayController {
 
     @DeleteMapping("/devices/{id}")
     public ResponseEntity<?> deleteDevice(@PathVariable Integer id) {
-        String url = webConfig.getDispositiviUrl() + "/devices/" + id;
-        return forwardDelete(url);
+        return forwardDelete(webConfig.getDispositiviUrl() + "/devices/" + id);
     }
 
     private Map<Integer, String> fetchTollMap() {

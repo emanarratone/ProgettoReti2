@@ -16,12 +16,12 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
     })
     .then(() => {
       // dopo invalidazione sessione, vai alla pagina di login
-      window.location.href = '/index.html';
+      window.location.href = '/index';
     })
     .catch(err => {
       console.error('Errore nel logout:', err);
       // fallback comunque alla login
-      window.location.href = '/index.html';
+      window.location.href = '/index';
     });
 });
 
@@ -31,7 +31,7 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
       .then(res => res.json())
       .then(data => {
         if (!data.loggedIn) {
-          window.location.href = "/index.html";
+          window.location.href = "/index";
           return;
         }
         const adminTools = document.querySelectorAll('.admin-tools');
@@ -42,7 +42,8 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
         } else {
           adminTools.forEach(el => el.style.display = 'none');
           document.body.classList.remove('is-admin');
-          document.getElementById('roleBadge').style.display = 'none';
+          document.getElementById('roleBadge').style.display = '';
+          document.getElementById('roleBadge').textContent = 'Impiegato';
         }
       })
       .catch(err => console.error("Errore nel recupero ruolo:", err));

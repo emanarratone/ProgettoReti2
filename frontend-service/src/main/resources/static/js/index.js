@@ -50,7 +50,7 @@ if (loginForm) {
       if (res.ok && data.success) {
         // Salva utente se ti serve
         // sessionStorage.setItem('user', JSON.stringify(data.user));
-        window.location.href = '/dashboard.html';
+        window.location.href = '/dashboard';
       } else {
         if (errorEl) {
           errorEl.textContent = data.error || 'Credenziali errate';

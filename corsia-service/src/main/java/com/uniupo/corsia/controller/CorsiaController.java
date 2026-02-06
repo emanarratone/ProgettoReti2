@@ -101,15 +101,12 @@ public class CorsiaController {
 
 
     @DeleteMapping("/lanes/{idCasello}/{numCorsia}")
-    public ResponseEntity<?> deleteLane(@PathVariable Integer idCasello,
-                                        @PathVariable Integer numCorsia) {
+    public ResponseEntity<?> deleteLane(@PathVariable Integer idCasello, @PathVariable Integer numCorsia) {
         try {
-            service.deleteByCaselloAndNum(idCasello, numCorsia);
-            return ResponseEntity.ok(Map.of("status", "ok"));
+            service.deleteByCaselloAndNumCorsia(idCasello, numCorsia);
+            return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore cancellazione corsia"));
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 

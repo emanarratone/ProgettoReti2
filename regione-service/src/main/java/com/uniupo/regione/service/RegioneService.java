@@ -3,7 +3,9 @@ package com.uniupo.regione.service;
 import com.uniupo.regione.model.Regione;
 import com.uniupo.regione.model.dto.RegioneCreateUpdateDTO;
 import com.uniupo.regione.model.dto.RegioneDTO;
+import com.uniupo.regione.rabbitMQ.RabbitMQConfig;
 import com.uniupo.regione.repository.RegioneRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,9 +15,11 @@ import java.util.List;
 public class RegioneService {
 
     private final RegioneRepository repo;
+    private final RabbitTemplate rabbitTemplate;
 
-    public RegioneService(RegioneRepository repo) {
+    public RegioneService(RegioneRepository repo, RabbitTemplate rabbitTemplate) {
         this.repo = repo;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     public List<RegioneDTO> getAll() {
@@ -43,7 +47,23 @@ public class RegioneService {
 
     @Transactional
     public void delete(Integer id) {
+        // 1. Verifica esistenza
+        if (!repo.existsById(id)) {
+            throw new IllegalArgumentException("Regione non trovata");
+        }
+
+        // 2. Eliminazione locale (DB Regione)
         repo.deleteById(id);
+
+        // 3. Notifica a cascata
+        // Inviamo l'ID al "centralino". RabbitMQ lo consegnerà a chiunque sia in ascolto.
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.REGIONE_EXCHANGE,
+                RabbitMQConfig.REGIONE_ROUTING_KEY,
+                id
+        );
+
+        System.out.println("Evento eliminazione Regione " + id + " inviato a RabbitMQ.");
     }
 
     public List<RegioneDTO> search(String query) {
