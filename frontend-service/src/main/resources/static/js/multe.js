@@ -4,7 +4,7 @@ let allFines = [];
 document.getElementById('logoutBtn')?.addEventListener('click', function () {
   fetch('/api/logout', { method: 'POST', credentials: 'same-origin' })
     .then(res => res.json().catch(() => ({})))
-    .finally(() => { window.location.href = '/index.html'; });
+    .finally(() => { window.location.href = '/index'; });
 });
 
 // Controllo sessione / ruolo (se vuoi allinearlo alla dashboard)
@@ -12,7 +12,7 @@ fetch('/api/session')
   .then(res => res.json())
   .then(data => {
     if (!data.loggedIn) {
-      window.location.href = "/index.html";
+      window.location.href = "/index";
       return;
     }
     if (data.isAdmin) {

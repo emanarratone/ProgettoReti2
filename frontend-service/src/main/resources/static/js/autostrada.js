@@ -45,11 +45,11 @@ document.addEventListener('DOMContentLoaded', function () {
           return res.json().catch(() => ({}));
         })
         .then(() => {
-          window.location.href = '/index.html';
+          window.location.href = '/index';
         })
         .catch(err => {
           console.error('Errore nel logout:', err);
-          window.location.href = '/index.html';
+          window.location.href = '/index';
         });
     });
   }

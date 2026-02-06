@@ -2,6 +2,9 @@ package com.uniupo.utente.controller;
 
 import com.uniupo.utente.model.Utente;
 import com.uniupo.utente.service.UtenteService;
+import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +18,7 @@ import java.util.Map;
 public class UtenteController {
 
     private final UtenteService service;
+    private static final Logger logger = LoggerFactory.getLogger(UtenteController.class);
 
     public UtenteController(UtenteService service) {
         this.service = service;
@@ -49,12 +53,18 @@ public class UtenteController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials, HttpSession session) {
         String username = credentials.get("username");
         String password = credentials.get("password");
 
         return service.login(username, password)
-                .map(u -> ResponseEntity.ok(Map.of("success", true, "user", u)))
+                .map(u -> {
+                    // FONDAMENTALE: Salva l'utente nella sessione qui!
+                    session.setAttribute("user", u);
+                    logger.info("Sessione creata per l'utente: {}", username);
+
+                    return ResponseEntity.ok(Map.of("success", true, "user", u));
+                })
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("success", false, "error", "Credenziali non valide")));
     }
