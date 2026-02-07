@@ -41,11 +41,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${backend.utente.url}")
     private String utenteUrl;
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
-
     /**
      * Configurazione CORS per HTTPS.
      * Permette le chiamate provenienti dal frontend sicuro verso i microservizi.

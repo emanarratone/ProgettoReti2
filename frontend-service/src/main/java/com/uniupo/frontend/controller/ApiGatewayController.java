@@ -1,6 +1,7 @@
 package com.uniupo.frontend.controller;
 
 import com.uniupo.frontend.config.WebConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;

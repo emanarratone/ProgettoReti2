@@ -45,7 +45,7 @@ public class DispositiviService {
     public Dispositivo createForLane(Integer idCasello, Integer numCorsia, String tipoStr, String statoStr) {
         boolean status = "ATTIVO".equalsIgnoreCase(statoStr) || Boolean.parseBoolean(statoStr);
         String t = tipoStr != null ? tipoStr.toUpperCase() : "";
-
+        System.out.println(t);
         Dispositivo d;
         switch (t) {
             case "SBARRA":

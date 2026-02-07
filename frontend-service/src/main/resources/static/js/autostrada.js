@@ -32,6 +32,9 @@ const cachedRegions = {};      // cache per i nomi delle regioni (usato per i ta
 let userIsAdmin = false; // Variabile globale
 
 
+
+document.addEventListener('DOMContentLoaded', function () {
+
  fetch('/api/session')
     .then(res => res.json())
     .then(data => {
@@ -49,8 +52,6 @@ let userIsAdmin = false; // Variabile globale
        loadRegions();
        updatePathSummary();
     });
-
-document.addEventListener('DOMContentLoaded', function () {
   // Logout coerente con dashboard
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
@@ -275,8 +276,10 @@ function loadRegions() {
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
 
+        // Estrazione dati (gestisce diversi formati di risposta API)
         const name = r.nome || r.nomeRegione || r.name;
-        const obj  = { id: r.id_regione || r.id, name };
+        const id = r.id_regione || r.id;
+        const obj = { id, name };
 
         li.innerHTML = `
           <div>
@@ -285,26 +288,29 @@ function loadRegions() {
           ${getActionButtonsHtml()}
         `;
 
+        // Rende la riga selezionabile
         makeSelectableLi(li, obj);
 
-        // Navigazione (Sempre attiva per entrambi i ruoli)
+        // --- GESTIONE NAVIGAZIONE E BREADCRUMB ---
         li.addEventListener('click', () => {
-          state.region = { id: obj.id, name };
-          state.highway = null;
-          state.toll = null;
-          state.lane = null;
-          updatePathSummary();
+          // 1. Aggiorniamo lo stato globale con la regione selezionata
+          state.region = { id: obj.id, name: name };
+
+          // 2. Resettiamo i livelli inferiori (highway, toll, lane)
+         resetBelow('region');
+
+          // 3. Carichiamo il livello successivo
           loadHighwaysForRegion(state.region.id);
         });
 
-        // Gestione Eventi Admin (Solo se userIsAdmin è true)
+        // --- GESTIONE EVENTI ADMIN ---
         if (userIsAdmin) {
           const editBtn = li.querySelector('.btn-edit-row');
           const deleteBtn = li.querySelector('.btn-delete-row');
 
           if (editBtn) {
             editBtn.addEventListener('click', (ev) => {
-              ev.stopPropagation();
+              ev.stopPropagation(); // Evita di attivare la navigazione cliccando l'icona
               selectedItem = obj;
               currentAction = 'edit';
               crudModalTitle.textContent = getModalTitle();
@@ -315,9 +321,9 @@ function loadRegions() {
 
           if (deleteBtn) {
             deleteBtn.addEventListener('click', (ev) => {
-              ev.stopPropagation();
+              ev.stopPropagation(); // Evita di attivare la navigazione cliccando l'icona
               selectedItem = obj;
-              if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
+              if (confirm('Sei sicuro di voler eliminare questa regione?')) {
                 doDelete();
               }
             });
@@ -373,13 +379,11 @@ function loadRegions() {
           makeSelectableLi(li, obj);
 
           // La navigazione rimane disponibile per tutti
-          li.addEventListener('click', () => {
-            state.highway = { id: obj.id, name };
-            state.toll = null;
-            state.lane = null;
-            updatePathSummary();
-            loadTollsForHighway(state.highway.id);
-          });
+            li.addEventListener('click', () => {
+              state.highway = { id: obj.id, name: name };
+              resetBelow('highway'); // Resetta i livelli successivi e aggiorna il path
+              loadTollsForHighway(state.highway.id);
+            });
 
           // Applichiamo i listener solo se i bottoni sono stati iniettati (Admin)
           if (userIsAdmin) {
@@ -465,10 +469,9 @@ function loadRegions() {
 
           // Navigazione disponibile per tutti
           li.addEventListener('click', () => {
-            state.toll = { id: obj.id, name };
-            state.lane = null;
-            updatePathSummary();
-            loadLanesForToll(state.toll.id);
+              state.toll = { id: obj.id, name: name };
+              resetBelow('toll'); // Aggiorna il pathSummary
+              loadLanesForToll(state.toll.id)
           });
 
           // Eventi Admin
@@ -560,13 +563,9 @@ function loadLanesForToll(tollId) {
 
         // Navigazione (Sola lettura per Impiegato)
         li.addEventListener('click', () => {
-          state.lane = {
-            num_corsia: obj.num_corsia,
-            id_casello: obj.id_casello,
-            name
-          };
-          updatePathSummary();
-          loadDevicesForLane(state.lane.num_corsia, state.lane.id_casello);
+              state.lane = { num_corsia: obj.num_corsia, id_casello: obj.id_casello, name: name };
+              updatePathSummary(); // Qui chiamiamo direttamente update perché non c'è nulla "sotto" la lane da resettare
+              loadDevicesForLane(state.lane.num_corsia, state.lane.id_casello);
         });
 
         // Gestione CRUD solo per Admin
@@ -605,81 +604,76 @@ function loadLanesForToll(tollId) {
     });
 }
 
-  // DISPOSITIVI per corsia
-  function loadDevicesForLane(numCorsia, idCasello) {
+// DISPOSITIVI per corsia
+function loadDevicesForLane(numCorsia, idCasello) {
     if (!numCorsia || !idCasello) return;
     setActiveLevel('devices');
-    levelTitle.textContent = 'DISPOSITIVI DI ' + state.lane.name;
+    levelTitle.textContent = 'DISPOSITIVI CORSIA ' + numCorsia;
     setStatus('Caricamento dispositivi...');
     itemsList.innerHTML = '';
 
-    fetch('/api/lanes/' + encodeURIComponent(idCasello) + '/' + encodeURIComponent(numCorsia) + '/devices')
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (!Array.isArray(data) || data.length === 0) {
-          setStatus('Nessun dispositivo trovato per questa corsia.');
-          return;
-        }
-        setStatus('Elenco dispositivi.');
-
-        data.forEach(d => {
-          const type  = d.tipo_dispositivo || d.tipo || d.type || 'Dispositivo';
-          const id    = d.id_dispositivo || d.id || d.idDispositivo;
-          const stato = d.stato || d.status || '';
-
-          const obj  = { id, tipo: type, stato };
-
-          const li = document.createElement('li');
-          li.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-          li.innerHTML = `
-            <div>
-              <strong>${type}</strong>
-              <div class="small-muted">ID: ${id} — ${stato}</div>
-            </div>
-            ${getActionButtonsHtml()}
-          `;
-
-          makeSelectableLi(li, obj);
-
-          // Gestione eventi condizionale (Solo Admin)
-          if (userIsAdmin) {
-            const editBtn = li.querySelector('.btn-edit-row');
-            const deleteBtn = li.querySelector('.btn-delete-row');
-
-            if (editBtn) {
-              editBtn.addEventListener('click', ev => {
-                ev.stopPropagation();
-                selectedItem  = obj;
-                currentAction = 'edit';
-                crudModalTitle.textContent = getModalTitle();
-                configureModalFields();
-                crudModal.show();
-              });
+    // Endpoint come definito nel gateway: /api/lanes/{idCasello}/{numCorsia}/devices
+    fetch(`/api/lanes/${idCasello}/${numCorsia}/devices`)
+        .then(res => res.json())
+        .then(data => {
+            if (!Array.isArray(data) || data.length === 0) {
+                setStatus('Nessun dispositivo presente.');
+                return;
             }
+            setStatus('Dispositivi trovati.');
 
-            if (deleteBtn) {
-              deleteBtn.addEventListener('click', ev => {
-                ev.stopPropagation();
-                selectedItem = obj;
-                if (confirm('Sei sicuro di voler eliminare questo elemento?')) {
-                  doDelete();
+            data.forEach(d => {
+                // Normalizziamo i dati per il JS
+                console.log(d)
+                const obj = {
+                    id: d.id,
+                    tipo: d.tipoDispositivo || d.tipo,
+                    stato: d.status || d.stato,
+                    num_corsia: numCorsia, // Assicurati che questi nomi siano coerenti
+                    id_casello: idCasello
+                };
+
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+                let icon = obj.tipo === 'SBARRA' ? 'bi-hr' : (obj.tipo === 'TOTEM' ? 'bi-display' : 'bi-cpu');
+
+                li.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="bi ${icon} fs-4 me-3 text-primary"></i>
+                        <div>
+                            <strong>${obj.tipo}</strong> <small class="text-muted">#${obj.id}</small>
+                            <div class="small">Stato: <span class="badge ${obj.stato === 'ATTIVO' ? 'bg-success' : 'bg-danger'}">${obj.stato}</span></div>
+                        </div>
+                    </div>
+                    ${getActionButtonsHtml()}
+                `;
+
+                makeSelectableLi(li, obj);
+
+                if (userIsAdmin) {
+                    li.querySelector('.btn-edit-row').onclick = (e) => {
+                        e.stopPropagation();
+                        selectedItem = obj;
+                        currentAction = 'edit';
+                        crudModalTitle.textContent = "Modifica Dispositivo";
+                        configureModalFields();
+                        // Pre-popolamento
+                        document.getElementById('dispTipo').value = obj.tipo;
+                        document.getElementById('dispStato').value = obj.stato;
+                        crudModal.show();
+                    };
+                    li.querySelector('.btn-delete-row').onclick = (e) => {
+                        e.stopPropagation();
+                        selectedItem = obj;
+                        if(confirm("Eliminare dispositivo?")) doDelete();
+                    };
                 }
-              });
-            }
-          }
-
-          itemsList.appendChild(li);
-        });
-      })
-      .catch(err => {
-        console.error('Errore caricamento dispositivi:', err);
-        setStatus('Errore nel caricamento dei dispositivi.');
-      });
-  }
+                itemsList.appendChild(li);
+            });
+        })
+        .catch(err => setStatus('Errore: ' + err.message));
+}
 
 
  function renderSelectedRegions() {
@@ -750,58 +744,55 @@ function loadLanesForToll(tollId) {
   }
 
   function configureModalFields() {
-    groupCasello.classList.add('d-none');
-    groupCorsia.classList.add('d-none');
-    groupDispositivo.classList.add('d-none');
+      // Nascondi tutti i gruppi extra
+      [groupCasello, groupCorsia, groupDispositivo, groupAutostrada].forEach(g => g.classList.add('d-none'));
 
-    const nameGroup = fieldName.closest('.mb-3');
-    nameGroup.classList.add('d-none');
-    fieldName.required = false;
-    fieldName.value = '';
+      const nameGroup = fieldName.closest('.mb-3');
+      nameGroup.classList.add('d-none');
+      fieldName.required = false;
 
-    switch (currentLevel) {
-      case 'regions':
-        nameGroup.classList.remove('d-none');
-        fieldNameLabel.textContent = 'Nome regione';
-        fieldName.required = true;
-        if (currentAction === 'edit' && selectedItem) fieldName.value = selectedItem.name || '';
-        break;
+      switch (currentLevel) {
+          case 'regions':
+              nameGroup.classList.remove('d-none');
+              fieldNameLabel.textContent = 'Nome regione';
+              fieldName.required = true;
+              if (currentAction === 'edit' && selectedItem) fieldName.value = selectedItem.name;
+              break;
 
-      case 'highways':
-        nameGroup.classList.remove('d-none');
-        fieldNameLabel.textContent = 'Nome autostrada';
-        fieldName.required = true;
+          case 'highways':
+              nameGroup.classList.remove('d-none');
+              fieldNameLabel.textContent = 'Sigla Autostrada';
+              groupAutostrada.classList.remove('d-none');
+              if (currentAction === 'edit' && selectedItem) fieldName.value = selectedItem.name;
+              break;
 
-        groupAutostrada.classList.remove('d-none');
-        highwayRegionInput.value = '';
-        regionSuggestionsEl.innerHTML = '';
+          case 'tolls':
+              nameGroup.classList.remove('d-none');
+              groupCasello.classList.remove('d-none');
+              if (currentAction === 'edit' && selectedItem) fieldName.value = selectedItem.name;
+              break;
 
-        if (currentAction === 'create') {
-          if (state.region) {
-            highwayRegionIdsEl.value = String(state.region.id);
-            cachedRegions[state.region.id] = state.region.name;
-          } else {
-            highwayRegionIdsEl.value = '';
-          }
-          renderSelectedRegions();
-        }
-        break;
+          case 'lanes':
+              groupCorsia.classList.remove('d-none');
+              break;
 
-      case 'tolls':
-        nameGroup.classList.remove('d-none');
-        fieldNameLabel.textContent = 'Nome casello';
-        fieldName.required = true;
-        groupCasello.classList.remove('d-none');
-        break;
 
-      case 'lanes':
-        groupCorsia.classList.remove('d-none');
-        break;
+          case 'devices':
+              groupDispositivo.classList.remove('d-none');
+              const dTipo = document.getElementById('dispTipo');
+              const dStato = document.getElementById('dispStato');
 
-      case 'devices':
-        groupDispositivo.classList.remove('d-none');
-        break;
-    }
+              if (currentAction === 'edit' && selectedItem) {
+                  dTipo.value = selectedItem.tipo; // Imposta il valore corretto
+                  dTipo.disabled = true;           // Poi disabilita per l'utente
+                  dStato.value = selectedItem.stato;
+              } else {
+                  dTipo.disabled = false;
+                  dTipo.value = 'SBARRA';          // Default per nuova creazione
+                  dStato.value = 'ATTIVO';
+              }
+              break;
+      }
   }
 
 
@@ -873,7 +864,6 @@ regionSearchTimeout = setTimeout(() => {
         };
       }
 
-
       case 'tolls':
         return {
           url: `/api/highways/${encodeURIComponent(state.highway.id)}/tolls`,
@@ -894,37 +884,27 @@ regionSearchTimeout = setTimeout(() => {
           }
         };
 
-      case 'devices':
-        return {
-          url: `/api/lanes/${encodeURIComponent(state.lane.id_casello)}/${encodeURIComponent(state.lane.num_corsia)}/devices`,
-          body: {
-            tipo: document.getElementById('dispTipo').value || null,
-            stato: document.getElementById('dispStato').value || null
-          }
-        };
+        case 'devices':
+            return {
+                url: `/api/lanes/${state.lane.id_casello}/${state.lane.num_corsia}/devices`,
+                body: {
+                    tipo: document.getElementById('dispTipo').value, // DEVE essere 'tipo'
+                    stato: document.getElementById('dispStato').value // DEVE essere 'stato'
+                }
+            };
     }
   }
 
-
-    // Cache per i nomi delle regioni selezionate
-      const cachedRegions = {};
-  function getEndpointForUpdateOrDelete() {
+function getEndpointForUpdateOrDelete() {
     if (!selectedItem) return null;
-
     switch (currentLevel) {
-      case 'regions':
-        return `/api/regions/${encodeURIComponent(selectedItem.id)}`;
-      case 'highways':
-        return `/api/highways/${encodeURIComponent(selectedItem.id)}`;
-      case 'tolls':
-        const tollId = selectedItem.id || selectedItem.idCasello || selectedItem.id_casello || selectedItem.id_casello;
-        return `/api/tolls/${encodeURIComponent(tollId)}`;
-      case 'lanes':
-        return `/api/lanes/${encodeURIComponent(selectedItem.id_casello)}/${encodeURIComponent(selectedItem.num_corsia)}`;
-      case 'devices':
-        return `/api/devices/${encodeURIComponent(selectedItem.id)}`;
+        case 'regions':  return `/api/regions/${selectedItem.id}`;
+        case 'highways': return `/api/highways/${selectedItem.id}`;
+        case 'tolls':    return `/api/tolls/${selectedItem.id}`; // Nota la 's' come nel tuo gateway
+        case 'lanes':    return `/api/lanes/${selectedItem.id_casello}/${selectedItem.num_corsia}`;
+        case 'devices':  return `/api/devices/${selectedItem.id}`; // Corrisponde a @PutMapping("/devices/{id}")
     }
-  }
+}
 
 crudModalEl.addEventListener('hidden.bs.modal', () => {
   crudForm.reset();
@@ -977,69 +957,59 @@ crudModalEl.addEventListener('hidden.bs.modal', () => {
       });
   }
 
-  function doUpdate() {
-    const url  = getEndpointForUpdateOrDelete();
+function doUpdate() {
+    const url = getEndpointForUpdateOrDelete();
     if (!url) return;
 
-    const name = fieldName.value.trim();
     let body = {};
+    const name = fieldName.value.trim();
 
     switch (currentLevel) {
-      case 'regions':
-        body = { nome: name };
-        break;
-      case 'highways':
-        // prefer region in navigation, else try selected regions from modal
-        const idRegione = state.region ? state.region.id
-          : (highwayRegionIdsEl.value ? Number(highwayRegionIdsEl.value.split(',')[0]) : null);
-        if (!idRegione) {
-          alert('Seleziona la regione per l\'autostrada prima di modificare.');
-          return;
-        }
-        // autostrada-service expects 'sigla' and 'idRegione'
-        body = { sigla: name, idRegione: idRegione };
-        break;
-      case 'tolls':
-        body = {
-          nome_casello: name,
-          limite: Number(document.getElementById('caselloLimite').value),
-          chiuso: document.getElementById('caselloChiuso').checked
-        };
-        break;
-      case 'lanes':
-        body = {
-          verso: document.getElementById('corsiaVerso').value || null,
-          tipo_corsia: document.getElementById('corsiaTipo').value || null,
-          chiuso: document.getElementById('corsiaChiuso').checked
-        };
-        break;
-     case 'devices':
-       body = {
-         tipo:  document.getElementById('dispTipo').value || null,
-         stato: document.getElementById('dispStato').value || null
-       };
-       break;
-
+        case 'regions': body = { nome: name }; break;
+        case 'highways': body = { sigla: name, idRegione: state.region.id }; break;
+        case 'tolls':
+            body = {
+                nome_casello: name,
+                limite: document.getElementById('caselloLimite').value,
+                chiuso: document.getElementById('caselloChiuso').checked
+            };
+            break;
+        case 'lanes':
+            body = {
+                verso: document.getElementById('corsiaVerso').value,
+                tipo_corsia: document.getElementById('corsiaTipo').value,
+                chiuso: document.getElementById('corsiaChiuso').checked
+            };
+            break;
+        case 'devices':
+            body = {
+                stato: document.getElementById('dispStato').value,
+                casello: selectedItem.id_casello,
+                corsia: selectedItem.num_corsia
+            };
+            break;
     }
 
+    console.log("Sending UPDATE to:", url, "Body:", body);
+
     fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
     })
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(() => {
+    .then(res => {
+        if (!res.ok) throw new Error('Errore HTTP ' + res.status);
+        return res.json();
+    })
+    .then(() => {
         crudModal.hide();
         reloadCurrentLevel();
-      })
-      .catch(err => {
-        console.error('Errore modifica:', err);
-        alert('Errore nella modifica.');
-      });
-  }
+    })
+    .catch(err => {
+        console.error('Errore update:', err);
+        alert('Errore durante l\'aggiornamento.');
+    });
+}
 
 function doDelete() {
     const url = getEndpointForUpdateOrDelete();

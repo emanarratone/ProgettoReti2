@@ -62,29 +62,32 @@ public class DispositiviController {
     public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody Map<String, Object> body) {
         try {
             Boolean status;
+            // Se arriva "ATTIVO"/"INATTIVO" come stringa
             if (body.containsKey("stato")) {
-                status = "ATTIVO".equalsIgnoreCase(String.valueOf(body.get("stato")))
-                        || Boolean.TRUE.equals(body.get("stato"));
-            } else if (body.containsKey("status")) {
+                String s = String.valueOf(body.get("stato"));
+                status = "ATTIVO".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);
+            }
+            // Se arriva come booleano "status"
+            else if (body.containsKey("status")) {
                 status = Boolean.TRUE.equals(body.get("status"));
             } else {
                 status = null;
             }
 
             Integer casello = body.containsKey("casello") ? ((Number) body.get("casello")).intValue() : null;
-            Integer corsia  = body.containsKey("corsia")  ? ((Number) body.get("corsia")).intValue()  : null;
+            Integer corsia = body.containsKey("corsia") ? ((Number) body.get("corsia")).intValue() : null;
 
             return service.getById(id).map(existing -> {
                 if (status != null) existing.setStatus(status);
                 if (casello != null) existing.setCasello(casello);
-                if (corsia  != null) existing.setCorsia(corsia);
-                Dispositivo saved = service.create(existing);
-                return ResponseEntity.ok(saved);
+                if (corsia != null) existing.setCorsia(corsia);
+
+                service.create(existing);
+                return ResponseEntity.ok(existing);
             }).orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore aggiornamento dispositivo"));
+            System.out.println(e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -160,13 +163,14 @@ public class DispositiviController {
             try {
                 Integer id = Integer.parseInt(q);
                 return ResponseEntity.ok(service.getByCasello(id));
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
 
             String s = q.toLowerCase();
-            if (s.contains("totem"))       return ResponseEntity.ok(service.getTotem());
-            if (s.contains("telecamera"))  return ResponseEntity.ok(service.getTelecamere());
-            if (s.contains("sbarra"))      return ResponseEntity.ok(service.getSbarre());
-            if (s.contains("attiv") || s.contains("active"))   return ResponseEntity.ok(service.getActive());
+            if (s.contains("totem")) return ResponseEntity.ok(service.getTotem());
+            if (s.contains("telecamera")) return ResponseEntity.ok(service.getTelecamere());
+            if (s.contains("sbarra")) return ResponseEntity.ok(service.getSbarre());
+            if (s.contains("attiv") || s.contains("active")) return ResponseEntity.ok(service.getActive());
             if (s.contains("inatt") || s.contains("inactive")) return ResponseEntity.ok(service.getInactive());
 
             return ResponseEntity.badRequest().body(Map.of("error", "q non riconosciuto"));
@@ -190,7 +194,7 @@ public class DispositiviController {
                                                  @PathVariable Integer numCorsia,
                                                  @RequestBody Map<String, Object> body) {
         try {
-            String tipo  = (String) body.get("tipo");
+            String tipo = (String) body.get("tipo");
             String stato = (String) body.getOrDefault("stato", body.getOrDefault("status", "ATTIVO"));
             var created = service.createForLane(idCasello, numCorsia, tipo, stato);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -198,161 +202,6 @@ public class DispositiviController {
             e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Errore creazione dispositivo"));
-        }
-    }
-
-    // ------------------- MQTT: Richiesta Generazione Biglietto -------------------
-
-    /**
-     * Endpoint per il totem che richiede la generazione di un biglietto.
-     * Il totem pubblica un evento sul broker MQTT che verrà ricevuto dalla telecamera.
-     * 
-     * POST /devices/totem/{idTotem}/generaBiglietto
-     */
-    @PostMapping("/devices/totem/{idTotem}/generaBiglietto")
-    public ResponseEntity<?> triggerBiglietto(@PathVariable Integer idTotem) {
-        try {
-            // Verifica che il dispositivo sia un totem
-            var dispositivo = service.getById(idTotem);
-            if (dispositivo.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            var totem = dispositivo.get();
-            if (!"TOTEM".equalsIgnoreCase(totem.getTipoDispositivo())) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Il dispositivo non è un totem"));
-            }
-
-            // Crea l'evento di richiesta biglietto
-            RichiestaBigliettoEvent evento = new RichiestaBigliettoEvent(
-                    totem.getID(),
-                    totem.getCorsia(),
-                    totem.getCasello(),
-                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            );
-
-            // Pubblica l'evento sul broker MQTT
-            mqttBroker.publish("totem/generaBiglietto", evento);
-
-            return ResponseEntity.ok(Map.of(
-                    "status", "ok",
-                    "message", "Richiesta biglietto pubblicata dal totem sul broker MQTT",
-                    "idTotem", idTotem,
-                    "casello", totem.getCasello(),
-                    "corsia", totem.getCorsia()
-            ));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore pubblicazione richiesta: " + e.getMessage()));
-        }
-    }
-
-    @PostMapping("/devices/telecamera/{idTelecamera}/generaBiglietto")
-    public ResponseEntity<?> triggerTelepass(@PathVariable Integer idTelecamera) {
-        try {
-
-            var dispositivo = service.getById(idTelecamera);
-            if (dispositivo.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            var telecamera = dispositivo.get();
-            if (!"TELECAMERA".equalsIgnoreCase(telecamera.getTipoDispositivo())) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Il dispositivo non è una telecamera"));
-            }
-
-            // Crea l'evento di richiesta biglietto
-            RichiestaBigliettoEvent evento = new RichiestaBigliettoEvent(
-                    telecamera.getID(),
-                    telecamera.getCorsia(),
-                    telecamera.getCasello(),
-                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            );
-
-            // Pubblica l'evento sul broker MQTT
-            mqttBroker.publish("totem/generaBiglietto", evento);
-
-            return ResponseEntity.ok(Map.of(
-                    "status", "ok",
-                    "message", "Richiesta biglietto pubblicata dalla telecamera sul broker MQTT",
-                    "idTelecamera", idTelecamera,
-                    "casello", telecamera.getCasello(),
-                    "corsia", telecamera.getCorsia()
-            ));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore pubblicazione richiesta: " + e.getMessage()));
-        }
-    }
-
-    @PostMapping("/devices/totem/{idTotem}/{idBiglietto}/richiestaPagamento")
-    public ResponseEntity<?> richiestaPagamento(@PathVariable Integer idTotem,
-                                                @PathVariable Integer idBiglietto) {
-        try {
-            // Verifica che il dispositivo sia un totem
-            var dispositivo = service.getById(idTotem);
-            if (dispositivo.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            var totem = dispositivo.get();
-            if (!"TOTEM".equalsIgnoreCase(totem.getTipoDispositivo())) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Il dispositivo non è un totem"));
-            }
-
-            richiestaPagamentoEvent evento = new richiestaPagamentoEvent(idBiglietto, totem.getCasello(), totem.getCorsia());
-
-            mqttBroker.publish("totem/pagaBiglietto", evento);
-
-            return ResponseEntity.ok(Map.of(
-                    "status", "ok",
-                    "message", "Richiesta pagamento biglietto pubblicata dal totem sul broker MQTT",
-                    "idTotem", idTotem,
-                    "casello", totem.getCasello(),
-                    "corsia", totem.getCorsia()
-            ));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore pubblicazione richiesta: " + e.getMessage()));
-        }
-    }
-
-    @PostMapping("/devices/totem/{idTelecamera}/{idBiglietto}/richiestaPagamento")
-    public ResponseEntity<?> richiestaPagamentoTelepass(@PathVariable Integer idTelecamera,
-                                                @PathVariable Integer idBiglietto) {
-        try {
-            var dispositivo = service.getById(idTelecamera);
-            if (dispositivo.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            var telecamera = dispositivo.get();
-            if (!"TELECAMERA".equalsIgnoreCase(telecamera.getTipoDispositivo())) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Il dispositivo non è una telecamera"));
-            }
-
-            richiestaPagamentoEvent evento = new richiestaPagamentoEvent(idBiglietto, telecamera.getCasello(), telecamera.getCorsia());
-
-            mqttBroker.publish("totem/pagaBiglietto", evento);
-
-            return ResponseEntity.ok(Map.of(
-                    "status", "ok",
-                    "message", "Richiesta pagamento biglietto pubblicata dal totem sul broker MQTT",
-                    "idTotem", idTelecamera,
-                    "casello", telecamera.getCasello(),
-                    "corsia", telecamera.getCorsia()
-            ));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Errore pubblicazione richiesta: " + e.getMessage()));
         }
     }
 }
