@@ -108,6 +108,12 @@ public class ApiGatewayController {
         return forwardGet(url);
     }
 
+    @GetMapping("/fines/management")
+    public ResponseEntity<?> getManagementFines() {
+        // Punta al nuovo endpoint dell'Aggregator Multa (8088)
+        return forwardGet(webConfig.getMultaUrl() + "/fines/gestione-completa");
+    }
+
     // ================== VEICOLO ==================
     @GetMapping("/vehicles/**")
     public ResponseEntity<?> getVehicles() {

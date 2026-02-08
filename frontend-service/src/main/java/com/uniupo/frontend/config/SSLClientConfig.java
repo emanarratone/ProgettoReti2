@@ -19,7 +19,6 @@ public class SSLClientConfig {
     @Primary
     public RestTemplate restTemplate() {
         try {
-            // Configurazione che accetta tutto per test (per isolare il problema PKIX)
             final CloseableHttpClient httpClient = HttpClients.custom()
                     .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                             .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()

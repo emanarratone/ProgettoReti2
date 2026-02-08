@@ -2,8 +2,12 @@ package com.uniupo.multa.controller;
 
 import com.uniupo.multa.model.Multa;
 import com.uniupo.multa.model.dto.MultaDTO;
+import com.uniupo.multa.model.dto.MultaGestionaleDTO;
 import com.uniupo.multa.model.dto.PagamentoDTO;
 import com.uniupo.multa.service.MultaService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -13,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -21,6 +26,8 @@ public class MultaController {
 
     private final MultaService service;
     private final WebClient webClient;
+    private static final Logger logger = LoggerFactory.getLogger(MultaController.class);
+
 
     public MultaController(MultaService service, WebClient webClient) {
         this.service = service;
@@ -141,5 +148,100 @@ public class MultaController {
                 .map(f -> new MultaDTO(f, "STATO NON DISPONIBILE"))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(localOnly);
+    }
+
+    @GetMapping("/gestione-completa")
+    @CircuitBreaker(name = "fullAggregation", fallbackMethod = "fallbackGestione")
+    public ResponseEntity<List<MultaGestionaleDTO>> getGestioneCompleta() {
+        // 1. Dati locali (DB Multe)
+        List<Multa> fines = service.getAll();
+
+        // 2. Recupero dati remoti dai microservizi esterni
+        List<Map<String, Object>> payments = fetchData("https://localhost:8087/payments");
+        List<Map<String, Object>> tolls = fetchData("https://localhost:8082/tolls");
+        List<Map<String, Object>> highways = fetchData("https://localhost:8081/highways");
+        List<Map<String, Object>> regions = fetchData("https://localhost:8084/regions");
+
+        // 3. Merge e Ritorno
+        List<MultaGestionaleDTO> merged = mergeFullData(fines, payments, tolls, highways, regions);
+        return ResponseEntity.ok(merged);
+    }
+
+
+    // Helper per pulire il codice
+    private List<Map<String, Object>> fetchData(String url) {
+        return webClient.get().uri(url).retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                .block(Duration.ofSeconds(2));
+    }
+
+    // Fallback se uno dei servizi esterni è offline
+    public ResponseEntity<List<MultaGestionaleDTO>> fallbackGestione(Exception e) {
+        logger.error("🚨 Fallback attivato! Errore nell'aggregazione dati: {}", e.getMessage());
+
+        List<MultaGestionaleDTO> fallbackList = service.getAll().stream()
+                .map(f -> new MultaGestionaleDTO(
+                        f.getId(),             // ID Multa (Locale)
+                        "SERVIZIO OFFLINE",    // Nome Regione (Esterno)
+                        "N/D",                 // Nome Casello (Esterno)
+                        f.getTarga(),          // Targa (Locale)
+                        "N/D",                 // Data Pagamento (Esterno)
+                        f.getImporto(),        // Importo (Locale)
+                        f.getPagato() ? "PAGATA (L)" : "DA PAGARE" // Stato (Locale)
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(fallbackList);
+    }
+
+    private List<MultaGestionaleDTO> mergeFullData(
+            List<Multa> fines,
+            List<Map<String, Object>> payments,
+            List<Map<String, Object>> tolls,
+            List<Map<String, Object>> highways,
+            List<Map<String, Object>> regions) {
+
+        // Creazione delle mappe di lookup (come prima)
+        Map<Integer, Map<String, Object>> payMap = payments.stream()
+                .collect(Collectors.toMap(p -> (Integer)p.get("idBiglietto"), p -> p, (a,b)->a));
+        Map<Integer, Map<String, Object>> tollMap = tolls.stream()
+                .collect(Collectors.toMap(t -> (Integer)t.get("idCasello"), t -> t, (a,b)->a));
+        Map<Integer, Map<String, Object>> highwayMap = highways.stream()
+                .collect(Collectors.toMap(h -> (Integer)h.get("id"), h -> h, (a,b)->a));
+        Map<Integer, String> regionMap = regions.stream()
+                .collect(Collectors.toMap(r -> (Integer)r.get("id"), r -> (String)r.get("nome"), (a,b)->a));
+
+        // Trasformazione con FILTRO (Inner Join)
+        return fines.stream()
+                .filter(f -> payMap.containsKey(f.getIdBiglietto())) // 1. Scarta se non c'è pagamento
+                .map(f -> {
+                    Map<String, Object> p = payMap.get(f.getIdBiglietto());
+                    Integer idC = (Integer) p.get("caselloOut");
+
+                    // 2. Verifica se esiste il casello, l'autostrada e la regione
+                    Map<String, Object> t = tollMap.get(idC);
+                    if (t == null) return null; // Scarta se il casello non esiste
+
+                    Integer idA = (Integer) t.get("idAutostrada");
+                    Map<String, Object> h = highwayMap.get(idA);
+                    if (h == null) return null; // Scarta se l'autostrada non esiste
+
+                    Integer idR = (Integer) h.get("idRegione");
+                    String nomeRegione = regionMap.get(idR);
+                    if (nomeRegione == null) return null; // Scarta se la regione non esiste
+
+                    // Se siamo arrivati qui, tutti i pezzi del puzzle esistono
+                    MultaGestionaleDTO dto = new MultaGestionaleDTO();
+                    dto.setId(f.getId());
+                    dto.setTarga(f.getTarga());
+                    dto.setImporto(f.getImporto());
+                    dto.setData(p.get("timestampOut").toString());
+                    dto.setStato((String) p.get("stato"));
+                    dto.setNomeCasello((String) t.get("sigla"));
+                    dto.setNomeRegione(nomeRegione);
+                    return dto;
+                })
+                .filter(Objects::nonNull) // Rimuove i record che hanno restituito null durante il map
+                .collect(Collectors.toList());
     }
 }
