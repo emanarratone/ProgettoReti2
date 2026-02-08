@@ -100,6 +100,14 @@ public class ApiGatewayController {
         return forwardPost(webConfig.getMultaUrl() + "/fines", body);
     }
 
+    @GetMapping("/fines/list-joined")
+    public ResponseEntity<?> getJoinedFines() {
+        // Questo inoltra la richiesta all'endpoint dell'Aggregator che abbiamo scritto prima
+        String url = webConfig.getMultaUrl() + "/fines/list-joined";
+        logger.info("Gateway → Inoltro richiesta a Multa Service (Aggregator): {}", url);
+        return forwardGet(url);
+    }
+
     // ================== VEICOLO ==================
     @GetMapping("/vehicles/**")
     public ResponseEntity<?> getVehicles() {

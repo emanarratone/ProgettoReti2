@@ -278,51 +278,46 @@ console.log(regions)
   })
   .catch(err => console.error("Errore fetch /api/tolls:", err));
 
-// Tabella Multe: ultimi 7 giorni
-fetch('/api/fines/list')
-  .then(async res => {
-    if (!res.ok) throw new Error('Errore HTTP: ' + res.status);
-
-    const raw = await res.text();
-    // prova asdrubale fare il parse solo se sembra JSON
-    try {
-      return JSON.parse(raw);
-    } catch (e) {
-      console.error('JSON non valido da /api/fines/list:', e);
-      throw e;
-    }
+// Tabella Multe: ultimi 7 giorni (JOIN tra multa e pagamento)
+fetch('/api/fines/list-joined')
+  .then(res => {
+    if (!res.ok) throw new Error('Errore nel recupero dati aggregati');
+    return res.json();
   })
   .then(data => {
-    if (data.error) {
-      console.error("Errore API /api/fines/list:", data.error);
+    console.log(data)
+    const tbody = document.getElementById('finesTable');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nessuna multa trovata</td></tr>';
       return;
     }
 
-    const tbody = document.getElementById('finesTable');
-    if (!tbody) return;
+    // Mostriamo i risultati (il backend ha già filtrato i match o applicato il fallback)
+    data.slice(0, 5).forEach((row) => {
+      const tr = document.createElement('tr');
 
-    tbody.innerHTML = '';
+      // Determiniamo lo stile in base allo stato restituito dal microservizio
+      const isPagata = row.stato === 'PAGATO';
+      const statoClass = isPagata ? 'text-success' : 'text-danger';
 
-data.forEach((row, index) => {
-  if (index >= 5) return;  // esce dopo 5 righe
-
-  const tr = document.createElement('tr');
-
-  const statoLabel = row.pagato ? 'Pagata' : 'Da pagare';
-  const statoClass = row.pagato ? 'text-success' : 'text-danger';
-
-  tr.innerHTML = `
-    <td>${row.id}</td>
-    <td>${row.targa}</td>
-    <td>€ ${Number(row.importo).toFixed(2)}</td>
-    <td class="${statoClass}">${statoLabel}</td>
-  `;
-  tbody.appendChild(tr);
-});
-
+      tr.innerHTML = `
+        <td><strong>#${row.id}</strong></td>
+        <td><span class="badge bg-light text-dark border">${row.targa}</span></td>
+        <td>€ ${Number(row.importo).toFixed(2)}</td>
+        <td><span class="${statoClass} fw-bold">${row.stato}</span></td>
+        <td class="text-muted small">${row.timestampOut}</td>
+      `;
+      tbody.appendChild(tr);
+    });
   })
-  .catch(err => console.error("Errore fetch /api/fines/list:", err));
-
+  .catch(err => {
+    console.error("Errore fetch dashboard:", err);
+    const tbody = document.getElementById('finesTable');
+    if(tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Errore di connessione al Gateway</td></tr>';
+  });
 // Funzione helper per validare e formattare le date
 function formatSafeDate(dateVal) {
     if (!dateVal) return null;
