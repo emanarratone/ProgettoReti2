@@ -80,7 +80,7 @@ public class CaselloController {
         }
     }
 
-    @PutMapping("/toll/{idCasello}")
+    @PutMapping("/tolls/{idCasello}")
     public ResponseEntity<?> updateToll(@PathVariable Integer idCasello,
                                         @RequestBody Map<String, Object> body) {
         try {

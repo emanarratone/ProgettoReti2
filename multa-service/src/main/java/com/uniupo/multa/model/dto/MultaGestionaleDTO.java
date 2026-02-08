@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MultaGestionaleDTO {
     private Integer id;          // id_multa
-    private String nomeRegione;  // Preso da  Regione
+    private String nomeRegione;  // Preso da Regione
     private String nomeCasello;  // Preso da casello
     private String targa;        // Preso da Multa
     private String data;         // timestamp_out da Pagamento
