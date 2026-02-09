@@ -1,7 +1,3 @@
-/**
- * GESTIONE MULTE - Script di aggregazione dati dai Microservizi
- */
-
 let allFines = [];
 
 // 1. GESTIONE SESSIONE E LOGOUT
@@ -44,7 +40,7 @@ fetch('/api/regions')
 // 3. RECUPERO DATI AGGREGATI (Triple Join: Multa + Pagamento + Regione)
 function loadFines() {
     // Puntiamo al nuovo endpoint del Gateway che chiama l'Aggregator nel Multa Service
-    fetch('/api/fines/management')
+    fetch('/api/fines/list-joined-full')
         .then(res => res.json())
         .then(data => {
             // Allineamento con il DTO: id, nomeRegione, targa, data, importo, stato
@@ -74,24 +70,44 @@ function renderTable(rows) {
     rows.forEach(row => {
         const tr = document.createElement('tr');
 
-        // Logica dinamica per lo stato (Pagato/Pendente/Offline)
-        const isPagata = row.stato === 'PAGATO' || row.stato === 'PAGATA';
-        const isOffline = row.stato === 'OFFLINE' || row.stato === 'Vedi Locale';
+        // Mappatura difensiva: prova i vari nomi possibili
+        const id = row.id || row.id_multa || '?';
+        const regione = row.nomeRegione || row.regioneNome || row.regione || 'N/D';
+        const casello = row.nomeCasello || row.sigla || row.casello || 'N/D';
+        const targa   = row.targa || 'Sconosciuta';
+        const dataVal = row.timestampOut || row.data || row.timestamp_out || '-';
+        let dataFormatted = '-';
+        if (dataVal) {
+            const d = new Date(dataVal);
+            // Verifico che la data sia valida prima di formattarla
+            if (!isNaN(d.getTime())) {
+                dataFormatted = d.toLocaleString('it-IT', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+        // Gestione sicura dell'importo per evitare crash con .toFixed()
+        const importoNum = Number(row.importo) || 0;
+        const stato = (row.stato || 'PENDENTE').toUpperCase();
 
         let badgeClass = 'bg-danger';
-        if (isPagata) badgeClass = 'bg-success';
-        if (isOffline) badgeClass = 'bg-warning text-dark';
+        if (stato === 'PAGATO' || stato === 'PAGATA') badgeClass = 'bg-success';
+        if (stato === 'OFFLINE' || stato === 'VEDI LOCALE') badgeClass = 'bg-warning text-dark';
 
         tr.innerHTML = `
-            <td><strong>#${row.id}</strong></td>
+            <td><strong>#${id}</strong></td>
             <td>
-                <div class="fw-bold">${row.nomeRegione}</div>
-                <div class="small text-muted"><i class="bi bi-geo-alt"></i> ${row.nomeCasello}</div>
+                <div class="fw-bold">${regione}</div>
+                <div class="small text-muted"><i class="bi bi-geo-alt"></i> ${casello}</div>
             </td>
-            <td><span class="badge bg-light text-dark border">${row.targa}</span></td>
-            <td><small>${row.data}</small></td>
-            <td><strong>€ ${row.importo.toFixed(2)}</strong></td>
-            <td><span class="badge ${badgeClass}">${row.stato}</span></td>
+            <td><span class="badge bg-light text-dark border">${targa}</span></td>
+            <td><small>${dataFormatted}</small></td>
+            <td><strong>€ ${importoNum.toFixed(2)}</strong></td>
+            <td><span class="badge ${badgeClass}">${stato}</span></td>
         `;
         tbody.appendChild(tr);
     });

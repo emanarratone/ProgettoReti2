@@ -308,12 +308,6 @@ fetch('/api/fines/list-joined')
 
 // --- HELPER E RICERCA VEICOLI ---
 
-function formatSafeDate(dateVal) {
-    if (!dateVal) return null;
-    const d = new Date(dateVal);
-    return isNaN(d.getTime()) ? null : d.toLocaleString('it-IT');
-}
-
 (function() {
     const searchBtn = document.getElementById('searchPlateBtn');
     const inputPlate = document.getElementById('searchPlate');
