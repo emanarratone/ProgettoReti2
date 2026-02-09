@@ -340,12 +340,8 @@ public class ApiGatewayController {
         );
     }
 
-    // KPI endpoints that compute from microservices when legacy not present
     @GetMapping("/fines")
     public ResponseEntity<?> getFinesCount() {
-        // try legacy first
-        ResponseEntity<?> legacy = forwardGet(webConfig.getAutostradaUrl() + "/api/fines");
-        if (legacy.getStatusCode().is2xxSuccessful()) return legacy;
 
         try {
             ResponseEntity<Object[]> listResp = restTemplate.getForEntity(webConfig.getMultaUrl() + "/fines", Object[].class);

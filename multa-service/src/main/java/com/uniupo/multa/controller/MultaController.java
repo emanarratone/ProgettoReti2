@@ -105,7 +105,7 @@ public class MultaController {
         // 2. Dati remoti (Microservizio Pagamenti)
         // Nel MultaController del servizio Multa (porta 8088)
         List<PagamentoDTO> payments = webClient.get()
-                .uri("https://localhost:8087/payments") // Porta 8087 come da tue properties
+                .uri("https://localhost:8087/payments")
                 .retrieve()
                 .bodyToFlux(PagamentoDTO.class)
                 .collectList()
