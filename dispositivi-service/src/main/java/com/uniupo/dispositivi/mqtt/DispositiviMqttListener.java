@@ -44,14 +44,14 @@ public class DispositiviMqttListener {
             if (message.startsWith("\"") && message.endsWith("\"")) {
                 message = objectMapper.readValue(message, String.class);
             }
-            System.out.println("🔍 Cleaned: '" + message + "'");
+            System.out.println("Cleaned: '" + message + "'");
 
             RichiestaDatiCorsiaEvent richiesta = objectMapper.readValue(message, RichiestaDatiCorsiaEvent.class);
-            System.out.println("✅ Deserializzato: idCasello=" + richiesta.getIdCasello() +
+            System.out.println("Deserializzato: idCasello=" + richiesta.getIdCasello() +
                     ", numCorsia=" + richiesta.getNumCorsia());
 
             List<Dispositivo> dispositivi = repo.findByCaselloAndCorsia(richiesta.getIdCasello(), richiesta.getNumCorsia());
-            System.out.println("📊 Trovati " + dispositivi.size() + " dispositivi");
+            System.out.println("Trovati " + dispositivi.size() + " dispositivi");
 
             if (!dispositivi.isEmpty()) {
                 try {
