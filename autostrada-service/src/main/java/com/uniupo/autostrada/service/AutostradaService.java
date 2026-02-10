@@ -8,19 +8,29 @@ import com.uniupo.autostrada.repository.AutostradaRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class AutostradaService {
 
     private final AutostradaRepository repo;
     private final RabbitTemplate rabbitTemplate;
+    private final WebClient webClient;
 
-    public AutostradaService(AutostradaRepository repo, RabbitTemplate rabbitTemplate) {
+    public AutostradaService(AutostradaRepository repo, RabbitTemplate rabbitTemplate, WebClient.Builder webClientBuilder) {
         this.repo = repo;
         this.rabbitTemplate = rabbitTemplate;
+        this.webClient = webClientBuilder.build();
     }
 
     public List<AutostradaDTO> getAll() {
@@ -78,6 +88,11 @@ public class AutostradaService {
                 .toList();
     }
 
+    public List<AutostradaDTO> getTop5Unique() {
+        return repo.findTop5Unique().stream()
+                .map(a -> new AutostradaDTO(a.getId(), a.getSigla(), a.getIdRegione()))
+                .collect(Collectors.toList());
+    }
     // Ascolta l'eliminazione della regione
     @RabbitListener(queues = "regione.deleted.queue")
     @Transactional

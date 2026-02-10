@@ -105,7 +105,7 @@ public class mqttListener {
             // Recupera la classe dal proprio DB locale tramite targa
             String classe = repo.findByTarga(info.getTarga()).get().getTipoVeicolo().toString();
 
-            // Creiamo un DTO che includa la classe (possiamo riusare ElaboraDistanzaEvent mettendo ID al posto dei nomi per ora)
+            // Creiamo un DTO che includa la classe
             ElaboraDistanzaEvent arricchitoClasse = new ElaboraDistanzaEvent(
                     info.getTarga(),
                     info.getCasello_in().toString(), // Per ora passiamo l'ID come stringa

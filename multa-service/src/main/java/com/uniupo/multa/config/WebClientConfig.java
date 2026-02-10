@@ -17,7 +17,6 @@ public class WebClientConfig {
 
     @Bean
     public WebClient webClient() throws SSLException {
-        // Configura il client per ignorare i certificati non validi (Sviluppo Locale)
         SslContext sslContext = SslContextBuilder
                 .forClient()
                 .trustManager(InsecureTrustManagerFactory.INSTANCE)

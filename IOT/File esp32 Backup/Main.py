@@ -1,924 +1,255 @@
 import time
-
 import ujson
-
 import Config
-
 from Wifi import Wifi
-
 from Broker import MQTTBroker
-
 from Sbarra import Sbarra
-
 from Schermo import Schermo
-
 from Telepass import Telepass
-
 from Bottone import Bottone
-
 from GestoreBroker import GestoreBroker
 
-from Setup import Setup
-
-from Corsia import Corsia
-
-
-
 # --- HARDWARE ---
-
-sbarra = Sbarra(True, 0, 0, 0, pin_id=Config.SERVO_PIN) 
-
+sbarra = Sbarra(True, 0, 0, 0, pin_id=Config.SERVO_PIN)
 schermo = Schermo(Config.SCL_PIN, Config.SDA_PIN, Config.WIDTH, Config.HEIGHT)
-
 telepass = Telepass(Config.TELEPASS_PIN)
-
+bottone = Bottone(Config.BOTTONE_PIN)
 wifi = Wifi(Config.SSID, Config.PASSWORD)
-
 broker_mqtt = MQTTBroker(Config.BROKER_IP, Config.PORT_BROKER)
 
-
-
 if not wifi.connect() or not broker_mqtt.connect():
-
     raise SystemExit
-
-
 
 gestore_mqtt = GestoreBroker(broker_mqtt)
 
-modalita_stato = 0
+# --- STATE ---
+modalita_stato = 0  # 0=INGRESSO, 1=USCITA
 
-
-
-id_casello_iniziale = Config.ID_CASELLO_INIZIALE
-
-numero_corsia_iniziale = Config.NUM_CORSIA
-
-
-
+# --- DATI CORRENTI ---
 targa_veicolo = ""
-
-id_casello_ingresso = 0
-
-id_casello_uscita = 0
-
 numero_corsia = 0
-
 tipo_corsia = ""
-
 id_totem_corrente = 101
-
 sigla_casello_corrente = "CASELLO"
 
 
-
 def carica_veicolo_default():
-
     global targa_veicolo
-
     print("📡 Richiesta veicolo test...")
-
-    payload = {"targa": "DY484VY"}
-
-    risposta = gestore_mqtt.richiedi("veicolo/richiesta", payload, "veicolo/DY484VY/risposta")
+    payload = {"targa": Config.TARGA_DEFAULT}
+    risposta = gestore_mqtt.richiedi("veicolo/richiesta", payload, f"veicolo/{Config.TARGA_DEFAULT}/risposta")
 
     if risposta:
-
         try:
-
-            veicolo = ujson.loads(risposta)
-
-            targa_veicolo = veicolo.get("targa", "XXXXXXX")
-
+            targa_veicolo = ujson.loads(risposta).get("targa", Config.TARGA_DEFAULT)
             print(f"✅ Veicolo: {targa_veicolo}")
-
         except:
-
-            targa_veicolo = "DY484VY"
+            targa_veicolo = Config.TARGA_DEFAULT
+    else:
+        targa_veicolo = Config.TARGA_DEFAULT
 
     return targa_veicolo
 
 
-
-def carica_dati_casello_completi(id_casello):
-
+def carica_dati_casello_completi(id_casello, num_corsia):
     global id_totem_corrente, sigla_casello_corrente, tipo_corsia, numero_corsia
 
-    
-
-    print(f"\n🔄 CASELLO {id_casello}")
-
-    
+    print(f"\n🔄 CASELLO {id_casello} - CORSIA {num_corsia}")
 
     # Dispositivi
-
-    payload_disp = {"id_casello": id_casello, "num_corsia": numero_corsia_iniziale}
-
-    broker_mqtt.publish("dispositivi/richiesta", ujson.dumps(payload_disp))
-
-    topic_disp = f"dispositivi/{id_casello}/corsia/{numero_corsia_iniziale}/risposta"
-
+    payload_disp = {"id_casello": id_casello, "num_corsia": num_corsia}
+    topic_disp = f"dispositivi/{id_casello}/corsia/{num_corsia}/risposta"
     dati_disp = gestore_mqtt.richiedi("dispositivi/richiesta", payload_disp, topic_disp)
 
-    
-
     id_totem = 101
-
     if dati_disp:
-
         try:
-
-            lista = ujson.loads(dati_disp)
-
-            for d in lista:
-
+            for d in ujson.loads(dati_disp):
                 if "TOTEM" in str(d.get("tipoDispositivo", "")).upper():
-
                     id_totem = d.get("id", 101)
-
                     print(f"✅ Totem: {id_totem}")
-
                     break
-
         except:
-
             pass
-
-    
 
     # Casello
-
     payload_casello = {"id_casello": id_casello}
-
-    broker_mqtt.publish("casello/richiesta", ujson.dumps(payload_casello))
-
     topic_casello = f"casello/risposta/{id_casello}"
-
     dati_casello = gestore_mqtt.richiedi("casello/richiesta", payload_casello, topic_casello)
 
-    
-
     sigla = f"C{id_casello}"
-
     if dati_casello:
-
         try:
-
-            casello = ujson.loads(dati_casello)
-
-            sigla = casello.get("sigla", sigla)
-
+            sigla = ujson.loads(dati_casello).get("sigla", sigla)
             print(f"✅ Sigla: {sigla}")
-
         except:
-
             pass
-
-    
 
     # Corsia
-
-    payload_corsia = {"id_casello": id_casello, "num_corsia": numero_corsia_iniziale}
-
-    broker_mqtt.publish("corsia/richiesta", ujson.dumps(payload_corsia))
-
-    topic_corsia = f"casello/{id_casello}/corsia/{numero_corsia_iniziale}/risposta"
-
+    payload_corsia = {"id_casello": id_casello, "num_corsia": num_corsia}
+    topic_corsia = f"casello/{id_casello}/corsia/{num_corsia}/risposta"
     dati_corsia = gestore_mqtt.richiedi("casello/richiesta", payload_corsia, topic_corsia)
 
-    
-
     tipo = "TELEPASS"
-
     if dati_corsia:
-
         try:
-
             corsia = ujson.loads(dati_corsia)
-
             tipo = corsia.get("tipoCorsia", tipo)
-
             verso = corsia.get("verso", "ENTRATA")
-
             print(f"✅ Corsia: tipo={tipo}, verso={verso}")
-
         except:
-
             pass
 
-    
-
     id_totem_corrente = id_totem
-
     sigla_casello_corrente = sigla
-
     tipo_corsia = tipo
+    numero_corsia = num_corsia
 
-    numero_corsia = numero_corsia_iniziale
-
-    
-
-    print(f"📍 '{sigla}' | Totem:{id_totem} | Tipo:{tipo}")
-
+    print(f"📍 '{sigla}' | Corsia:{num_corsia} | Totem:{id_totem} | Tipo:{tipo}")
 
 
 def schermo_base():
-
+    verso = 'INGRESSO' if modalita_stato == 0 else 'USCITA'
     schermo.setText(
-
-        f"BENVENUTO A:",
-
+        "BENVENUTO A:",
         sigla_casello_corrente.upper(),
-
         f"CORSIA {numero_corsia}",
-
-        f"{'INGRESSO' if modalita_stato==0 else 'USCITA'}",
-
+        verso,
         f"TIPO: {tipo_corsia}"
-
     )
 
 
+def mostra_schermo_e_attendi(linea1, linea2, linea3, linea4, linea5, secondi):
+    schermo.setText(linea1, linea2, linea3, linea4, linea5)
+    time.sleep(secondi)
 
-print("🚀 TOTEM REALISTICO")
+
+def apri_e_chiudi_sbarra(messaggio_linea5):
+    mostra_schermo_e_attendi("SBARRA", "APERTURA", sigla_casello_corrente.upper(), "", messaggio_linea5, 0)
+    sbarra.open_bar()
+    time.sleep(3)
+    sbarra.close_bar()
+
+
+def gestisci_ingresso():
+    global modalita_stato
+
+    mostra_schermo_e_attendi(
+        "VEICOLO", "RILEVATO", sigla_casello_corrente.upper(),
+        f"CORSIA {numero_corsia}", "ATTENDERE...", 1.2
+    )
+
+    mostra_schermo_e_attendi(
+        "ELABORAZIONE", "FOTO TARGA", sigla_casello_corrente.upper(),
+        f"T:{id_totem_corrente}", "...", 0.8
+    )
+
+    payload = {
+        "idTotem": id_totem_corrente,
+        "targa": targa_veicolo,
+        "idCasello": Config.ID_CASELLO_IN,
+        "idCorsia": Config.NUM_CORSIA_IN,
+        "tipoCorsia": tipo_corsia,
+        "verso": "INGRESSO"
+    }
+    broker_mqtt.publish("telecamera/fotoScattata", ujson.dumps(payload))
+    print("📤 Dati inviati al server...")
+
+    mostra_schermo_e_attendi(
+        "INGRESSO OK", "DATI SALVATI", sigla_casello_corrente.upper(),
+        f"TARGA: {targa_veicolo[-7:]}", "BUON VIAGGIO", 1.5
+    )
+
+    apri_e_chiudi_sbarra("PASSARE")
+
+    modalita_stato = 1
+    mostra_schermo_e_attendi("CARICAMENTO", "DATI USCITA", "ATTENDERE", "", "...", 1)
+    carica_dati_casello_completi(Config.ID_CASELLO_OUT, Config.NUM_CORSIA_OUT)
+    schermo_base()
+
+
+def gestisci_uscita():
+    global modalita_stato
+
+    mostra_schermo_e_attendi(
+        "VEICOLO", "RILEVATO", sigla_casello_corrente.upper(),
+        f"CORSIA {numero_corsia}", "ATTENDERE...", 1.2
+    )
+
+    mostra_schermo_e_attendi(
+        "CONTROLLO", "INGRESSO", sigla_casello_corrente.upper(),
+        f"ID TOTEM:{id_totem_corrente}", "...", 0.8
+    )
+
+    payload_biglietto = {
+        "targa": targa_veicolo,
+        "idCasello": Config.ID_CASELLO_OUT,
+        "idCorsia": Config.NUM_CORSIA_OUT,
+        "tipoCorsia": tipo_corsia,
+        "verso": "USCITA"
+    }
+    risposta = gestore_mqtt.richiedi(
+        "telecamera/ottieniTarga", payload_biglietto, f"veicolo/{targa_veicolo}/risposta"
+    )
+
+    id_biglietto = 6
+    if risposta:
+        try:
+            dati = ujson.loads(risposta) if isinstance(risposta, str) else risposta
+            id_biglietto = dati.get('idBiglietto') or dati.get('id') or 6
+        except:
+            pass
+
+    mostra_schermo_e_attendi(
+        "CALCOLO", "PEDAGGIO", sigla_casello_corrente.upper(),
+        f"ID BIGLIETTO:{id_biglietto}", "ATTENDERE...", 1
+    )
+
+    payload_pagamento = {
+        "idBiglietto": id_biglietto,
+        "caselloOut": Config.ID_CASELLO_OUT,
+        "isTelepass": True,
+        "targa": targa_veicolo,
+        "corsia": Config.NUM_CORSIA_OUT,
+        "tipoCorsia": tipo_corsia,
+        "verso": "USCITA",
+        "idTotem": id_totem_corrente
+    }
+    broker_mqtt.publish("totem/pagaBiglietto", ujson.dumps(payload_pagamento))
+    print("📤 Pagamento inviato...")
+    time.sleep(0.8)
+
+    mostra_schermo_e_attendi(
+        "PAGAMENTO", "CONFERMATO", sigla_casello_corrente.upper(),
+        f"ID BIGLIETTO:{id_biglietto}", "GRAZIE", 1.8
+    )
+
+    apri_e_chiudi_sbarra("ARRIVEDERCI")
+
+    modalita_stato = 0
+    mostra_schermo_e_attendi("CARICAMENTO", "DATI INGRESSO", "ATTENDERE", "", "", 1)
+    carica_dati_casello_completi(Config.ID_CASELLO_IN, Config.NUM_CORSIA_IN)
+    schermo_base()
+
+
+# --- MAIN ---
+print("Sistema autostradale")
+print(f"📍 Config: IN={Config.ID_CASELLO_IN}/Corsia{Config.NUM_CORSIA_IN} | OUT={Config.ID_CASELLO_OUT}/Corsia{Config.NUM_CORSIA_OUT}")
 
 targa_veicolo = carica_veicolo_default()
-
-id_casello_ingresso = id_casello_iniziale
-
-id_casello_uscita = id_casello_iniziale + 1
-
-
-
-carica_dati_casello_completi(id_casello_ingresso)
-
+carica_dati_casello_completi(Config.ID_CASELLO_IN, Config.NUM_CORSIA_IN)
 schermo_base()
 
-
-
 while True:
-    
-    # Controllo bottone per pubblicare topic personalizzato
-    if bottone.is_pressed():
+
+
+
+    if telepass.veicolo_rilevato() or bottone.is_pressed():
         print(f"\n🚗 Veicolo {targa_veicolo}!")
 
-
-
-        if modalita_stato == 0:  # INGRESSO
-
-            # Fase 1: Rilevamento
-
-            schermo.setText(
-
-                "VEICOLO",
-
-                "RILEVATO",
-
-                sigla_casello_corrente.upper(),
-
-                f"CORSIA {numero_corsia}",
-
-                "ATTENDERE..."
-
-            )
-
-            time.sleep(1.2)
-
-
-
-            # Fase 2: Elaborazione foto
-
-            schermo.setText(
-
-                "ELABORAZIONE",
-
-                "FOTO TARGA",
-
-                sigla_casello_corrente.upper(),
-
-                f"T:{id_totem_corrente}",
-
-                "..."
-
-            )
-
-            time.sleep(0.8)
-
-
-
-            # Fase 3: Invio dati al server
-
-            payload = {
-
-                "idTotem": id_totem_corrente,
-
-                "targa": targa_veicolo,
-
-                "idCasello": id_casello_ingresso,
-
-                "idCorsia": numero_corsia,
-
-                "tipoCorsia": tipo_corsia,
-
-                "verso": "INGRESSO"
-
-            }
-
-            broker_mqtt.publish("telecamera/fotoScattata", ujson.dumps(payload))
-
-            print("📤 Dati inviati al server...")
-
-
-
-            # Fase 4: Conferma
-
-            schermo.setText(
-
-                "INGRESSO OK",
-
-                "DATI SALVATI",
-
-                sigla_casello_corrente.upper(),
-
-                f"TARGA: {targa_veicolo[-7:]}",
-
-                "BUON VIAGGIO"
-
-            )
-
-            time.sleep(1.5)
-
-
-
-            # Fase 5: Apertura sbarra
-
-            schermo.setText(
-
-                "SBARRA",
-
-                "APERTURA",
-
-                sigla_casello_corrente.upper(),
-
-                "",
-
-                "PASSARE"
-
-            )
-
-            sbarra.open_bar()
-
-            time.sleep(3)
-
-            sbarra.close_bar()
-
-
-
-            # Cambio stato
-
-            modalita_stato = 1
-
-            schermo.setText(
-
-                "CARICAMENTO",
-
-                "DATI USCITA",
-
-                "ATTENDERE",
-
-                "",
-
-                "..."
-
-            )
-
-            time.sleep(1)
-
-            carica_dati_casello_completi(id_casello_uscita)
-
-            schermo_base()
-
-
-
-        else:  # USCITA
-
-            # Fase 1: Rilevamento
-
-            schermo.setText(
-
-                "VEICOLO",
-
-                "RILEVATO",
-
-                sigla_casello_corrente.upper(),
-
-                f"CORSIA {numero_corsia}",
-
-                "ATTENDERE..."
-
-            )
-
-            time.sleep(1.2)
-
-
-
-            # Fase 2: Check database
-
-            schermo.setText(
-
-                "CONTROLLO",
-
-                "INGRESSO",
-
-                sigla_casello_corrente.upper(),
-
-                f"ID TOTEM:{id_totem_corrente}",
-
-                "..."
-
-            )
-
-            time.sleep(0.8)
-
-
-
-            payload_biglietto = {
-
-                "targa": targa_veicolo,
-
-                "idCasello": id_casello_uscita,
-
-                "idCorsia": numero_corsia,
-
-                "tipoCorsia": tipo_corsia,
-
-                "verso": "USCITA"
-
-            }
-
-            risposta = gestore_mqtt.richiedi("telecamera/ottieniTarga", payload_biglietto, f"veicolo/{targa_veicolo}/risposta")
-
-
-
-            id_biglietto = 6
-
-            if risposta:
-
-                try:
-
-                    if isinstance(risposta, str): risposta = ujson.loads(risposta)
-
-                    id_biglietto = risposta.get('idBiglietto') or risposta.get('id') or 6
-
-                except:
-
-                    pass
-
-
-
-            # Fase 3: Calcolo pedaggio
-
-            schermo.setText(
-
-                "CALCOLO",
-
-                "PEDAGGIO",
-
-                sigla_casello_corrente.upper(),
-
-                "ID BIGLIETTO:{id_biglietto}",
-
-                "ATTENDERE..."
-
-            )
-
-            time.sleep(1)
-
-
-
-            payload_pagamento = {
-
-                "idBiglietto": id_biglietto,
-
-                "caselloOut": id_casello_uscita,
-
-                "isTelepass": True,
-
-                "targa": targa_veicolo,
-
-                "corsia": numero_corsia,
-
-                "tipoCorsia": tipo_corsia,
-
-                "verso": "USCITA",
-
-                "idTotem": id_totem_corrente
-
-            }
-
-            broker_mqtt.publish("totem/pagaBiglietto", ujson.dumps(payload_pagamento))
-
-            print("📤 Pagamento inviato...")
-
-            time.sleep(0.8)
-
-
-
-            # Fase 4: Conferma pagamento
-
-            schermo.setText(
-
-                "PAGAMENTO",
-
-                "CONFERMATO",
-
-                sigla_casello_corrente.upper(),
-
-                "ID BIGLIETTO :{id_biglietto}",
-
-                "GRAZIE"
-
-            )
-
-            time.sleep(1.8)
-
-
-
-            # Fase 5: Apertura sbarra
-
-            schermo.setText(
-
-                "SBARRA",
-
-                "APERTURA",
-
-                sigla_casello_corrente.upper(),
-
-                "",
-
-                "ARRIVEDERCI"
-
-            )
-
-            sbarra.open_bar()
-
-            time.sleep(3)
-
-            sbarra.close_bar()
-
-
-
-            # Cambio stato
-
-            modalita_stato = 0
-
-            schermo.setText(
-
-                "CARICAMENTO",
-
-                "DATI INGRESSO",
-
-                "ATTENDERE",
-
-            )
-
-            time.sleep(1)
-
-            carica_dati_casello_completi(id_casello_ingresso)
-
-            schermo_base()
-    
-    if telepass.veicolo_rilevato():
-
-        print(f"\n🚗 Veicolo {targa_veicolo}!")
-
-        
-
-        if modalita_stato == 0:  # INGRESSO
-
-            # Fase 1: Rilevamento
-
-            schermo.setText(
-
-                "VEICOLO",
-
-                "RILEVATO",
-
-                sigla_casello_corrente.upper(),
-
-                f"CORSIA {numero_corsia}",
-
-                "ATTENDERE..."
-
-            )
-
-            time.sleep(1.2)
-
-            
-
-            # Fase 2: Elaborazione foto
-
-            schermo.setText(
-
-                "ELABORAZIONE",
-
-                "FOTO TARGA",
-
-                sigla_casello_corrente.upper(),
-
-                f"T:{id_totem_corrente}",
-
-                "..."
-
-            )
-
-            time.sleep(0.8)
-
-            
-
-            # Fase 3: Invio dati al server
-
-            payload = {
-
-                "idTotem": id_totem_corrente,
-
-                "targa": targa_veicolo,
-
-                "idCasello": id_casello_ingresso,
-
-                "idCorsia": numero_corsia,
-
-                "tipoCorsia": tipo_corsia,
-
-                "verso": "INGRESSO"
-
-            }
-
-            broker_mqtt.publish("telecamera/fotoScattata", ujson.dumps(payload))
-
-            print("📤 Dati inviati al server...")
-
-            
-
-            # Fase 4: Conferma
-
-            schermo.setText(
-
-                "INGRESSO OK",
-
-                "DATI SALVATI",
-
-                sigla_casello_corrente.upper(),
-
-                f"TARGA: {targa_veicolo[-7:]}",
-
-                "BUON VIAGGIO"
-
-            )
-
-            time.sleep(1.5)
-
-            
-
-            # Fase 5: Apertura sbarra
-
-            schermo.setText(
-
-                "SBARRA",
-
-                "APERTURA",
-
-                sigla_casello_corrente.upper(),
-
-                "",
-
-                "PASSARE"
-
-            )
-
-            sbarra.open_bar()
-
-            time.sleep(3)
-
-            sbarra.close_bar()
-
-            
-
-            # Cambio stato
-
-            modalita_stato = 1
-
-            schermo.setText(
-
-                "CARICAMENTO",
-
-                "DATI USCITA",
-
-                "ATTENDERE",
-
-                "",
-
-                "..."
-
-            )
-
-            time.sleep(1)
-
-            carica_dati_casello_completi(id_casello_uscita)
-
-            schermo_base()
-
-
-
-        else:  # USCITA
-
-            # Fase 1: Rilevamento
-
-            schermo.setText(
-
-                "VEICOLO",
-
-                "RILEVATO",
-
-                sigla_casello_corrente.upper(),
-
-                f"CORSIA {numero_corsia}",
-
-                "ATTENDERE..."
-
-            )
-
-            time.sleep(1.2)
-
-            
-
-            # Fase 2: Check database
-
-            schermo.setText(
-
-                "CONTROLLO",
-
-                "INGRESSO",
-
-                sigla_casello_corrente.upper(),
-
-                f"ID TOTEM:{id_totem_corrente}",
-
-                "..."
-
-            )
-
-            time.sleep(0.8)
-
-            
-
-            payload_biglietto = {
-
-                "targa": targa_veicolo,
-
-                "idCasello": id_casello_uscita,
-
-                "idCorsia": numero_corsia,
-
-                "tipoCorsia": tipo_corsia,
-
-                "verso": "USCITA"
-
-            }
-
-            risposta = gestore_mqtt.richiedi("telecamera/ottieniTarga", payload_biglietto, f"veicolo/{targa_veicolo}/risposta")
-
-            
-
-            id_biglietto = 6
-
-            if risposta:
-
-                try:
-
-                    if isinstance(risposta, str): risposta = ujson.loads(risposta)
-
-                    id_biglietto = risposta.get('idBiglietto') or risposta.get('id') or 6
-
-                except:
-
-                    pass
-
-            
-
-            # Fase 3: Calcolo pedaggio
-
-            schermo.setText(
-
-                "CALCOLO",
-
-                "PEDAGGIO",
-
-                sigla_casello_corrente.upper(),
-
-                "ID BIGLIETTO:{id_biglietto}",
-
-                "ATTENDERE..."
-
-            )
-
-            time.sleep(1)
-
-            
-
-            payload_pagamento = {
-
-                "idBiglietto": id_biglietto,
-
-                "caselloOut": id_casello_uscita,
-
-                "isTelepass": True,
-
-                "targa": targa_veicolo,
-
-                "corsia": numero_corsia,
-
-                "tipoCorsia": tipo_corsia,
-
-                "verso": "USCITA",
-
-                "idTotem": id_totem_corrente
-
-            }
-
-            broker_mqtt.publish("totem/pagaBiglietto", ujson.dumps(payload_pagamento))
-
-            print("📤 Pagamento inviato...")
-
-            time.sleep(0.8)
-
-            
-
-            # Fase 4: Conferma pagamento
-
-            schermo.setText(
-
-                "PAGAMENTO",
-
-                "CONFERMATO",
-
-                sigla_casello_corrente.upper(),
-
-                "ID BIGLIETTO :{id_biglietto}",
-
-                "GRAZIE"
-
-            )
-
-            time.sleep(1.8)
-
-            
-
-            # Fase 5: Apertura sbarra
-
-            schermo.setText(
-
-                "SBARRA",
-
-                "APERTURA",
-
-                sigla_casello_corrente.upper(),
-
-                "",
-
-                "ARRIVEDERCI"
-
-            )
-
-            sbarra.open_bar()
-
-            time.sleep(3)
-
-            sbarra.close_bar()
-
-            
-
-            # Cambio stato
-
-            modalita_stato = 0
-
-            schermo.setText(
-
-                "CARICAMENTO",
-
-                "DATI INGRESSO",
-
-                "ATTENDERE",
-
-            )
-
-            time.sleep(1)
-
-            carica_dati_casello_completi(id_casello_ingresso)
-
-            schermo_base()
-
-    
+        if modalita_stato == 0:
+            gestisci_ingresso()
+        else:
+            gestisci_uscita()
 
     time.sleep(0.1)
-

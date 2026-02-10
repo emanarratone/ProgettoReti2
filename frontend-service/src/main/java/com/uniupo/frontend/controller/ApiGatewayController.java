@@ -102,8 +102,14 @@ public class ApiGatewayController {
 
     @GetMapping("/fines/list-joined")
     public ResponseEntity<?> getJoinedFines() {
-        // Questo inoltra la richiesta all'endpoint dell'Aggregator che abbiamo scritto prima
         String url = webConfig.getMultaUrl() + "/fines/list-joined";
+        logger.info("Gateway → Inoltro richiesta a Multa Service (Aggregator): {}", url);
+        return forwardGet(url);
+    }
+
+    @GetMapping("/fines/list-joined-full")
+    public ResponseEntity<?> getJoinedFullFines() {
+        String url = webConfig.getMultaUrl() + "/fines/gestione-completa";
         logger.info("Gateway → Inoltro richiesta a Multa Service (Aggregator): {}", url);
         return forwardGet(url);
     }
@@ -123,7 +129,7 @@ public class ApiGatewayController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Object credentials, jakarta.servlet.http.HttpSession session) {
         ResponseEntity<?> response = forwardPost(webConfig.getUtenteUrl() + "/users/login", credentials);
-        
+
         // Se login OK, salva in sessione
         if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
             try {
@@ -141,7 +147,7 @@ public class ApiGatewayController {
                 logger.error("Errore nel salvataggio sessione: {}", e.getMessage());
             }
         }
-        
+
         return response;
     }
 
@@ -224,12 +230,12 @@ public class ApiGatewayController {
     public ResponseEntity<?> getSession(jakarta.servlet.http.HttpSession session) {
         Object user = session.getAttribute("user");
         Boolean isAdmin = (Boolean) session.getAttribute("isAdmin");
-        
+
         if (user != null) {
             return ResponseEntity.ok(Map.of(
-                "loggedIn", true,
-                "username", user,
-                "isAdmin", isAdmin != null ? isAdmin : false
+                    "loggedIn", true,
+                    "username", user,
+                    "isAdmin", isAdmin != null ? isAdmin : false
             ));
         }
         return ResponseEntity.ok(Map.of("loggedIn", false));
@@ -334,12 +340,8 @@ public class ApiGatewayController {
         );
     }
 
-    // KPI endpoints that compute from microservices when legacy not present
     @GetMapping("/fines")
     public ResponseEntity<?> getFinesCount() {
-        // try legacy first
-        ResponseEntity<?> legacy = forwardGet(webConfig.getAutostradaUrl() + "/api/fines");
-        if (legacy.getStatusCode().is2xxSuccessful()) return legacy;
 
         try {
             ResponseEntity<Object[]> listResp = restTemplate.getForEntity(webConfig.getMultaUrl() + "/fines", Object[].class);
@@ -561,5 +563,15 @@ public class ApiGatewayController {
             logger.error("Impossibile caricare la mappa dei caselli: {}", e.getMessage());
         }
         return tollMap;
+    }
+
+    @GetMapping("/highways/top5")
+    public ResponseEntity<?> getTop5Highways() {
+        // Inoltra la richiesta all'endpoint /highways/summary del microservizio Autostrada
+        String url = webConfig.getAutostradaUrl() + "/highways/summary";
+
+        logger.info("Gateway → Inoltro richiesta aggregata a Autostrada Service: {}", url);
+
+        return forwardGet(url);
     }
 }

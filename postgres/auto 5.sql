@@ -1,0 +1,47 @@
+-- AUTO (targa naturale, niente identity)
+CREATE TABLE AUTO (
+    targa          VARCHAR(10) PRIMARY KEY,
+    classe_veicolo VARCHAR(20) NOT NULL
+);
+
+-- AUTO
+INSERT INTO AUTO (targa, classe_veicolo) VALUES
+  ('AB123CD', 'A'),
+  ('EF456GH', 'B'),
+  ('IJ789KL', 'C'),
+  ('MN101OP', 'D'),
+  ('QR202ST', 'E'),
+  ('UV303WX', 'A'),
+  ('YZ404AA', 'B'),
+  ('BB505CC', 'C'),
+  ('DD606EE', 'D'),
+  ('FF707GG', 'E'),
+  ('HH808II', 'A'),
+  ('JJ909KK', 'B'),
+  ('LL010MM', 'C'),
+  ('NN111PP', 'D'),
+  ('QQ212RR', 'E'),
+  ('SS313TT', 'A'),
+  ('UU414VV', 'B'),
+  ('WW515XX', 'C'),
+  ('YY616ZZ', 'D'),
+  ('AC717BD', 'E'),
+  ('CE818DF', 'A'),
+  ('EG919FH', 'B'),
+  ('GI020HJ', 'C'),
+  ('IK121JL', 'D'),
+  ('LM222NO', 'E'),
+  ('OP323QR', 'A'),
+  ('RS424TU', 'B'),
+  ('UV525WX', 'C'),
+  ('XY626ZA', 'D'),
+  ('AZ727BC', 'E'),
+  ('CD828EF', 'A'),
+  ('GH929IJ', 'B'),
+  ('KL030MN', 'C'),
+  ('NP131QR', 'D'),
+  ('ST232UV', 'E'),
+  ('WX333YZ', 'A'),
+  ('BA434CD', 'B'),
+  ('DE535FG', 'C'),
+  ('HI636JK', 'D');

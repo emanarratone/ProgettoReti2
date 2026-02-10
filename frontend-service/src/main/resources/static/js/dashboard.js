@@ -231,61 +231,51 @@ document.getElementById('logoutBtn').addEventListener('click', function () {
                 }
             });
         });
-// Tabella Autostrada: Regione – Autostrada – Casello
-fetch('/api/tolls')
+
+fetch('/api/highways/top5')
   .then(res => {
-    if (!res.ok) throw new Error('Errore HTTP: ' + res.status);
+    // Se lo stato è 500, non procedere al .json() ma lancia errore
+    if (!res.ok) throw new Error('Errore Server: ' + res.status);
     return res.json();
   })
   .then(data => {
-    if (data.error) {
-      console.error("Errore API /api/tolls:", data.error);
+    const tbody = document.getElementById('highwaysTable');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    // PROTEZIONE: Controlla se data è un array
+    if (!Array.isArray(data)) {
+      console.error("I dati ricevuti non sono un array:", data);
+      tbody.innerHTML = '<tr><td colspan="2" class="text-center text-warning">Dati non validi</td></tr>';
       return;
     }
 
-    const tbody = document.getElementById('highwaysTable');
-    if (!tbody) return;
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">Nessuna autostrada</td></tr>';
+      return;
+    }
 
-// Joint tra regione e autostrada
-Promise.all([
-  fetch('/api/highways').then(res => res.json()),
-  fetch('/api/regions').then(res => res.json())
-]).then(([highways, regions]) => {
-
-console.log(highways)
-console.log(regions)
-
-  // Crea un dizionario delle regioni per accesso rapido { id: nome }
-  const regionMap = {};
-  regions.forEach(r => regionMap[r.id] = r.nome);
-
-  const tbody = document.getElementById('highwaysTable');
-  tbody.innerHTML = '';
-
-  highways.forEach(row => {
-    const nomeRegione = regionMap[row.idRegione] || 'Sconosciuta';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${nomeRegione}</td>
-      <td>
-        <span>${row.sigla}</span>
-      </td>
-
-    `;
-    tbody.appendChild(tr);
-  });
-}).catch(err => console.error("Errore nel join:", err));
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="badge bg-primary">${row.regioneNome || 'N/D'}</span></td>
+        <td><strong>${row.sigla || '???'}</strong></td>
+      `;
+      tbody.appendChild(tr);
+    });
   })
-  .catch(err => console.error("Errore fetch /api/tolls:", err));
-
-// Tabella Multe: ultimi 7 giorni (JOIN tra multa e pagamento)
+  .catch(err => {
+    console.error("Errore caricamento autostrade:", err);
+    const tbody = document.getElementById('highwaysTable');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="2" class="text-danger">Servizio temporaneamente non disponibile</td></tr>';
+  });
+// 2. Tabella Multe: ultimi 7 giorni (JOIN tra multa e pagamento)
 fetch('/api/fines/list-joined')
   .then(res => {
     if (!res.ok) throw new Error('Errore nel recupero dati aggregati');
     return res.json();
   })
   .then(data => {
-    console.log(data)
     const tbody = document.getElementById('finesTable');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -295,11 +285,8 @@ fetch('/api/fines/list-joined')
       return;
     }
 
-    // Mostriamo i risultati (il backend ha già filtrato i match o applicato il fallback)
     data.slice(0, 5).forEach((row) => {
       const tr = document.createElement('tr');
-
-      // Determiniamo lo stile in base allo stato restituito dal microservizio
       const isPagata = row.stato === 'PAGATO';
       const statoClass = isPagata ? 'text-success' : 'text-danger';
 
@@ -308,7 +295,7 @@ fetch('/api/fines/list-joined')
         <td><span class="badge bg-light text-dark border">${row.targa}</span></td>
         <td>€ ${Number(row.importo).toFixed(2)}</td>
         <td><span class="${statoClass} fw-bold">${row.stato}</span></td>
-        <td class="text-muted small">${row.timestampOut}</td>
+        <td class="text-muted small">${row.timestampOut || '-'}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -318,19 +305,9 @@ fetch('/api/fines/list-joined')
     const tbody = document.getElementById('finesTable');
     if(tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Errore di connessione al Gateway</td></tr>';
   });
-// Funzione helper per validare e formattare le date
-function formatSafeDate(dateVal) {
-    if (!dateVal) return null;
-    const d = new Date(dateVal);
-    return isNaN(d.getTime()) ? null : d.toLocaleString('it-IT');
-}
 
-/**
- * Gestione Ricerca Veicoli
- */
-/**
- * Sezione Ricerca Veicolo
- */
+// --- HELPER E RICERCA VEICOLI ---
+
 (function() {
     const searchBtn = document.getElementById('searchPlateBtn');
     const inputPlate = document.getElementById('searchPlate');
@@ -349,19 +326,12 @@ function formatSafeDate(dateVal) {
         fetch(`/api/vehicles/history?plate=${plate}`)
             .then(res => res.json())
             .then(data => {
-                console.log("[DEBUG] Dati ricevuti:", data); // Controlla qui l'importo
                 infoBox.innerHTML = `Trovati <strong>${data.length}</strong> record per ${plate}`;
-
                 data.forEach((row) => {
                      const tr = document.createElement('tr');
-
-                     // Formattazione
                      const dIn = row.dataIngresso ? new Date(row.dataIngresso).toLocaleString('it-IT') : '-';
                      const dOut = row.dataUscita ? new Date(row.dataUscita).toLocaleString('it-IT') : '---';
-
-                     // Gestione importo (se null metti 0)
                      const imp = row.importo ? parseFloat(row.importo).toFixed(2) : "0.00";
-
                      const badgeClass = row.stato === 'PAGATO' ? 'bg-success' : 'bg-warning text-dark';
 
                      tr.innerHTML = `
