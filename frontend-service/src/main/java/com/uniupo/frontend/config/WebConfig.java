@@ -10,7 +10,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    // Caricamento degli URL dai placeholder definiti in application.properties
     @Value("${backend.autostrada.url}")
     private String autostradaUrl;
 
@@ -41,10 +40,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${backend.utente.url}")
     private String utenteUrl;
 
-    /**
-     * Configurazione CORS per HTTPS.
-     * Permette le chiamate provenienti dal frontend sicuro verso i microservizi.
-     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")

@@ -10,9 +10,7 @@ public class CorsiaDTO {
     private Corsia.Tipo tipo;
     private Boolean isClosed;
 
-    public CorsiaDTO() {
-        // required by Jackson
-    }
+    public CorsiaDTO() {}
 
     public CorsiaDTO(Integer casello, Integer numCorsia, Corsia.Verso verso, Corsia.Tipo tipo) {
         this.casello = casello;

@@ -62,12 +62,10 @@ public class DispositiviController {
     public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody Map<String, Object> body) {
         try {
             Boolean status;
-            // Se arriva "ATTIVO"/"INATTIVO" come stringa
             if (body.containsKey("stato")) {
                 String s = String.valueOf(body.get("stato"));
                 status = "ATTIVO".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);
             }
-            // Se arriva come booleano "status"
             else if (body.containsKey("status")) {
                 status = Boolean.TRUE.equals(body.get("status"));
             } else {

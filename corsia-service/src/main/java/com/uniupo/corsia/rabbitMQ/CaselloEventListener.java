@@ -24,11 +24,10 @@ public class CaselloEventListener {
     public void handleCaselloDeleted(Integer idCasello) {
         System.out.println("Ricevuto evento: eliminazione casello ID " + idCasello);
 
-        // Cerco tutte le corsie del casello
         List<Corsia> corsie = repo.findByCasello(idCasello);
 
         for (Corsia c : corsie) {
-            // Messaggio composto per Dispositivi-Service
+
             String compositeId = idCasello + ":" + c.getNumCorsia();
 
             System.out.println("Propago eliminazione per corsia: " + compositeId);

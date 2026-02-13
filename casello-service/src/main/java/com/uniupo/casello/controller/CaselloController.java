@@ -18,8 +18,6 @@ public class CaselloController {
         this.service = service;
     }
 
-    // ---------------- GLOBAL /tolls (optional) ----------------
-
     @GetMapping("/tolls")
     public ResponseEntity<List<CaselloDTO>> getTolls() {
         return ResponseEntity.ok(service.getAll());

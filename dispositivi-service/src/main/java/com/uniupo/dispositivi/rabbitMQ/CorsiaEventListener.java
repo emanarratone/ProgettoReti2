@@ -18,7 +18,6 @@ public class CorsiaEventListener {
     @Transactional
     public void handleCorsiaDeleted(String compositeId) {
         try {
-            // 1. Smontiamo il messaggio (es. "10:2")
             String[] parts = compositeId.split(":");
             if (parts.length != 2) return;
 
@@ -28,7 +27,6 @@ public class CorsiaEventListener {
             System.out.println("PULIZIA FINALE: Eliminazione dispositivi per Casello "
                     + idCasello + ", Corsia " + numCorsia);
 
-            // 2. Eseguiamo l'eliminazione dei sensori/sbarre nel DB locale
             repo.deleteByCaselloAndCorsia(idCasello, numCorsia);
 
         } catch (Exception e) {

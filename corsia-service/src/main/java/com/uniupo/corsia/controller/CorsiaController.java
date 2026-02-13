@@ -54,7 +54,6 @@ public class CorsiaController {
                                         @PathVariable Integer numCorsia,
                                         @RequestBody Map<String, Object> body) {
         try {
-            // Leggi i campi dal JSON come li manda il front-end
             String versoStr = (String) body.getOrDefault("verso", body.get("corsiaVerso"));
             String tipoStr  = (String) body.getOrDefault("tipo_corsia", body.get("corsiaTipo"));
             Object chiusoObj = body.getOrDefault("chiuso", body.getOrDefault("corsiaChiuso", false));
@@ -83,7 +82,6 @@ public class CorsiaController {
             else if (chiusoObj instanceof String s) chiuso = Boolean.parseBoolean(s);
             else chiuso = false;
 
-            // Costruisci un DTO minimale da passare al service
             CorsiaDTO dto = new CorsiaDTO(idCasello, numCorsia, verso, tipo, chiuso);
 
             CorsiaDTO updated = service.update(idCasello, numCorsia, dto);
@@ -109,8 +107,6 @@ public class CorsiaController {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
-
-    // -------- endpoint usati da gateway: /tolls/{idCasello}/lanes --------
 
     @GetMapping("/tolls/{idCasello}/lanes")
     public ResponseEntity<?> getLanesForToll(@PathVariable Integer idCasello) {

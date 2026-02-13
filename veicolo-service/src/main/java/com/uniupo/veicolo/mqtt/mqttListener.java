@@ -51,18 +51,15 @@ public class mqttListener {
 
     private void handleRichiestaVeicolo(String topic, String message) {
         try {
-            // 1. Python invia un JSON, quindi dobbiamo estrarre il campo "targa"
+            //Dobbiamo estrarre il campo "targa"
             com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(message);
             String targaRichiesta = root.get("targa").asText();
 
             System.out.println("[VEICOLO-SERVICE] ESP richiede info per targa: " + targaRichiesta);
 
-            // 2. Cerco nel DB
             repo.findById(targaRichiesta).ifPresentOrElse(veicolo -> {
                 try {
                     String jsonRisposta = objectMapper.writeValueAsString(veicolo);
-
-                    // 3. COSTRUISCO IL TOPIC DINAMICO (deve coincidere con Python)
 
                     String topicRispostaDinamico = "veicolo/" + targaRichiesta + "/risposta";
 
@@ -105,7 +102,6 @@ public class mqttListener {
             // Recupera la classe dal proprio DB locale tramite targa
             String classe = repo.findByTarga(info.getTarga()).get().getTipoVeicolo().toString();
 
-            // Creiamo un DTO che includa la classe
             ElaboraDistanzaEvent arricchitoClasse = new ElaboraDistanzaEvent(
                     info.getTarga(),
                     info.getCasello_in().toString(), // Per ora passiamo l'ID come stringa

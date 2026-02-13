@@ -99,11 +99,8 @@ public class MultaController {
     @GetMapping("/list-joined")
     @CircuitBreaker(name = "paymentService", fallbackMethod = "fallbackPayments")
     public ResponseEntity<List<MultaDTO>> getJoinedFines() {
-        // 1. Dati locali (DB Multe)
         List<Multa> fines = service.getAll();
 
-        // 2. Dati remoti (Microservizio Pagamenti)
-        // Nel MultaController del servizio Multa (porta 8088)
         List<PagamentoDTO> payments = webClient.get()
                 .uri("https://localhost:8087/payments")
                 .retrieve()
@@ -111,7 +108,6 @@ public class MultaController {
                 .collectList()
                 .block(Duration.ofSeconds(3));
 
-        // 3. Merge
         System.out.println(mergeData(fines, payments));
         return ResponseEntity.ok(mergeData(fines, payments));
     }
@@ -141,7 +137,6 @@ public class MultaController {
                 .collect(Collectors.toList());
     }
 
-    // Il fallback deve avere la stessa firma (ResponseEntity<List<MultaDTO>>)
     public ResponseEntity<List<MultaDTO>> fallbackPayments(Exception e) {
         System.err.println("Fallback attivato: il servizio pagamenti è offline.");
         List<MultaDTO> localOnly = service.getAll().stream()
@@ -153,22 +148,20 @@ public class MultaController {
     @GetMapping("/gestione-completa")
     @CircuitBreaker(name = "fullAggregation", fallbackMethod = "fallbackGestione")
     public ResponseEntity<List<MultaGestionaleDTO>> getGestioneCompleta() {
-        // 1. Dati locali (DB Multe)
+        //Dati locali (DB Multe)
         List<Multa> fines = service.getAll();
 
-        // 2. Recupero dati remoti dai microservizi esterni
+        //Recupero dati remoti dai microservizi esterni
         List<Map<String, Object>> payments = fetchData("https://localhost:8087/payments");
         List<Map<String, Object>> tolls = fetchData("https://localhost:8082/tolls");
         List<Map<String, Object>> highways = fetchData("https://localhost:8081/highways");
         List<Map<String, Object>> regions = fetchData("https://localhost:8084/regions");
 
-        // 3. Merge e Ritorno
         List<MultaGestionaleDTO> merged = mergeFullData(fines, payments, tolls, highways, regions);
         return ResponseEntity.ok(merged);
     }
 
 
-    // Helper per pulire il codice
     private List<Map<String, Object>> fetchData(String url) {
         return webClient.get().uri(url).retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
@@ -181,13 +174,13 @@ public class MultaController {
 
         List<MultaGestionaleDTO> fallbackList = service.getAll().stream()
                 .map(f -> new MultaGestionaleDTO(
-                        f.getId(),             // ID Multa (Locale)
-                        "SERVIZIO OFFLINE",    // Nome Regione (Esterno)
-                        "N/D",                 // Nome Casello (Esterno)
-                        f.getTarga(),          // Targa (Locale)
-                        "N/D",                 // Data Pagamento (Esterno)
-                        f.getImporto(),        // Importo (Locale)
-                        f.getPagato() ? "PAGATA (L)" : "DA PAGARE" // Stato (Locale)
+                        f.getId(),             // ID Multa
+                        "SERVIZIO OFFLINE",    // Nome Regione
+                        "N/D",                 // Nome Casello
+                        f.getTarga(),          // Targa
+                        "N/D",                 // Data Pagamento
+                        f.getImporto(),        // Importo
+                        f.getPagato() ? "PAGATA (L)" : "DA PAGARE" // Stato
                 ))
                 .collect(Collectors.toList());
 
@@ -201,7 +194,6 @@ public class MultaController {
             List<Map<String, Object>> highways,
             List<Map<String, Object>> regions) {
 
-        // Creazione delle mappe di lookup (come prima)
         Map<Integer, Map<String, Object>> payMap = payments.stream()
                 .collect(Collectors.toMap(p -> (Integer)p.get("idBiglietto"), p -> p, (a,b)->a));
         Map<Integer, Map<String, Object>> tollMap = tolls.stream()
@@ -213,24 +205,22 @@ public class MultaController {
 
         // Trasformazione con FILTRO (Inner Join)
         return fines.stream()
-                .filter(f -> payMap.containsKey(f.getIdBiglietto())) // 1. Scarta se non c'è pagamento
+                .filter(f -> payMap.containsKey(f.getIdBiglietto()))
                 .map(f -> {
                     Map<String, Object> p = payMap.get(f.getIdBiglietto());
                     Integer idC = (Integer) p.get("caselloOut");
 
-                    // 2. Verifica se esiste il casello, l'autostrada e la regione
                     Map<String, Object> t = tollMap.get(idC);
-                    if (t == null) return null; // Scarta se il casello non esiste
-
+                    if (t == null) return null;
                     Integer idA = (Integer) t.get("idAutostrada");
                     Map<String, Object> h = highwayMap.get(idA);
-                    if (h == null) return null; // Scarta se l'autostrada non esiste
+                    if (h == null) return null;
 
                     Integer idR = (Integer) h.get("idRegione");
                     String nomeRegione = regionMap.get(idR);
-                    if (nomeRegione == null) return null; // Scarta se la regione non esiste
+                    if (nomeRegione == null) return null;
 
-                    // Se siamo arrivati qui, tutti i pezzi del puzzle esistono
+
                     MultaGestionaleDTO dto = new MultaGestionaleDTO();
                     dto.setId(f.getId());
                     dto.setTarga(f.getTarga());

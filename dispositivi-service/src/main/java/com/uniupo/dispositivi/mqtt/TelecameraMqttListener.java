@@ -16,11 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Listener MQTT per le telecamere.
- * Sottoscrive il topic "utente/generaBiglietto" e quando riceve una richiesta,
- * simula lo scatto di una foto e pubblica l'evento "telecamera/fotoScattata"
- */
+
 @Component
 public class TelecameraMqttListener {
 

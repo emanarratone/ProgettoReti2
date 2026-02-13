@@ -11,10 +11,8 @@ public class MultaDTO {
     private String timestampOut;
     private Long idBiglietto;
 
-    // Costruttore vuoto per Jackson
     public MultaDTO() {}
 
-    // Costruttore per Join (successo)
     public MultaDTO(Long id, String targa, Double importo, String stato, String timestampOut, Long idBiglietto) {
         this.id = id;
         this.targa = targa;
@@ -24,7 +22,6 @@ public class MultaDTO {
         this.idBiglietto = idBiglietto;
     }
 
-    // Costruttore per Fallback (accetta l'entità Multa originale)
     public MultaDTO(Multa f, String statoDefault) {
         this.id = f.getId() != null ? f.getId().longValue() : null;
         this.targa = f.getTarga();

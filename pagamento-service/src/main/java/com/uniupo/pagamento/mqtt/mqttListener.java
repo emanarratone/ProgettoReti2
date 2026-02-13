@@ -181,7 +181,7 @@ public class mqttListener {
             //ogni 10 secondi corrispondono al limite di velocità con tolleranza es: 105km/h -> 105km percorsi in 10 second
             double tempoMinimoConsentito = (distanzaKm / limiteConTolleranza) * 10;
 
-            System.out.println(secondiEffettivi + " " + tempoMinimoConsentito + " " + targa);
+            System.out.println("Secondi effettivi :" + secondiEffettivi + " Tempo minimo :" + tempoMinimoConsentito + " targa : " + targa);
 
 
             if (secondiEffettivi < tempoMinimoConsentito) {

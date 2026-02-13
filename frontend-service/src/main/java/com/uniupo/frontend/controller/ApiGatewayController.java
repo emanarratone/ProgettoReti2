@@ -130,7 +130,6 @@ public class ApiGatewayController {
     public ResponseEntity<?> login(@RequestBody Object credentials, jakarta.servlet.http.HttpSession session) {
         ResponseEntity<?> response = forwardPost(webConfig.getUtenteUrl() + "/users/login", credentials);
 
-        // Se login OK, salva in sessione
         if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
             try {
                 @SuppressWarnings("unchecked")
@@ -154,10 +153,8 @@ public class ApiGatewayController {
     @GetMapping("/vehicles/history")
     public ResponseEntity<?> getVehicleHistory(@RequestParam String plate) {
         try {
-            // 1. Carica nomi caselli
             Map<Integer, String> tollNames = fetchTollMap();
 
-            // 2. Recupera Biglietti
             String ticketUrl = webConfig.getBigliettoUrl() + "/tickets/targa/" + plate;
             ResponseEntity<List<Map<String, Object>>> ticketsResp = restTemplate.exchange(
                     ticketUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<Map<String, Object>>>() {});
@@ -169,18 +166,15 @@ public class ApiGatewayController {
                 for (Map<String, Object> t : tickets) {
                     Map<String, Object> row = new HashMap<>();
 
-                    // Biglietto ID
                     Object idBObj = t.get("id_biglietto") != null ? t.get("id_biglietto") : t.get("idBiglietto");
                     Integer idB = ((Number) idBObj).intValue();
 
-                    // TRADUZIONE CASELLO INGRESSO
                     Object idIn = t.get("casello_in") != null ? t.get("casello_in") : t.get("caselloIn");
                     String nomeIn = tollNames.getOrDefault(((Number) idIn).intValue(), "Casello " + idIn);
 
                     row.put("dataIngresso", t.get("timestamp_in") != null ? t.get("timestamp_in") : t.get("timestampIn"));
                     row.put("siglaIngresso", nomeIn);
 
-                    // 3. Recupero Pagamento
                     try {
                         String pUrl = webConfig.getPagamentoUrl() + "/payments/biglietto/" + idB;
                         ResponseEntity<List<Map<String, Object>>> pResp = restTemplate.exchange(
@@ -190,7 +184,6 @@ public class ApiGatewayController {
                         if (payments != null && !payments.isEmpty()) {
                             Map<String, Object> p = payments.get(0);
 
-                            // TRADUZIONE CASELLO USCITA
                             Object idOut = p.get("casello_out") != null ? p.get("casello_out") : p.get("caselloOut");
                             String nomeOut = tollNames.getOrDefault(((Number) idOut).intValue(), "Casello " + idOut);
 
@@ -249,16 +242,13 @@ public class ApiGatewayController {
 
     @GetMapping("/tolls")
     public ResponseEntity<?> getTolls() {
-        // Cambiato da "/toll" a "/tolls" per coincidere con il microservizio
         String url = webConfig.getCaselloUrl() + "/tolls";
         logger.info("Forwarding to Casello Service: {}", url);
         return forwardGet(url);
     }
 
-    // 2. Endpoint per la tabella Multe (usato da fetch('/api/fines/list'))
     @GetMapping("/fines/list")
     public ResponseEntity<?> getFinesList() {
-        // Inoltra alla lista completa delle multe
         return forwardGet(webConfig.getMultaUrl() + "/fines");
     }
 
@@ -535,10 +525,8 @@ public class ApiGatewayController {
     private Map<Integer, String> fetchTollMap() {
         Map<Integer, String> tollMap = new HashMap<>();
         try {
-            // Costruisce l'URL puntando all'endpoint globale dei caselli
             String tollUrl = webConfig.getCaselloUrl() + "/tolls";
 
-            // Esegue la chiamata REST per ottenere la lista di tutti i caselli
             ResponseEntity<List<Map<String, Object>>> tollsResp = restTemplate.exchange(
                     tollUrl,
                     HttpMethod.GET,
@@ -548,7 +536,6 @@ public class ApiGatewayController {
 
             if (tollsResp.getBody() != null) {
                 for (Map<String, Object> t : tollsResp.getBody()) {
-                    // Gestisce la mappatura cercando l'ID sia come 'id_casello' che come 'idCasello'
                     Object idObj = t.get("id_casello") != null ? t.get("id_casello") : t.get("idCasello");
                     if (idObj instanceof Number) {
                         int idVal = ((Number) idObj).intValue();
@@ -559,7 +546,6 @@ public class ApiGatewayController {
             }
             logger.info("Mappa caselli caricata con successo: {} elementi", tollMap.size());
         } catch (Exception e) {
-            // Se il servizio caselli è offline, il sistema logga l'errore e restituisce una mappa vuota
             logger.error("Impossibile caricare la mappa dei caselli: {}", e.getMessage());
         }
         return tollMap;
@@ -567,7 +553,6 @@ public class ApiGatewayController {
 
     @GetMapping("/highways/top5")
     public ResponseEntity<?> getTop5Highways() {
-        // Inoltra la richiesta all'endpoint /highways/summary del microservizio Autostrada
         String url = webConfig.getAutostradaUrl() + "/highways/summary";
 
         logger.info("Gateway → Inoltro richiesta aggregata a Autostrada Service: {}", url);

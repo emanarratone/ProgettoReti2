@@ -8,16 +8,10 @@ import com.uniupo.autostrada.repository.AutostradaRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -65,20 +59,17 @@ public class AutostradaService {
 
     @Transactional
     public void delete(Integer id) {
-        // 1. Verifica esistenza
+
         if (!repo.existsById(id)) {
             throw new IllegalArgumentException("Autostrada non trovata");
         }
 
-        // 2. Notifica ai CASELLI (RabbitMQ) - Questo è il cuore della cascata
-        // Deve essere fatto PRIMA dell'eliminazione locale o garantito dalla transazione
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.AUTOSTRADA_EXCHANGE,
                 RabbitMQConfig.AUTOSTRADA_ROUTING_KEY,
                 id
         );
 
-        // 3. Eliminazione locale (DB Autostrada)
         repo.deleteById(id);
     }
 
@@ -97,15 +88,13 @@ public class AutostradaService {
     @RabbitListener(queues = "regione.deleted.queue")
     @Transactional
     public void onRegioneDeleted(Integer idRegione) {
-        // 1. Trova tutte le autostrade appartenenti a quella regione
+
         List<Autostrada> autostrade = repo.findByIdRegioneOrderBySiglaAsc(idRegione);
 
         for (Autostrada a : autostrade) {
-            // 2. Pubblica l'evento per il livello successivo (Casello)
-            // Usiamo l'ID dell'autostrada come messaggio
+
             rabbitTemplate.convertAndSend("autostrada.exchange", "autostrada.deleted", a.getId());
 
-            // 3. Elimina l'autostrada localmente
             repo.delete(a);
         }
     }

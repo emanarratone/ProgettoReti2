@@ -40,7 +40,6 @@ public class UtenteService {
 
     @Transactional
     public Utente create(Utente utente) {
-        // Hash della password con BCrypt
         String hashedPassword = BCrypt.hashpw(utente.getPassword(), BCrypt.gensalt());
         utente.setPassword(hashedPassword);
         return repository.save(utente);

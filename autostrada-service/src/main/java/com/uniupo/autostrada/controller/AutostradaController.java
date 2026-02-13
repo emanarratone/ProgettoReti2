@@ -95,18 +95,15 @@ public class AutostradaController {
     @GetMapping("/summary")
     @CircuitBreaker(name = "regioneService", fallbackMethod = "fallbackSummary")
     public ResponseEntity<List<Map<String, Object>>> getHighwaysSummary() {
-        // 1. Dati locali (DB Autostrada) - Prendiamo le 5 uniche
         List<AutostradaDTO> highways = service.getTop5Unique();
 
-        // 2. Recupero dati remoti (Nomi Regioni) usando l'helper fetchData
-        // Assicurati che la porta 8084 sia quella del microservizio Regione
         List<Map<String, Object>> regions = fetchData("https://localhost:8084/regions");
 
-        // 3. Merge e Ritorno
+
         return ResponseEntity.ok(mergeHighwaysAndRegions(highways, regions));
     }
 
-    // Helper per pulire il codice (esattamente come nel MultaController)
+
     private List<Map<String, Object>> fetchData(String url) {
         return webClient.get()
                 .uri(url)
@@ -119,7 +116,6 @@ public class AutostradaController {
             List<AutostradaDTO> highways,
             List<Map<String, Object>> regions) {
 
-        // Mappa di lookup ID -> Nome Regione
         Map<Integer, String> regionMap = regions.stream()
                 .collect(Collectors.toMap(
                         r -> (Integer) r.get("id"),
@@ -137,7 +133,6 @@ public class AutostradaController {
                 .collect(Collectors.toList());
     }
 
-    // Fallback se il servizio Regioni è offline
     public ResponseEntity<List<Map<String, Object>>> fallbackSummary(Exception e) {
         logger.error("🚨 Fallback Autostrada: Servizio Regioni offline. Dettaglio: {}", e.getMessage());
 

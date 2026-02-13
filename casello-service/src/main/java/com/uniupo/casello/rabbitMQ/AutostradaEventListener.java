@@ -26,13 +26,11 @@ public class AutostradaEventListener {
     public void handleAutostradaDeleted(Integer idAutostrada) {
         System.out.println("Ricevuto evento: eliminazione autostrada " + idAutostrada);
 
-        // Trovo i caselli di questa autostrada
         List<Casello> caselli = repo.findByIdAutostradaOrderBySiglaAsc(idAutostrada);
 
         for (Casello c : caselli) {
             System.out.println("Propago eliminazione per casello ID: " + c.getIdCasello());
 
-            // AVVISO LE CORSIE: Passo l'ID del casello
             rabbitTemplate.convertAndSend(
                     RabbitMQConfig.CASELLO_EXCHANGE,
                     RabbitMQConfig.CASELLO_ROUTING_KEY,

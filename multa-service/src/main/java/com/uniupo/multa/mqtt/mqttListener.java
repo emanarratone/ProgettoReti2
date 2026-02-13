@@ -20,7 +20,6 @@ public class mqttListener {
 
     private static final String TOPIC_MULTA = "multa/creaMulta";
 
-
     public mqttListener(MqttMessageBroker mqttBroker, MultaRepository repo, ObjectMapper objectMapper,RestTemplate restTemplate) {
         this.mqttBroker = mqttBroker;
         this.repo = repo;
@@ -40,24 +39,19 @@ public class mqttListener {
 
     private void handleGenerazioneMulta(String topic, String message) {
         try {
-            // 1. Pulizia e lettura (già funzionante dai tuoi log)
             String cleanMessage = message;
             if (cleanMessage.startsWith("\"") && cleanMessage.endsWith("\"")) {
                 cleanMessage = cleanMessage.substring(1, cleanMessage.length() - 1).replace("\\\"", "\"");
             }
             CreazioneMultaEvent evento = objectMapper.readValue(cleanMessage, CreazioneMultaEvent.class);
 
-            // 2. CREAZIONE ENTITY PER DATABASE
-            // Devi mappare i dati dell'evento nell'oggetto che Hibernate salva
             Multa nuovaMulta = new Multa();
             nuovaMulta.setTarga(evento.getTarga());
             nuovaMulta.setIdBiglietto(evento.getIdBiglietto());
 
-            // Imposta un importo fisso o calcolato (visto che nel DB è NOT NULL)
             nuovaMulta.setImporto(150.00);
             nuovaMulta.setPagato(false);
 
-            // 3. SALVATAGGIO EFFETTIVO
             repo.save(nuovaMulta);
 
             System.out.println("[MULTA-LISTENER] Record salvato correttamente nel DB per: " + evento.getTarga());

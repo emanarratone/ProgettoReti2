@@ -56,7 +56,7 @@ public class RegioneService {
         repo.deleteById(id);
 
         // 3. Notifica a cascata
-        // Inviamo l'ID al "centralino". RabbitMQ lo consegnerà a chiunque sia in ascolto.
+        // Inviamo l'ID. RabbitMQ lo consegnerà a chiunque sia in ascolto.
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.REGIONE_EXCHANGE,
                 RabbitMQConfig.REGIONE_ROUTING_KEY,

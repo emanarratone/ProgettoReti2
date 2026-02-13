@@ -29,12 +29,10 @@ public class PagamentoService {
         return repository.findByIdBiglietto(idBiglietto);
     }
 
-    // Aggiornato: ora cerca per stringa 'NON_PAGATO'
     public List<Pagamento> getUnpaid() {
         return repository.findByStato("NON_PAGATO");
     }
 
-    // Aggiornato: ora cerca per stringa 'PAGATO'
     public List<Pagamento> getPaid() {
         return repository.findByStato("PAGATO");
     }

@@ -55,19 +55,16 @@ public class CaselloService {
 
     @Transactional
     public void delete(Integer id) {
-        // 1. Verifica se esiste (opzionale ma consigliato per evitare errori silenziosi)
         if (!repo.existsById(id)) {
             throw new IllegalArgumentException("Casello non trovato con ID: " + id);
         }
 
-        // 2. NOTIFICA ALLE CORSIE (Trigger della cascata verso il basso)
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.CASELLO_EXCHANGE,
                 RabbitMQConfig.CASELLO_ROUTING_KEY,
                 id
         );
 
-        // 3. Eliminazione locale
         repo.deleteById(id);
         System.out.println("Casello " + id + " eliminato. Messaggio inviato alle corsie.");
     }
